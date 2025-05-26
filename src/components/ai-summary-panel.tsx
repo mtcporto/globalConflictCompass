@@ -3,7 +3,6 @@
 
 import type React from 'react';
 import { useState, useCallback, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { getAiSummaryAction, fetchBbcNewsForAISummary, fetchReliefWebForAISummary } from '@/app/actions';
 import type { SourceStatus, SummarizeNewsInputItem, BbcNewsItemRss, ReliefWebReport } from '@/lib/types';
 import type { SummarizeConflictNewsOutput, SummarizeConflictNewsInput } from '@/ai/flows/summarize-conflict-news';
@@ -11,13 +10,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Wand2, MapPin } from 'lucide-react';
-
-const MapDisplay = dynamic(() => import('@/components/map-display'), {
-  ssr: false,
-  loading: () => <div className="h-[300px] w-full flex items-center justify-center bg-muted/30 rounded-lg"><LoadingSpinner text="Carregando mapa..." /></div>,
-});
-
+import { Wand2 } from 'lucide-react';
 
 interface AiSummaryPanelProps {
   onStatusChange: (status: SourceStatus) => void;
@@ -35,8 +28,8 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
     onStatusChange({ status: 'loading' });
 
     try {
-      const bbcItemsPromise = fetchBbcNewsForAISummary(3); // Fetch 3 items
-      const reliefWebItemsPromise = fetchReliefWebForAISummary(3); // Fetch 3 items
+      const bbcItemsPromise = fetchBbcNewsForAISummary(3);
+      const reliefWebItemsPromise = fetchReliefWebForAISummary(3);
 
       const [bbcData, reliefWebData] = await Promise.all([bbcItemsPromise, reliefWebItemsPromise]);
 
@@ -86,7 +79,6 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
   }, [onStatusChange]);
   
   useEffect(() => {
-    // Set initial status to idle when component mounts
     onStatusChange({ status: 'idle' });
   }, [onStatusChange]);
 
@@ -105,22 +97,6 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
         <ScrollArea className="flex-grow">
           <div className="p-1 md:p-3 bg-card rounded-lg shadow-md space-y-6 text-sm">
             
-            {summary.principaisZonasDeConflito && summary.principaisZonasDeConflito.length > 0 && (
-              <div className="mb-6">
-                <h4 className="font-semibold text-lg mb-2 text-accent flex items-center">
-                  <MapPin className="mr-2 h-5 w-5" />
-                  Mapa de Conflitos e Zonas Principais
-                </h4>
-                <MapDisplay zones={summary.principaisZonasDeConflito || []} />
-                <div className="mt-3">
-                  <p className="font-medium text-foreground/90 mb-1">Zonas de Conflito Identificadas:</p>
-                  <ul className="list-disc list-inside ml-4 space-y-0.5 text-foreground/80">
-                    {summary.principaisZonasDeConflito.map((zona, index) => <li key={`zona-${index}`}>{zona.nome}</li>)}
-                  </ul>
-                </div>
-              </div>
-            )}
-
             {summary.resumoGeral && (
               <div>
                 <h4 className="font-semibold text-base mb-1 text-accent">Resumo Geral:</h4>
@@ -156,7 +132,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
                 <p className="whitespace-pre-wrap text-foreground/90">{summary.causasFatoresMencionados}</p>
               </div>
             )}
-            {(!summary.resumoGeral && (!summary.principaisZonasDeConflito || summary.principaisZonasDeConflito.length === 0)) && (
+            {(!summary.resumoGeral && (!summary.eventosChave || summary.eventosChave.length === 0)) && (
                 <p className="text-muted-foreground">Não foi possível extrair informações detalhadas das notícias fornecidas para esta análise.</p>
             )}
           </div>
@@ -164,9 +140,11 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       )}
       {!summary && !isLoading && !error && (
          <p className="text-sm text-muted-foreground text-center flex-grow flex items-center justify-center">
-           Clique no botão acima para gerar uma análise detalhada e visualizar as zonas de conflito no mapa.
+           Clique no botão acima para gerar uma análise detalhada dos eventos e temas recorrentes.
          </p>
       )}
     </div>
   );
 }
+
+    
