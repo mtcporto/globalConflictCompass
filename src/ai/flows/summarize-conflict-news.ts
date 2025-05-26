@@ -55,15 +55,11 @@ Com base APENAS nos itens de notícia fornecidos, preencha os seguintes campos:
 
 1.  **Eventos Chave** (campo: \`eventosChave\`): Liste os eventos ou desenvolvimentos mais importantes e recentes mencionados.
     - Se houver dados, retorne um array de strings (ex: \`["Evento 1", "Evento 2"]\`).
-    - Se NÃO houver dados, a forma PREFERENCIAL é retornar um array vazio (\`[]\`).
-    - Você também PODE omitir o campo completamente da resposta JSON.
-    - NUNCA retorne strings como "Nenhum", "Não há", "Não mencionado" como o valor direto deste campo, nem como um item dentro de um array (ex: \`["Nenhum"]\`). NUNCA retorne \`null\` para este campo.
+    - Se NÃO houver dados, você PODE omitir completamente o campo \`eventosChave\` da resposta JSON OU retornar um array vazio \`[]\`. Não inclua strings como "Nenhum" ou "Não mencionado" no array.
 
 2.  **Atores Envolvidos** (campo: \`atoresEnvolvidos\`): Se claramente mencionado, liste os principais atores (países, grupos armados, organizações internacionais, etc.) envolvidos.
     - Se houver dados, retorne um array de strings.
-    - Se NÃO houver dados, a forma PREFERENCIAL é retornar um array vazio (\`[]\`).
-    - Você também PODE omitir o campo completamente da resposta JSON.
-    - NUNCA retorne strings como "Nenhum" ou "Não mencionado" como valor direto deste campo ou dentro do array. NUNCA retorne \`null\` para este campo.
+    - Se NÃO houver dados, você PODE omitir completamente o campo \`atoresEnvolvidos\` da resposta JSON OU retornar um array vazio \`[]\`. Não inclua strings como "Nenhum" ou "Não mencionado" no array.
 
 3.  **Impacto Humanitário** (campo: \`impactoHumanitario\`): Descreva brevemente qualquer impacto humanitário (vítimas, deslocados, crises, etc.) que seja explicitamente reportado. Se não houver menção clara, você pode omitir o campo \`impactoHumanitario\` ou fornecer a string "Não mencionado explicitamente nas notícias fornecidas".
 
@@ -74,7 +70,7 @@ Com base APENAS nos itens de notícia fornecidos, preencha os seguintes campos:
 Instruções CRÍTICAS para o formato da resposta:
 - O resultado DEVE estar em português brasileiro (pt-BR).
 - É ABSOLUTAMENTE CRUCIAL que a sua resposta respeite o schema de output JSON fornecido.
-- Para campos de array opcionais como \`eventosChave\` e \`atoresEnvolvidos\`: se não houver dados, siga as instruções detalhadas acima (preferencialmente \`[]\` ou omitir o campo). Não use \`null\` para estes campos.
+- Para campos de array opcionais como \`eventosChave\` e \`atoresEnvolvidos\`: se não houver dados, siga as instruções detalhadas acima (omitir o campo ou retornar \`[]\`). Não use \`null\` para estes campos.
 - Para campos de string opcionais como \`impactoHumanitario\` e \`causasFatoresMencionados\`: se nenhuma informação for encontrada, você PODE retornar a string "Não mencionado explicitamente nas notícias fornecidas" ou omitir o campo.
 - O campo \`resumoGeral\` é obrigatório e deve sempre ser uma string.
 
@@ -104,6 +100,6 @@ const summarizeConflictNewsFlow = ai.defineFlow(
       console.error('AI summary flow returned undefined output. Input:', JSON.stringify(input).substring(0, 500));
       throw new Error('O fluxo de resumo de IA retornou uma saída inesperada (undefined/null).');
     }
-    return output; // No non-null assertion here, rely on schema validation.
+    return output; 
   }
 );
