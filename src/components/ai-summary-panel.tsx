@@ -5,7 +5,7 @@ import type React from 'react';
 import { useState, useCallback, useEffect } from 'react';
 import { getAiSummaryAction, fetchBbcNewsForAISummary, fetchReliefWebForAISummary } from '@/app/actions';
 import type { SourceStatus, SummarizeNewsInputItem, BbcNewsItemRss, ReliefWebReport } from '@/lib/types';
-import type { SummarizeConflictNewsOutput, SummarizeConflictNewsInput } from '@/ai/flows/summarize-conflict-news';
+import type { SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
@@ -67,8 +67,8 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
         return;
       }
       
-      const input: SummarizeConflictNewsInput = { newsItems: newsToSummarize };
-      const result = await getAiSummaryAction(input);
+      // Pass the newsToSummarize array directly
+      const result = await getAiSummaryAction(newsToSummarize);
 
       if (result.error) {
         throw new Error(result.error);
