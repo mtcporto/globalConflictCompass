@@ -41,8 +41,10 @@ export interface AcledApiResponse {
   status?: boolean; // Optional as API might use 'success' or omit
   count?: number;
   data: AcledEvent[];
-  message?: string; // In case of error
+  message?: string; // In case of error from ACLED with success: false
+  detail?: string; // In case of authentication error (status 401/403)
   success?: boolean; // ACLED API might use 'success' field
+  status_code?: number; // ACLED might return this for auth errors
 }
 
 // ReliefWeb specific types

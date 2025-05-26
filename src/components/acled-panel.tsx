@@ -14,13 +14,13 @@ interface AcledPanelProps {
   triggerFetch?: number; // To allow parent to trigger refresh
 }
 
-const ACLED_API_KEY = 'Hr3EHefA5L0Pd5HTj8x-'; // WARNING: Hardcoding API keys is insecure.
-const ACLED_USER_EMAIL = 'mtcporto@gmail.com'; // User's email for API access
+const ACLED_API_KEY = 'Hr3EHefA5L0Pd5HTj8x-'; // User's API key
+// const ACLED_USER_EMAIL = 'mtcporto@gmail.com'; // Not strictly needed for token auth
 
-function getAcledDateRange() {
+function getAcledDateRange(days: number = 30) {
   const endDate = new Date();
   const startDate = new Date();
-  startDate.setDate(endDate.getDate() - 30); // Last 30 days
+  startDate.setDate(endDate.getDate() - days);
   return `${startDate.toISOString().split('T')[0]}:${endDate.toISOString().split('T')[0]}`;
 }
 
@@ -37,47 +37,58 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
     try {
       const baseUrl = 'https://api.acleddata.com/acled/read';
       const params = new URLSearchParams({
-        key: ACLED_API_KEY,
-        email: ACLED_USER_EMAIL,
+        // key and email removed, auth is via header
         limit: '10',
-        event_date: getAcledDateRange(),
+        event_date: getAcledDateRange(), // Last 30 days
+        country: 'Ukraine', // Querying for Ukraine as per suggestion
         fields: 'event_id_cnty,event_date,event_type,location,notes,country,fatalities',
         page: '1',
-        terms: 'accept'
+        terms: 'accept' // Essential parameter
       });
       const requestUrl = `${baseUrl}?${params.toString()}`;
 
-      const response = await fetch(requestUrl);
+      const response = await fetch(requestUrl, {
+        headers: {
+          'Authorization': `Token ${ACLED_API_KEY}`
+        }
+      });
       
       if (!response.ok) {
         const errorBody = await response.text();
         console.error('ACLED API HTTP Error:', response.status, errorBody);
-        throw new Error(`Falha ao buscar dados ACLED: ${response.status} ${response.statusText}. Detalhes: ${errorBody.substring(0,100)}`);
+        throw new Error(`Falha ao buscar dados ACLED: ${response.status} ${response.statusText}. Detalhes: ${errorBody.substring(0,150)}`);
       }
 
       const apiResponse = await response.json() as AcledApiResponse;
 
-      // Explicitly check for API-level error indicated by 'success: false'
-      if (apiResponse.success === false) {
-        const errorMessage = apiResponse.message || 'ACLED API indicou falha sem uma mensagem específica.';
-        console.error('ACLED API Logic Error (success:false):', errorMessage, 'Resposta completa:', apiResponse);
+      // Explicitly check for API-level error indicated by 'success: false' or other error indicators
+      if (apiResponse.success === false || apiResponse.status_code === 401 || apiResponse.status_code === 403) {
+        const errorMessage = apiResponse.message || apiResponse.detail || 'ACLED API indicou falha sem uma mensagem específica.';
+        console.error('ACLED API Logic Error:', errorMessage, 'Resposta completa:', apiResponse);
         throw new Error(errorMessage);
       }
 
       // Check if data exists and is an array
       if (!apiResponse.data || !Array.isArray(apiResponse.data)) {
-        console.error('ACLED API Error: O campo "data" está ausente ou não é um array. Resposta:', apiResponse);
-        throw new Error('Formato de dados inesperado da API ACLED. O campo "data" não é um array.');
+        console.warn('ACLED API Warning: O campo "data" está ausente ou não é um array. Resposta:', apiResponse);
+        // Consider this a success with no data if count is 0, otherwise an error
+        if (apiResponse.count === 0) {
+            setData([]);
+            onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para os filtros atuais (Ucrânia, últimos 30 dias).' });
+        } else {
+            throw new Error('Formato de dados inesperado da API ACLED. O campo "data" não é um array ou está ausente.');
+        }
+        return;
       }
       
       if (apiResponse.data.length === 0) {
         setData([]);
-        onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para os filtros atuais.' });
+        onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para Ucrânia nos últimos 30 dias.' });
         return;
       }
       
       const formattedData: NewsItem[] = apiResponse.data.map((event: AcledEventType, index: number) => ({
-        id: event.event_id_cnty || `acled-${index}`,
+        id: event.event_id_cnty || `acled-${index}`, // Fallback id
         date: event.event_date,
         title: event.event_type,
         description: event.notes || 'Sem descrição detalhada.',
@@ -85,6 +96,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
         country: event.country,
         location: event.location,
         eventType: event.event_type,
+        // fatalities: event.fatalities !== undefined ? Number(event.fatalities) : 0, // Ensure fatalities is a number
       }));
       setData(formattedData);
       onStatusChange({ status: 'success' });
@@ -104,7 +116,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <ErrorDisplay message={error} />;
-  if (data.length === 0) return <p className="text-sm text-muted-foreground p-4 text-center">Nenhum evento ACLED para mostrar.</p>;
+  if (data.length === 0) return <p className="text-sm text-muted-foreground p-4 text-center">Nenhum evento ACLED para mostrar (Ucrânia, últimos 30 dias).</p>;
 
   return (
     <ScrollArea className="h-full">
