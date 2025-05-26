@@ -11,6 +11,15 @@ import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Wand2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+// Placeholder for MapDisplay as its AI-driven functionality was reverted.
+// Will be re-implemented later if a map feature based on API data (e.g., ACLED with geocoding) is developed.
+const MapDisplayPlaceholder = dynamic(() => import('./map-display').then(mod => mod.default || (() => <div className="h-[300px] w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 text-center"><p className="text-sm text-muted-foreground">Funcionalidade de mapa em desenvolvimento.</p></div>)), {
+  ssr: false,
+  loading: () => <LoadingSpinner text="Carregando mapa..." />,
+});
+
 
 interface AiSummaryPanelProps {
   onStatusChange: (status: SourceStatus) => void;
@@ -79,8 +88,15 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
   }, [onStatusChange]);
   
   useEffect(() => {
-    onStatusChange({ status: 'idle' });
-  }, [onStatusChange]);
+    // Set initial status or handle other side effects if needed
+    // For now, this useEffect simply ensures onStatusChange is part of the component's lifecycle
+    // and its stability is managed by the parent (ConflictDashboard) via useCallback.
+    // If this panel were to auto-trigger a summary on load, logic would go here.
+    // Currently, it's user-triggered, so an 'idle' status is appropriate until generation.
+    if (!isLoading && !summary && !error) {
+      onStatusChange({ status: 'idle' });
+    }
+  }, [onStatusChange, isLoading, summary, error]);
 
 
   return (
@@ -112,7 +128,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
                 </ul>
               </div>
             )}
-            {summary.atoresEnvolvidos && summary.atoresEnvolvidos.length > 0 && summary.atoresEnvolvidos.join('') !== "Não mencionado explicitamente" && (
+            {summary.atoresEnvolvidos && summary.atoresEnvolvidos.length > 0 && (
               <div>
                 <h4 className="font-semibold text-base mb-1 text-accent">Atores Envolvidos:</h4>
                  <ul className="list-disc list-inside ml-4 space-y-0.5 text-foreground/90">
@@ -146,5 +162,3 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
     </div>
   );
 }
-
-    
