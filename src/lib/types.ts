@@ -10,7 +10,7 @@ export interface NewsItem {
   location?: string; // For ACLED
 }
 
-export type ApiName = 'acled' | 'reliefweb' | 'bbc' | 'gpi' | 'aiSummary';
+export type ApiName = 'acled' | 'reliefweb' | 'bbc' | 'aiSummary';
 export type ApiStatus = 'loading' | 'success' | 'error' | 'idle';
 
 export interface SourceStatus {
@@ -22,7 +22,6 @@ export interface AllApiStatuses {
   acled: SourceStatus;
   reliefweb: SourceStatus;
   bbc: SourceStatus;
-  gpi: SourceStatus;
   aiSummary: SourceStatus;
 }
 

@@ -1,3 +1,4 @@
+// src/components/conflict-dashboard.tsx
 "use client";
 
 import type React from 'react';
@@ -7,15 +8,13 @@ import { DataCard } from './data-card';
 import { AcledPanel } from './acled-panel';
 import { ReliefWebPanel } from './reliefweb-panel';
 import { BbcNewsPanel } from './bbc-news-panel';
-import { GpiPanel } from './gpi-panel';
 import { AiSummaryPanel } from './ai-summary-panel';
-import { BarChartBig, Globe, HelpingHand, Newspaper, ShieldCheck, Sparkles, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { BarChartBig, Globe, HelpingHand, Newspaper, Sparkles, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 
 const initialApiStatuses: AllApiStatuses = {
   acled: { status: 'loading' },
   reliefweb: { status: 'loading' },
   bbc: { status: 'loading' },
-  gpi: { status: 'idle' }, // GPI is static or pre-loaded
   aiSummary: { status: 'idle' }, // AI Summary is user-triggered
 };
 
@@ -23,7 +22,7 @@ export default function ConflictDashboard() {
   const [apiStatuses, setApiStatuses] = useState<AllApiStatuses>(initialApiStatuses);
   // Trigger state for refreshing individual panels
   const [fetchTriggers, setFetchTriggers] = useState<Record<ApiName, number>>({
-    acled: 0, reliefweb: 0, bbc: 0, gpi: 0, aiSummary: 0,
+    acled: 0, reliefweb: 0, bbc: 0, aiSummary: 0,
   });
 
   const handleStatusChange = useCallback((source: ApiName, status: SourceStatus) => {
@@ -48,8 +47,11 @@ export default function ConflictDashboard() {
     if (errorCount > 0) {
       return { text: `${errorCount} fonte(s) com erro. ${successCount} funcionando.`, icon: <AlertTriangle className="h-4 w-4" />, color: "text-red-600 bg-red-100" };
     }
-    if (successCount + idleCount === total) {
+    if (successCount + idleCount === total && total > 0) { // Ensure total is not zero before claiming all operational
          return { text: `Todas as fontes de dados operacionais.`, icon: <CheckCircle2 className="h-4 w-4" />, color: "text-green-600 bg-green-100"};
+    }
+    if (total === 0) { // Case where all panels might have been removed
+        return { text: "Nenhuma fonte de dados configurada.", icon: <AlertTriangle className="h-4 w-4" />, color: "text-yellow-600 bg-yellow-100"};
     }
     return { text: "Verificando status das fontes...", icon: <Loader2 className="h-4 w-4 animate-spin" />, color: "text-gray-600 bg-gray-100"};
 
@@ -66,10 +68,6 @@ export default function ConflictDashboard() {
 
   const handleBbcStatusChange = useCallback((status: SourceStatus) => {
     handleStatusChange('bbc', status);
-  }, [handleStatusChange]);
-
-  const handleGpiStatusChange = useCallback((status: SourceStatus) => {
-    handleStatusChange('gpi', status);
   }, [handleStatusChange]);
 
   const handleAiSummaryStatusChange = useCallback((status: SourceStatus) => {
@@ -133,19 +131,10 @@ export default function ConflictDashboard() {
         </DataCard>
         
         <DataCard 
-          title="Global Peace Index" 
-          icon={ShieldCheck}
-          // No refresh for GPI as it's static in this version
-          className="md:col-span-1"
-        >
-          <GpiPanel onStatusChange={handleGpiStatusChange} />
-        </DataCard>
-
-        <DataCard 
           title="Resumo por IA" 
           icon={Sparkles}
           // AI summary has its own trigger button inside the panel
-          className="md:col-span-2 lg:col-span-2"
+          className="md:col-span-3 lg:col-span-3" // Adjusted to span full width if GPI is removed
         >
           <AiSummaryPanel onStatusChange={handleAiSummaryStatusChange} />
         </DataCard>
