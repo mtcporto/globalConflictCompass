@@ -15,6 +15,7 @@ interface AcledPanelProps {
 }
 
 const ACLED_API_KEY = 'Hr3EHefA5L0Pd5HTj8x-'; 
+const ACLED_USER_EMAIL = 'mtcporto@gmail.com';
 
 function getAcledDateRange(days: number = 30) {
   const endDate = new Date();
@@ -36,31 +37,31 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
     try {
       const baseUrl = 'https://api.acleddata.com/acled/read';
       const params = new URLSearchParams({
+        key: ACLED_API_KEY,
+        email: ACLED_USER_EMAIL,
         limit: '10',
         event_date: getAcledDateRange(), 
         country: 'Ukraine', 
         fields: 'event_id_cnty,event_date,event_type,location,notes,country,fatalities',
         page: '1',
-        // terms: 'accept' // ACLED docs say it's required, but curl example didn't use it.
-                         // The 403 error is about account restriction, not missing terms.
+        terms: 'accept' 
       });
       const requestUrl = `${baseUrl}?${params.toString()}`;
 
-      const response = await fetch(requestUrl, {
-        headers: {
-          'Authorization': `Token ${ACLED_API_KEY}`
-        }
-      });
+      // Log the request URL to verify
+      console.log('ACLED Request URL:', requestUrl);
+
+      const response = await fetch(requestUrl);
       
       const responseText = await response.text(); 
       console.log('ACLED API Raw Response Text:', responseText);
 
       if (!response.ok) {
-        // This block handles HTTP-level errors (e.g., 401, 403 directly from server, 500)
         console.error('ACLED API HTTP Error:', response.status, response.statusText, 'Response body:', responseText);
         let detailMessage = `Falha ao buscar dados ACLED: ${response.status} ${response.statusText}.`;
         try {
             const errorJson = JSON.parse(responseText) as AcledApiResponse;
+            // Try to extract a more specific message from the JSON error response
             if (errorJson.error && typeof errorJson.error === 'object' && errorJson.error !== null && typeof errorJson.error.message === 'string' && errorJson.error.message.trim() !== '') {
                 detailMessage = errorJson.error.message;
                  if (response.status === 403 && errorJson.error.message.toLowerCase().includes('your account is restricted')) {
@@ -72,7 +73,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
                 detailMessage = errorJson.detail;
             }
         } catch (e) {
-            // Ignore if responseText is not JSON, stick to the HTTP status message
+            // Stick to HTTP status message if responseText is not JSON
             detailMessage += ` Resposta da API: ${responseText.substring(0,250)}`;
         }
         throw new Error(detailMessage);
@@ -88,22 +89,19 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
       
       console.log('ACLED API Raw Parsed Response:', apiResponse);
 
-      // This block handles cases where HTTP response is OK (200), but ACLED API indicates an error in the JSON body
       if (apiResponse.success === false || 
-          (typeof apiResponse.status === 'number' && [400, 401, 403].includes(apiResponse.status)) || 
-          (typeof apiResponse.status_code === 'number' && [400, 401, 403].includes(apiResponse.status_code))) {
+          (typeof apiResponse.status === 'number' && [400, 401, 403, 429].includes(apiResponse.status)) || // Added 429 for rate limiting
+          (apiResponse.error && (apiResponse.error.status === 403 || apiResponse.error.status === 401 || apiResponse.error.status === 429)) ||
+          (typeof apiResponse.status_code === 'number' && [400, 401, 403, 429].includes(apiResponse.status_code))) {
         
-        let extractedErrorMessage = 'Falha na API ACLED. Por favor, tente novamente mais tarde.'; // Default user-facing message
+        let extractedErrorMessage = 'Falha na API ACLED. Por favor, tente novamente mais tarde.'; 
 
-        if (apiResponse.error) {
-            if (typeof apiResponse.error === 'string' && apiResponse.error.trim() !== '') {
-                extractedErrorMessage = apiResponse.error;
-            } else if (typeof apiResponse.error === 'object' && apiResponse.error !== null && apiResponse.error.message && typeof apiResponse.error.message === 'string' && apiResponse.error.message.trim() !== '') {
-                extractedErrorMessage = apiResponse.error.message;
-                // Specifically handle the known account restriction message
-                if (apiResponse.error.message.toLowerCase().includes('your account is restricted')) {
-                    extractedErrorMessage = `Acesso à API ACLED negado: "${apiResponse.error.message}" Seu acesso à API pode estar limitado. Por favor, verifique o e-mail enviado para access@acleddata.com ou contate o suporte ACLED para assistência.`;
-                }
+        if (apiResponse.error && typeof apiResponse.error === 'object' && apiResponse.error.message) {
+            extractedErrorMessage = apiResponse.error.message;
+            if (String(apiResponse.error.status).startsWith('4') && apiResponse.error.message.toLowerCase().includes('your account is restricted')) {
+                extractedErrorMessage = `Acesso à API ACLED negado: "${apiResponse.error.message}" Seu acesso à API pode estar limitado. Por favor, verifique o e-mail enviado para access@acleddata.com ou contate o suporte ACLED para assistência.`;
+            } else if (apiResponse.error.message.toLowerCase().includes("incorrect email or access key")) {
+                extractedErrorMessage = `Chave de API ou e-mail ACLED incorreto. Verifique as credenciais. (${apiResponse.error.message})`;
             }
         } else if (apiResponse.message && typeof apiResponse.message === 'string' && apiResponse.message.trim() !== '') {
             extractedErrorMessage = apiResponse.message;
@@ -115,14 +113,13 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
         throw new Error(extractedErrorMessage);
       }
       
-      if (!apiResponse.data || !Array.isArray(apiResponse.data) || apiResponse.count === 0) {
+      if (!apiResponse.data || !Array.isArray(apiResponse.data) || (apiResponse.count === 0 && apiResponse.data?.length === 0) ) {
          setData([]);
          const message = (apiResponse.count === 0 && apiResponse.data?.length === 0) 
             ? 'Nenhum dado ACLED encontrado para os filtros atuais (Ucrânia, últimos 30 dias).'
             : 'Formato de dados inesperado ou vazio da API ACLED.';
          onStatusChange({ status: 'success', message });
-         // If count is 0 but data is an empty array, it's not an error, just no data.
-         // Only set error if data is not an array or truly malformed beyond just being empty.
+         // Only set error if data is truly malformed beyond just being empty with count 0.
          if (!Array.isArray(apiResponse.data) && apiResponse.count !== 0) {
             setError(message); 
          }
@@ -167,4 +164,3 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
     </ScrollArea>
   );
 }
-
