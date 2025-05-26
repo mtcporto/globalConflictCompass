@@ -26,10 +26,10 @@ const SummarizeConflictNewsOutputSchema = z.object({
   principaisZonasDeConflito: z.array(
     z.object({
       nome: z.string().describe('O nome da zona de conflito.'),
-      latitude: z.number().optional().describe('A latitude aproximada da zona de conflito. Omitir se não souber.'),
-      longitude: z.number().optional().describe('A longitude aproximada da zona de conflito. Omitir se não souber.')
+      latitude: z.number().nullable().optional().describe('A latitude aproximada da zona de conflito. Omitir ou usar null se não souber.'),
+      longitude: z.number().nullable().optional().describe('A longitude aproximada da zona de conflito. Omitir ou usar null se não souber.')
     })
-  ).describe('Lista das principais zonas de conflito mencionadas nas notícias, com suas coordenadas geográficas aproximadas, se disponíveis com boa confiança. Caso contrário, omita latitude e longitude.'),
+  ).describe('Lista das principais zonas de conflito mencionadas nas notícias, com suas coordenadas geográficas aproximadas, se disponíveis com boa confiança. Caso contrário, omita latitude e longitude, ou defina-os como null.'),
   eventosChave: z.array(z.string()).describe('Lista dos eventos chave ou desenvolvimentos mais significativos nas notícias.'),
   atoresEnvolvidos: z.array(z.string()).optional().describe('Principais atores (países, grupos formações políticas, etc.) explicitamente mencionados como envolvidos nos conflitos.'),
   impactoHumanitario: z.string().optional().describe('Breve descrição do impacto humanitário mencionado (e.g., deslocados, vítimas, necessidade de ajuda), se houver.'),
@@ -60,7 +60,7 @@ Itens de Notícia:
 
 Com base APENAS nos itens de notícia fornecidos, preencha os seguintes campos:
 
-1.  **Principais Zonas de Conflito**: Identifique e liste as principais regiões geográficas ou países onde os conflitos estão ocorrendo. Para cada zona, forneça o nome e, se possível e com um grau razoável de confiança, as coordenadas geográficas aproximadas (latitude e longitude). Se as coordenadas não forem conhecidas ou forem muito imprecisas, omita os campos latitude e longitude para essa zona específica.
+1.  **Principais Zonas de Conflito**: Identifique e liste as principais regiões geográficas ou países onde os conflitos estão ocorrendo. Para cada zona, forneça o nome e, se possível e com um grau razoável de confiança, as coordenadas geográficas aproximadas (latitude e longitude). Se as coordenadas não forem conhecidas ou forem muito imprecisas, omita os campos latitude e longitude para essa zona específica ou defina seus valores como nulo (null).
 2.  **Eventos Chave**: Liste os eventos ou desenvolvimentos mais importantes e recentes mencionados.
 3.  **Atores Envolvidos**: Se claramente mencionado, liste os principais atores (países, grupos armados, organizações internacionais, etc.) envolvidos. Se não houver menção clara, indique "Não mencionado explicitamente".
 4.  **Impacto Humanitário**: Descreva brevemente qualquer impacto humanitário (vítimas, deslocados, crises, etc.) que seja explicitamente reportado. Se não houver menção clara, indique "Não mencionado explicitamente".
@@ -84,3 +84,4 @@ const summarizeConflictNewsFlow = ai.defineFlow(
     return output!;
   }
 );
+

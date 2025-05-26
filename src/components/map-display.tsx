@@ -8,8 +8,8 @@ import { Globe } from 'lucide-react';
 
 interface ConflictZone {
   nome: string;
-  latitude?: number;
-  longitude?: number;
+  latitude?: number | null; // Allow null
+  longitude?: number | null; // Allow null
 }
 
 interface MapDisplayProps {
@@ -32,14 +32,17 @@ export default function MapDisplay({ zones }: MapDisplayProps) {
   const position: LatLngExpression = [20, 0]; // Default center
   const zoomLevel = 2;
 
-  const validZones = zones.filter(zone => zone.latitude !== undefined && zone.longitude !== undefined);
+  // Filter for zones that have valid, numeric latitude and longitude
+  const validZones = zones.filter(
+    zone => typeof zone.latitude === 'number' && typeof zone.longitude === 'number'
+  );
 
   if (validZones.length === 0) {
     return (
       <div className="h-[300px] w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 text-center">
         <Globe className="w-12 h-12 text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">
-          Nenhuma coordenada geográfica disponível para exibir no mapa no momento.
+          Nenhuma coordenada geográfica numérica disponível para exibir no mapa no momento.
         </p>
         <p className="text-xs text-muted-foreground mt-1">
           A IA tentará fornecer coordenadas para as zonas de conflito identificadas.
@@ -51,7 +54,8 @@ export default function MapDisplay({ zones }: MapDisplayProps) {
   // Calculate bounds if there are multiple valid zones
   let mapBounds: LatLngExpression[] | undefined = undefined;
   if (validZones.length > 0) {
-    mapBounds = validZones.map(zone => [zone.latitude!, zone.longitude!] as LatLngExpression);
+    // Ensure latitude and longitude are not null before casting
+    mapBounds = validZones.map(zone => [zone.latitude as number, zone.longitude as number] as LatLngExpression);
   }
 
 
@@ -72,7 +76,8 @@ export default function MapDisplay({ zones }: MapDisplayProps) {
         {validZones.map((zone) => (
           <Marker 
             key={zone.nome} 
-            position={[zone.latitude!, zone.longitude!]}
+            // We've already filtered for number types, so direct use is safe
+            position={[zone.latitude as number, zone.longitude as number]}
           >
             <Popup>
               {zone.nome}
@@ -83,3 +88,4 @@ export default function MapDisplay({ zones }: MapDisplayProps) {
     </div>
   );
 }
+
