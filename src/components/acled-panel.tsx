@@ -41,7 +41,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
         country: 'Ukraine', 
         fields: 'event_id_cnty,event_date,event_type,location,notes,country,fatalities',
         page: '1',
-        // terms: 'accept' // Tentatively removed as per debugging
+        // terms: 'accept' // Tentatively removed
       });
       const requestUrl = `${baseUrl}?${params.toString()}`;
 
@@ -51,11 +51,24 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
         }
       });
       
-      const responseText = await response.text(); // Get text first
+      const responseText = await response.text(); 
+      console.log('ACLED API Raw Response Text:', responseText);
 
       if (!response.ok) {
         console.error('ACLED API HTTP Error:', response.status, response.statusText, 'Response body:', responseText);
-        throw new Error(`Falha ao buscar dados ACLED: ${response.status} ${response.statusText}. Detalhes: ${responseText.substring(0,250)}`);
+        // Try to parse error from ACLED if responseText is JSON
+        let detailMessage = responseText.substring(0,250);
+        try {
+            const errorJson = JSON.parse(responseText) as AcledApiResponse;
+            if (errorJson.error && typeof errorJson.error.message === 'string') {
+                detailMessage = errorJson.error.message;
+            } else if (typeof errorJson.message === 'string') {
+                detailMessage = errorJson.message;
+            }
+        } catch (e) {
+            // Ignore if responseText is not JSON
+        }
+        throw new Error(`Falha ao buscar dados ACLED: ${response.status} ${response.statusText}. Detalhes: ${detailMessage}`);
       }
 
       let apiResponse: AcledApiResponse;
@@ -66,20 +79,34 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
         throw new Error(`Erro ao processar resposta da API ACLED. Resposta não é JSON válido. Conteúdo: ${responseText.substring(0,150)}`);
       }
       
-      console.log('ACLED API Raw Parsed Response:', apiResponse); // Log the parsed response
+      console.log('ACLED API Raw Parsed Response:', apiResponse);
 
-      // Explicitly check for API-level error indicated by 'success: false' or other error indicators
       if (apiResponse.success === false || 
-          (typeof apiResponse.status_code === 'number' && [401, 403].includes(apiResponse.status_code))) {
-        const errorMessage = apiResponse.message || apiResponse.detail || 'ACLED API indicou falha sem uma mensagem específica.';
-        console.error('ACLED API Logic Error:', errorMessage, 'Resposta completa:', apiResponse);
-        throw new Error(errorMessage);
+          (typeof apiResponse.status === 'number' && [401, 403, 400].includes(apiResponse.status)) || // Check apiResponse.status as well
+          (typeof apiResponse.status_code === 'number' && [401, 403, 400].includes(apiResponse.status_code))) {
+        
+        let extractedErrorMessage = 'ACLED API indicou falha sem uma mensagem específica.';
+        if (apiResponse.error && typeof apiResponse.error.message === 'string' && apiResponse.error.message.trim() !== '') {
+          extractedErrorMessage = apiResponse.error.message;
+        } else if (typeof apiResponse.message === 'string' && apiResponse.message.trim() !== '') {
+          extractedErrorMessage = apiResponse.message;
+        } else if (typeof apiResponse.detail === 'string' && apiResponse.detail.trim() !== '') {
+          extractedErrorMessage = apiResponse.detail;
+        }
+        
+        console.error('ACLED API Logic Error:', extractedErrorMessage, 'Resposta completa:', apiResponse);
+        throw new Error(extractedErrorMessage);
       }
-
-      // Check if data exists and is an array
+      
+      if (apiResponse.count === 0 && Array.isArray(apiResponse.data) && apiResponse.data.length === 0) {
+        setData([]);
+        onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para os filtros atuais (Ucrânia, últimos 30 dias).' });
+        return;
+      }
+      
       if (!apiResponse.data || !Array.isArray(apiResponse.data)) {
         console.warn('ACLED API Warning: O campo "data" está ausente ou não é um array. Resposta:', apiResponse);
-        if (apiResponse.count === 0 && Array.isArray(apiResponse.data) && apiResponse.data.length === 0) { // More specific check for empty data
+         if (apiResponse.count === 0) { 
             setData([]);
             onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para os filtros atuais (Ucrânia, últimos 30 dias).' });
         } else {
@@ -108,7 +135,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
       onStatusChange({ status: 'success' });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar dados ACLED.';
-      setError(errorMessage);
+      setError(errorMessage); // Set error state to display in UI
       onStatusChange({ status: 'error', message: errorMessage });
       console.error("ACLED fetch error details:", err);
     } finally {
@@ -121,7 +148,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
   }, [fetchData, triggerFetch]);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorDisplay message={error} />;
+  if (error) return <ErrorDisplay message={error} />; // Display the error using ErrorDisplay component
   if (data.length === 0) return <p className="text-sm text-muted-foreground p-4 text-center">Nenhum evento ACLED para mostrar (Ucrânia, últimos 30 dias).</p>;
 
   return (
@@ -132,3 +159,4 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
     </ScrollArea>
   );
 }
+
