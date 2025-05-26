@@ -22,7 +22,7 @@ const SummarizeConflictNewsInputSchema = z.object({
 export type SummarizeConflictNewsInput = z.infer<typeof SummarizeConflictNewsInputSchema>;
 
 const SummarizeConflictNewsOutputSchema = z.object({
-  summary: z.string().describe('A summary of the conflict news.'),
+  summary: z.string().describe('A summary of the conflict news in Brazilian Portuguese.'),
 });
 
 export type SummarizeConflictNewsOutput = z.infer<typeof SummarizeConflictNewsOutputSchema>;
@@ -35,14 +35,14 @@ const summarizeConflictNewsPrompt = ai.definePrompt({
   name: 'summarizeConflictNewsPrompt',
   input: {schema: SummarizeConflictNewsInputSchema},
   output: {schema: SummarizeConflictNewsOutputSchema},
-  prompt: `You are an AI assistant that summarizes conflict news from various sources.
+  prompt: `Você é um assistente de IA que resume notícias sobre conflitos de várias fontes.
 
-  Summarize the following news items into a single, concise summary. Include the most important details and events.  If a news item has a URL, consider whether the URL would be useful to the user. If so, include it in the summary.
+  Resuma os seguintes itens de notícias em um único resumo conciso em português brasileiro (pt-BR). Inclua os detalhes e eventos mais importantes. Se um item de notícia tiver um URL, considere se o URL seria útil para o usuário. Se sim, inclua-o no resumo.
 
-  News Items:
+  Itens de Notícia:
   {{#each newsItems}}
-  - Title: {{this.title}}
-    Description: {{this.description}}
+  - Título: {{this.title}}
+    Descrição: {{this.description}}
     {{#if this.link}}
     Link: {{this.link}}
     {{/if}}
@@ -61,3 +61,4 @@ const summarizeConflictNewsFlow = ai.defineFlow(
     return output!;
   }
 );
+
