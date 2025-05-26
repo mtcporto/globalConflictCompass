@@ -18,8 +18,16 @@ export async function getAiSummaryAction(newsToSummarize: SummarizeNewsInputItem
     const result = await summarizeConflictNews(input);
     return { summary: result };
   } catch (error) {
-    console.error('Error calling AI summary flow:', error);
-    return { error: 'Falha ao gerar resumo de IA.' };
+    let detailedErrorMessage = 'Falha ao gerar resumo de IA.';
+    if (error instanceof Error) {
+      detailedErrorMessage = `Falha ao gerar resumo de IA: ${error.message}`;
+      // Log the full error message and stack for server-side debugging
+      console.error('Error calling AI summary flow. Message:', error.message, 'Stack:', error.stack);
+    } else {
+      // Log the error if it's not an Error instance
+      console.error('Error calling AI summary flow (non-Error object):', error);
+    }
+    return { error: detailedErrorMessage }; // Return the more detailed error message to the client
   }
 }
 
@@ -57,3 +65,4 @@ export async function fetchReliefWebForAISummary(limit: number = 3): Promise<Rel
     return [];
   }
 }
+
