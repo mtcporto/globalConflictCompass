@@ -55,23 +55,29 @@ Com base APENAS nos itens de notícia fornecidos, preencha os seguintes campos:
 
 1.  **Eventos Chave** (campo: \`eventosChave\`): Liste os eventos ou desenvolvimentos mais importantes e recentes mencionados.
     - Se houver dados, retorne um array de strings (ex: \`["Evento 1", "Evento 2"]\`).
-    - Se NÃO houver dados, você PODE omitir completamente o campo \`eventosChave\` da resposta JSON OU retornar um array vazio \`[]\`. Não inclua strings como "Nenhum" ou "Não mencionado" no array.
+    - Se NÃO houver dados, você DEVE omitir completamente o campo \`eventosChave\` da resposta JSON OU retornar um array vazio \`[]\`.
+    - IMPORTANTE: NÃO retorne \`null\` para este campo. NÃO inclua strings como "Nenhum", "Não há", ou "Não mencionado" como o valor do campo ou dentro do array.
 
 2.  **Atores Envolvidos** (campo: \`atoresEnvolvidos\`): Se claramente mencionado, liste os principais atores (países, grupos armados, organizações internacionais, etc.) envolvidos.
     - Se houver dados, retorne um array de strings.
-    - Se NÃO houver dados, você PODE omitir completamente o campo \`atoresEnvolvidos\` da resposta JSON OU retornar um array vazio \`[]\`. Não inclua strings como "Nenhum" ou "Não mencionado" no array.
+    - Se NÃO houver dados, você DEVE omitir completamente o campo \`atoresEnvolvidos\` da resposta JSON OU retornar um array vazio \`[]\`.
+    - IMPORTANTE: NÃO retorne \`null\` para este campo. NÃO inclua strings como "Nenhum", "Não há", ou "Não mencionado" como o valor do campo ou dentro do array.
 
-3.  **Impacto Humanitário** (campo: \`impactoHumanitario\`): Descreva brevemente qualquer impacto humanitário (vítimas, deslocados, crises, etc.) que seja explicitamente reportado. Se não houver menção clara, você pode omitir o campo \`impactoHumanitario\` ou fornecer a string "Não mencionado explicitamente nas notícias fornecidas".
+3.  **Impacto Humanitário** (campo: \`impactoHumanitario\`): Descreva brevemente qualquer impacto humanitário (vítimas, deslocados, crises, etc.) que seja explicitamente reportado.
+    - Se não houver menção clara, você DEVE omitir o campo \`impactoHumanitario\` OU fornecer a string "Não mencionado explicitamente nas notícias fornecidas".
+    - IMPORTANTE: NÃO retorne \`null\` para este campo.
 
-4.  **Causas/Fatores Mencionados** (campo: \`causasFatoresMencionados\`): Se as notícias mencionarem causas diretas, tensões subjacentes ou fatores que contribuem para os conflitos, resuma-os brevemente. Evite especulações ou inferências não suportadas pelos textos. Se não houver menção clara, você pode omitir o campo \`causasFatoresMencionados\` ou fornecer a string "Não mencionado explicitamente nas notícias fornecidas".
+4.  **Causas/Fatores Mencionados** (campo: \`causasFatoresMencionados\`): Se as notícias mencionarem causas diretas, tensões subjacentes ou fatores que contribuem para os conflitos, resuma-os brevemente. Evite especulações ou inferências não suportadas pelos textos.
+    - Se não houver menção clara, você DEVE omitir o campo \`causasFatoresMencionados\` OU fornecer a string "Não mencionado explicitamente nas notícias fornecidas".
+    - IMPORTANTE: NÃO retorne \`null\` para este campo.
 
-5.  **Resumo Geral** (campo: \`resumoGeral\`): Forneça um parágrafo de resumo geral que conecte os pontos principais e a situação atual conforme as notícias. Este campo é obrigatório.
+5.  **Resumo Geral** (campo: \`resumoGeral\`): Forneça um parágrafo de resumo geral que conecte os pontos principais e a situação atual conforme as notícias. Este campo é OBRIGATÓRIO.
 
 Instruções CRÍTICAS para o formato da resposta:
 - O resultado DEVE estar em português brasileiro (pt-BR).
 - É ABSOLUTAMENTE CRUCIAL que a sua resposta respeite o schema de output JSON fornecido.
-- Para campos de array opcionais como \`eventosChave\` e \`atoresEnvolvidos\`: se não houver dados, siga as instruções detalhadas acima (omitir o campo ou retornar \`[]\`). Não use \`null\` para estes campos.
-- Para campos de string opcionais como \`impactoHumanitario\` e \`causasFatoresMencionados\`: se nenhuma informação for encontrada, você PODE retornar a string "Não mencionado explicitamente nas notícias fornecidas" ou omitir o campo.
+- Para campos de array opcionais (\`eventosChave\`, \`atoresEnvolvidos\`): se não houver dados, siga as instruções detalhadas acima (omitir o campo ou retornar \`[]\`).
+- Para campos de string opcionais (\`impactoHumanitario\`, \`causasFatoresMencionados\`): se nenhuma informação for encontrada, siga as instruções detalhadas acima (omitir o campo ou retornar "Não mencionado explicitamente nas notícias fornecidas").
 - O campo \`resumoGeral\` é obrigatório e deve sempre ser uma string.
 
 Mantenha o resultado conciso e focado nos fatos dos artigos.
@@ -79,7 +85,7 @@ Mantenha o resultado conciso e focado nos fatos dos artigos.
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }, // Allow more conflict-related content
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
     ],
@@ -97,9 +103,11 @@ const summarizeConflictNewsFlow = ai.defineFlow(
     if (!output) {
       // This case should ideally be caught by Genkit's schema validation if the output is truly non-conformant and an error is thrown.
       // However, if it resolves to undefined/null without throwing, this is a fallback.
-      console.error('AI summary flow returned undefined output. Input:', JSON.stringify(input).substring(0, 500));
+      console.error('AI summary flow returned undefined/null output before Zod validation. Input:', JSON.stringify(input).substring(0, 500));
+      // Consider throwing a more specific error or ensuring Zod always throws if output is null/undefined when a schema is expected.
       throw new Error('O fluxo de resumo de IA retornou uma saída inesperada (undefined/null).');
     }
-    return output; 
+    return output;
   }
 );
+
