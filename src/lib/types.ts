@@ -34,18 +34,25 @@ export interface AcledEvent {
   location: string;
   notes: string;
   country: string;
-  fatalities?: number | string; // Made fatalities optional and can be number or string
+  fatalities?: number | string;
+}
+
+export interface AcledErrorDetail {
+  status?: number;
+  message?: string;
 }
 
 export interface AcledApiResponse {
-  status?: boolean; // Optional as API might use 'success' or omit
+  status?: number | boolean; // Can be HTTP status from JSON or boolean success indicator
+  success?: boolean;
   count?: number;
-  data: AcledEvent[];
-  message?: string; // In case of error from ACLED with success: false
-  detail?: string; // In case of authentication error (status 401/403)
-  success?: boolean; // ACLED API might use 'success' field
-  status_code?: number; // ACLED might return this for auth errors
+  data?: AcledEvent[]; // Data might be absent in error responses
+  message?: string; // General message from API
+  detail?: string; // Detailed message, often for auth errors
+  status_code?: number; // Specific status code within JSON response
+  error?: AcledErrorDetail | string; // ACLED error object or string
 }
+
 
 // ReliefWeb specific types
 export interface ReliefWebReportField {
@@ -97,3 +104,4 @@ export interface SummarizeNewsInputItem {
   description: string;
   link?: string;
 }
+

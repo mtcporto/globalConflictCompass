@@ -41,7 +41,8 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
         country: 'Ukraine', 
         fields: 'event_id_cnty,event_date,event_type,location,notes,country,fatalities',
         page: '1',
-        // terms: 'accept' // Tentatively removed
+        // terms: 'accept' // ACLED docs say it's required, but curl example didn't use it.
+                         // The 403 error is about account restriction, not missing terms.
       });
       const requestUrl = `${baseUrl}?${params.toString()}`;
 
@@ -55,20 +56,26 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
       console.log('ACLED API Raw Response Text:', responseText);
 
       if (!response.ok) {
+        // This block handles HTTP-level errors (e.g., 401, 403 directly from server, 500)
         console.error('ACLED API HTTP Error:', response.status, response.statusText, 'Response body:', responseText);
-        // Try to parse error from ACLED if responseText is JSON
-        let detailMessage = responseText.substring(0,250);
+        let detailMessage = `Falha ao buscar dados ACLED: ${response.status} ${response.statusText}.`;
         try {
             const errorJson = JSON.parse(responseText) as AcledApiResponse;
-            if (errorJson.error && typeof errorJson.error.message === 'string') {
+            if (errorJson.error && typeof errorJson.error === 'object' && errorJson.error !== null && typeof errorJson.error.message === 'string' && errorJson.error.message.trim() !== '') {
                 detailMessage = errorJson.error.message;
-            } else if (typeof errorJson.message === 'string') {
+                 if (response.status === 403 && errorJson.error.message.toLowerCase().includes('your account is restricted')) {
+                    detailMessage = `Acesso à API ACLED negado (Erro 403): "${errorJson.error.message}" Sua chave de API pode estar restrita. Por favor, contate access@acleddata.com.`;
+                }
+            } else if (typeof errorJson.message === 'string' && errorJson.message.trim() !== '') {
                 detailMessage = errorJson.message;
+            } else if (typeof errorJson.detail === 'string' && errorJson.detail.trim() !== '') {
+                detailMessage = errorJson.detail;
             }
         } catch (e) {
-            // Ignore if responseText is not JSON
+            // Ignore if responseText is not JSON, stick to the HTTP status message
+            detailMessage += ` Resposta da API: ${responseText.substring(0,250)}`;
         }
-        throw new Error(`Falha ao buscar dados ACLED: ${response.status} ${response.statusText}. Detalhes: ${detailMessage}`);
+        throw new Error(detailMessage);
       }
 
       let apiResponse: AcledApiResponse;
@@ -81,44 +88,45 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
       
       console.log('ACLED API Raw Parsed Response:', apiResponse);
 
+      // This block handles cases where HTTP response is OK (200), but ACLED API indicates an error in the JSON body
       if (apiResponse.success === false || 
-          (typeof apiResponse.status === 'number' && [401, 403, 400].includes(apiResponse.status)) || // Check apiResponse.status as well
-          (typeof apiResponse.status_code === 'number' && [401, 403, 400].includes(apiResponse.status_code))) {
+          (typeof apiResponse.status === 'number' && [400, 401, 403].includes(apiResponse.status)) || 
+          (typeof apiResponse.status_code === 'number' && [400, 401, 403].includes(apiResponse.status_code))) {
         
-        let extractedErrorMessage = 'ACLED API indicou falha sem uma mensagem específica.';
-        if (apiResponse.error && typeof apiResponse.error.message === 'string' && apiResponse.error.message.trim() !== '') {
-          extractedErrorMessage = apiResponse.error.message;
-        } else if (typeof apiResponse.message === 'string' && apiResponse.message.trim() !== '') {
-          extractedErrorMessage = apiResponse.message;
-        } else if (typeof apiResponse.detail === 'string' && apiResponse.detail.trim() !== '') {
-          extractedErrorMessage = apiResponse.detail;
+        let extractedErrorMessage = 'Falha na API ACLED. Por favor, tente novamente mais tarde.'; // Default user-facing message
+
+        if (apiResponse.error) {
+            if (typeof apiResponse.error === 'string' && apiResponse.error.trim() !== '') {
+                extractedErrorMessage = apiResponse.error;
+            } else if (typeof apiResponse.error === 'object' && apiResponse.error !== null && apiResponse.error.message && typeof apiResponse.error.message === 'string' && apiResponse.error.message.trim() !== '') {
+                extractedErrorMessage = apiResponse.error.message;
+                // Specifically handle the known account restriction message
+                if (apiResponse.error.message.toLowerCase().includes('your account is restricted')) {
+                    extractedErrorMessage = `Acesso à API ACLED negado: "${apiResponse.error.message}" Seu acesso à API pode estar limitado. Por favor, verifique o e-mail enviado para access@acleddata.com ou contate o suporte ACLED para assistência.`;
+                }
+            }
+        } else if (apiResponse.message && typeof apiResponse.message === 'string' && apiResponse.message.trim() !== '') {
+            extractedErrorMessage = apiResponse.message;
+        } else if (apiResponse.detail && typeof apiResponse.detail === 'string' && apiResponse.detail.trim() !== '') {
+            extractedErrorMessage = apiResponse.detail;
         }
         
-        console.error('ACLED API Logic Error:', extractedErrorMessage, 'Resposta completa:', apiResponse);
+        console.error('ACLED API Logic Error:', extractedErrorMessage, 'Raw Parsed Response for error context:', apiResponse);
         throw new Error(extractedErrorMessage);
       }
       
-      if (apiResponse.count === 0 && Array.isArray(apiResponse.data) && apiResponse.data.length === 0) {
-        setData([]);
-        onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para os filtros atuais (Ucrânia, últimos 30 dias).' });
-        return;
-      }
-      
-      if (!apiResponse.data || !Array.isArray(apiResponse.data)) {
-        console.warn('ACLED API Warning: O campo "data" está ausente ou não é um array. Resposta:', apiResponse);
-         if (apiResponse.count === 0) { 
-            setData([]);
-            onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para os filtros atuais (Ucrânia, últimos 30 dias).' });
-        } else {
-            throw new Error('Formato de dados inesperado da API ACLED. O campo "data" não é um array ou está ausente, ou "count" indica dados mas "data" está vazio.');
-        }
-        return;
-      }
-      
-      if (apiResponse.data.length === 0) {
-        setData([]);
-        onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para Ucrânia nos últimos 30 dias.' });
-        return;
+      if (!apiResponse.data || !Array.isArray(apiResponse.data) || apiResponse.count === 0) {
+         setData([]);
+         const message = (apiResponse.count === 0 && apiResponse.data?.length === 0) 
+            ? 'Nenhum dado ACLED encontrado para os filtros atuais (Ucrânia, últimos 30 dias).'
+            : 'Formato de dados inesperado ou vazio da API ACLED.';
+         onStatusChange({ status: 'success', message });
+         // If count is 0 but data is an empty array, it's not an error, just no data.
+         // Only set error if data is not an array or truly malformed beyond just being empty.
+         if (!Array.isArray(apiResponse.data) && apiResponse.count !== 0) {
+            setError(message); 
+         }
+         return;
       }
       
       const formattedData: NewsItem[] = apiResponse.data.map((event: AcledEventType, index: number) => ({
@@ -135,7 +143,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
       onStatusChange({ status: 'success' });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar dados ACLED.';
-      setError(errorMessage); // Set error state to display in UI
+      setError(errorMessage); 
       onStatusChange({ status: 'error', message: errorMessage });
       console.error("ACLED fetch error details:", err);
     } finally {
@@ -148,7 +156,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
   }, [fetchData, triggerFetch]);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorDisplay message={error} />; // Display the error using ErrorDisplay component
+  if (error) return <ErrorDisplay message={error} />; 
   if (data.length === 0) return <p className="text-sm text-muted-foreground p-4 text-center">Nenhum evento ACLED para mostrar (Ucrânia, últimos 30 dias).</p>;
 
   return (
