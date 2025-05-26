@@ -31,7 +31,8 @@ interface AcledPanelProps {
   triggerFetch?: number; // To allow parent to trigger refresh
 }
 
-const ACLED_API_KEY = 'Hr3EHefA5L0Pd5HTj8x-'; // WARNING: Hardcoding API keys is insecure. Best practice is to use environment variables and a backend proxy.
+const ACLED_API_KEY = 'Hr3EHefA5L0Pd5HTj8x-'; // WARNING: Hardcoding API keys is insecure.
+const ACLED_USER_EMAIL = 'mtcporto@gmail.com'; // User's email for API access
 
 function getAcledDateRange() {
   const endDate = new Date();
@@ -53,6 +54,8 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
     try {
       const baseUrl = 'https://api.acleddata.com/acled/read';
       const params = new URLSearchParams({
+        key: ACLED_API_KEY,
+        email: ACLED_USER_EMAIL,
         limit: '10',
         event_date: getAcledDateRange(),
         fields: 'event_id_cnty,event_date,event_type,location,notes,country,fatalities',
@@ -61,11 +64,8 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
       });
       const requestUrl = `${baseUrl}?${params.toString()}`;
 
-      const response = await fetch(requestUrl, {
-        headers: {
-          'Authorization': `Token ${ACLED_API_KEY}`
-        }
-      });
+      // Removed Authorization header, key and email are now in URL params
+      const response = await fetch(requestUrl);
       
       if (!response.ok) {
         const errorBody = await response.text();
