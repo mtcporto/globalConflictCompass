@@ -1,3 +1,4 @@
+
 export interface NewsItem {
   id: string;
   date: string;
@@ -33,14 +34,15 @@ export interface AcledEvent {
   location: string;
   notes: string;
   country: string;
-  fatalities: number; // Assuming fatalities is a number
+  fatalities?: number | string; // Made fatalities optional and can be number or string
 }
 
 export interface AcledApiResponse {
-  status: boolean;
-  count: number;
+  status?: boolean; // Optional as API might use 'success' or omit
+  count?: number;
   data: AcledEvent[];
   message?: string; // In case of error
+  success?: boolean; // ACLED API might use 'success' field
 }
 
 // ReliefWeb specific types

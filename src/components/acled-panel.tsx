@@ -3,28 +3,14 @@
 
 import type React from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import type { NewsItem, SourceStatus } from '@/lib/types';
+import type { NewsItem, SourceStatus, AcledEvent as AcledEventType, AcledApiResponse } from '@/lib/types'; // Renamed AcledEvent to AcledEventType to avoid conflict
 import { EventDisplay } from './event-display';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Types based on ACLED API documentation and user's example
-interface AcledEvent {
-  event_id_cnty: string; // Or any unique ID field
-  event_date: string;
-  event_type: string;
-  location: string;
-  notes: string;
-  country: string;
-  fatalities?: number;
-}
-
-interface AcledApiResponse {
-  // Assuming the structure from the user's example and typical API responses
-  data: AcledEvent[];
-  // Add other fields like count, status, etc., if present in the actual API response
-}
+// Moved to types.ts, but ensure AcledApiResponse and AcledEvent are imported correctly.
 
 interface AcledPanelProps {
   onStatusChange: (status: SourceStatus) => void;
@@ -60,11 +46,10 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
         event_date: getAcledDateRange(),
         fields: 'event_id_cnty,event_date,event_type,location,notes,country,fatalities',
         page: '1',
-        // terms: 'accept' // May be required by ACLED if terms have updated / for specific access
+        terms: 'accept' // Added terms:accept
       });
       const requestUrl = `${baseUrl}?${params.toString()}`;
 
-      // Removed Authorization header, key and email are now in URL params
       const response = await fetch(requestUrl);
       
       if (!response.ok) {
@@ -77,11 +62,11 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
 
       if (!apiResponse.data || apiResponse.data.length === 0) {
         setData([]);
-        onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado.' });
+        onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para os filtros atuais.' });
         return;
       }
       
-      const formattedData: NewsItem[] = apiResponse.data.map((event, index) => ({
+      const formattedData: NewsItem[] = apiResponse.data.map((event: AcledEventType, index: number) => ({
         id: event.event_id_cnty || `acled-${index}`,
         date: event.event_date,
         title: event.event_type,
