@@ -55,6 +55,27 @@ export default function ConflictDashboard() {
 
   }, [apiStatuses]);
 
+  // Memoized callbacks for each panel
+  const handleAcledStatusChange = useCallback((status: SourceStatus) => {
+    handleStatusChange('acled', status);
+  }, [handleStatusChange]);
+
+  const handleReliefWebStatusChange = useCallback((status: SourceStatus) => {
+    handleStatusChange('reliefweb', status);
+  }, [handleStatusChange]);
+
+  const handleBbcStatusChange = useCallback((status: SourceStatus) => {
+    handleStatusChange('bbc', status);
+  }, [handleStatusChange]);
+
+  const handleGpiStatusChange = useCallback((status: SourceStatus) => {
+    handleStatusChange('gpi', status);
+  }, [handleStatusChange]);
+
+  const handleAiSummaryStatusChange = useCallback((status: SourceStatus) => {
+    handleStatusChange('aiSummary', status);
+  }, [handleStatusChange]);
+
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8">
@@ -80,7 +101,7 @@ export default function ConflictDashboard() {
           className="lg:col-span-1"
         >
           <AcledPanel 
-            onStatusChange={(status) => handleStatusChange('acled', status)}
+            onStatusChange={handleAcledStatusChange}
             triggerFetch={fetchTriggers.acled}
           />
         </DataCard>
@@ -93,7 +114,7 @@ export default function ConflictDashboard() {
           className="lg:col-span-1"
         >
           <ReliefWebPanel 
-            onStatusChange={(status) => handleStatusChange('reliefweb', status)}
+            onStatusChange={handleReliefWebStatusChange}
             triggerFetch={fetchTriggers.reliefweb}
           />
         </DataCard>
@@ -106,7 +127,7 @@ export default function ConflictDashboard() {
           className="lg:col-span-1"
         >
           <BbcNewsPanel 
-            onStatusChange={(status) => handleStatusChange('bbc', status)}
+            onStatusChange={handleBbcStatusChange}
             triggerFetch={fetchTriggers.bbc}
           />
         </DataCard>
@@ -117,7 +138,7 @@ export default function ConflictDashboard() {
           // No refresh for GPI as it's static in this version
           className="md:col-span-1"
         >
-          <GpiPanel onStatusChange={(status) => handleStatusChange('gpi', status)} />
+          <GpiPanel onStatusChange={handleGpiStatusChange} />
         </DataCard>
 
         <DataCard 
@@ -126,7 +147,7 @@ export default function ConflictDashboard() {
           // AI summary has its own trigger button inside the panel
           className="md:col-span-2 lg:col-span-2"
         >
-          <AiSummaryPanel onStatusChange={(status) => handleStatusChange('aiSummary', status)} />
+          <AiSummaryPanel onStatusChange={handleAiSummaryStatusChange} />
         </DataCard>
       </div>
     </div>
