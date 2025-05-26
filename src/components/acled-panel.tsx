@@ -3,14 +3,11 @@
 
 import type React from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import type { NewsItem, SourceStatus, AcledEvent as AcledEventType, AcledApiResponse } from '@/lib/types'; // Renamed AcledEvent to AcledEventType to avoid conflict
+import type { NewsItem, SourceStatus, AcledEvent as AcledEventType, AcledApiResponse } from '@/lib/types';
 import { EventDisplay } from './event-display';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-// Types based on ACLED API documentation and user's example
-// Moved to types.ts, but ensure AcledApiResponse and AcledEvent are imported correctly.
 
 interface AcledPanelProps {
   onStatusChange: (status: SourceStatus) => void;
@@ -46,7 +43,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
         event_date: getAcledDateRange(),
         fields: 'event_id_cnty,event_date,event_type,location,notes,country,fatalities',
         page: '1',
-        terms: 'accept' // Added terms:accept
+        terms: 'accept'
       });
       const requestUrl = `${baseUrl}?${params.toString()}`;
 
@@ -54,13 +51,26 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
       
       if (!response.ok) {
         const errorBody = await response.text();
-        console.error('ACLED API Error:', response.status, errorBody);
+        console.error('ACLED API HTTP Error:', response.status, errorBody);
         throw new Error(`Falha ao buscar dados ACLED: ${response.status} ${response.statusText}. Detalhes: ${errorBody.substring(0,100)}`);
       }
 
       const apiResponse = await response.json() as AcledApiResponse;
 
-      if (!apiResponse.data || apiResponse.data.length === 0) {
+      // Explicitly check for API-level error indicated by 'success: false'
+      if (apiResponse.success === false) {
+        const errorMessage = apiResponse.message || 'ACLED API indicou falha sem uma mensagem específica.';
+        console.error('ACLED API Logic Error (success:false):', errorMessage, 'Resposta completa:', apiResponse);
+        throw new Error(errorMessage);
+      }
+
+      // Check if data exists and is an array
+      if (!apiResponse.data || !Array.isArray(apiResponse.data)) {
+        console.error('ACLED API Error: O campo "data" está ausente ou não é um array. Resposta:', apiResponse);
+        throw new Error('Formato de dados inesperado da API ACLED. O campo "data" não é um array.');
+      }
+      
+      if (apiResponse.data.length === 0) {
         setData([]);
         onStatusChange({ status: 'success', message: 'Nenhum dado ACLED encontrado para os filtros atuais.' });
         return;
@@ -82,7 +92,7 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar dados ACLED.';
       setError(errorMessage);
       onStatusChange({ status: 'error', message: errorMessage });
-      console.error("ACLED fetch error:", err);
+      console.error("ACLED fetch error details:", err);
     } finally {
       setIsLoading(false);
     }
