@@ -1,3 +1,4 @@
+
 "use client";
 
 import type React from 'react';
@@ -30,9 +31,7 @@ interface AcledPanelProps {
   triggerFetch?: number; // To allow parent to trigger refresh
 }
 
-const ACLED_API_KEY = 'Hr3EHefA5L0Pd5HTj8x-'; // WARNING: Hardcoding API keys is insecure for production. Use environment variables and backend proxy.
-const ACLED_API_URL = `https://api.acleddata.com/acled/read?limit=10&event_date=${getAcledDateRange()}&fields=event_id_cnty,event_date,event_type,location,notes,country,fatalities&key=${ACLED_API_KEY}&page=1`;
-
+const ACLED_API_KEY = 'Hr3EHefA5L0Pd5HTj8x-'; // WARNING: Hardcoding API keys is insecure. Best practice is to use environment variables and a backend proxy.
 
 function getAcledDateRange() {
   const endDate = new Date();
@@ -52,30 +51,19 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
     setError(null);
     onStatusChange({ status: 'loading' });
     try {
-      // The ACLED API seems to sometimes return 403 or other errors if not properly authenticated or rate-limited.
-      // The user provided key and structure indicates a direct fetch.
-      // For a robust solution, this should be via a backend.
-      // The URL in the user's example uses Authorization header, but their test endpoint needs a key in URL.
-      // Trying with key in URL based on common ACLED API patterns.
-      // If this fails, it means the specific endpoint or auth method from user's example is needed.
-      // The user's example JS fetch uses 'Authorization': 'Token ...'
-      // Let's stick to the user's fetch implementation style as much as possible.
-      const currentAcledUrl = `https://api.acleddata.com/acled/read?limit=10&event_date=${getAcledDateRange()}&fields=event_id_cnty,event_date,event_type,location,notes,country,fatalities`;
+      const baseUrl = 'https://api.acleddata.com/acled/read';
+      const params = new URLSearchParams({
+        limit: '10',
+        event_date: getAcledDateRange(),
+        fields: 'event_id_cnty,event_date,event_type,location,notes,country,fatalities',
+        page: '1',
+        // terms: 'accept' // May be required by ACLED if terms have updated / for specific access
+      });
+      const requestUrl = `${baseUrl}?${params.toString()}`;
 
-      const response = await fetch(currentAcledUrl, {
+      const response = await fetch(requestUrl, {
         headers: {
-          // ACLED new API might not use token in header for basic access, or might use a different key.
-          // The example provided key `Hr3EHefA5L0Pd5HTj8x-` might be for an older API or a specific plan.
-          // For now, assuming it's a direct key or that no key is needed for a very limited public request.
-          // If a key is needed as 'Token <key>', it would be:
-          // 'Authorization': `Token ${ACLED_API_KEY}` 
-          // Let's try without specific Auth header if the key is in URL or not needed for basic query.
-          // The user code used `Token ...` but the provided key doesn't look like a typical Bearer token.
-          // It's more likely a query parameter key as used in `ACLED_API_URL`.
-          // Let's try with the user's provided key but in the URL as per standard ACLED docs.
-          // If the user's key `Hr3EHefA5L0Pd5HTj8x-` is a "Token", it should be in the header.
-          // The user's fetch: `fetch('https://api.acleddata.com/acled/read?limit=5...', { headers: {'Authorization': 'Token Hr3EHefA5L0Pd5HTj8x-'} })`
-          // So, let's use that.
+          'Authorization': `Token ${ACLED_API_KEY}`
         }
       });
       
