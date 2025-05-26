@@ -111,7 +111,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
                   <MapPin className="mr-2 h-5 w-5" />
                   Mapa de Conflitos e Zonas Principais
                 </h4>
-                <MapDisplay zones={summary.principaisZonasDeConflito} />
+                <MapDisplay zones={summary.principaisZonasDeConflito || []} />
                 <div className="mt-3">
                   <p className="font-medium text-foreground/90 mb-1">Zonas de Conflito Identificadas:</p>
                   <ul className="list-disc list-inside ml-4 space-y-0.5 text-foreground/80">
