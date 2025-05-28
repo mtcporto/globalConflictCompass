@@ -1,10 +1,12 @@
 
 "use client";
 
-import React from 'react'; // Removed useState, useEffect
+import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
+
+// CSS is globally imported in layout.tsx
 
 // Robust icon patch to ensure it only runs once per page load, even with HMR
 // @ts-ignore
@@ -47,9 +49,9 @@ const createCustomIcon = (color: string) => {
 
   return L.divIcon({
     className: "custom-icon",
-    iconAnchor: [0, 24], // Adjusted for better positioning with the shape
+    iconAnchor: [0, 24],
     labelAnchor: [-6, 0],
-    popupAnchor: [0, -24], // Points to the tip of the marker
+    popupAnchor: [0, -24],
     html: `<span style="${markerHtmlStyles}" />`
   });
 };
@@ -60,8 +62,6 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
 ];
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
-  // Removed isClient state and useEffect
-
   const validConflicts = conflicts.filter(
     (conflict) =>
       conflict.latitude != null &&
@@ -70,15 +70,16 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
       typeof conflict.longitude === 'number'
   );
 
-  const mapCenter: L.LatLngExpression = [20, 0]; // Centered more globally
+  const mapCenter: L.LatLngExpression = [20, 0];
   const mapZoom = 2;
 
-  // The dynamic import's loading prop in WikipediaMacroPanel now handles the loading state.
-  // This component will only be rendered client-side.
+  // Key to help React re-initialize MapContainer if the conflict presence changes significantly
+  const mapKey = `map-container-${validConflicts.length > 0 ? 'with-data' : 'no-data'}`;
+
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        // Removed placeholder prop as the dynamic import's loading prop handles it.
+        key={mapKey} // Add a dynamic key to MapContainer
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
