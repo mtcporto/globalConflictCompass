@@ -10,7 +10,7 @@ import { AcledPanel } from './acled-panel';
 import { ReliefWebPanel } from './reliefweb-panel';
 import { BbcNewsPanel } from './bbc-news-panel';
 import { AiSummaryPanel } from './ai-summary-panel';
-import { WikipediaMacroPanel } from './wikipedia-macro-panel'; // Import new panel
+import { WikipediaMacroPanel } from './wikipedia-macro-panel';
 import { BarChartBig, Globe, HelpingHand, Newspaper, Sparkles, AlertTriangle, CheckCircle2, Loader2, BookOpen } from 'lucide-react';
 
 const initialApiStatuses: AllApiStatuses = {
@@ -18,7 +18,7 @@ const initialApiStatuses: AllApiStatuses = {
   reliefweb: { status: 'loading' },
   bbc: { status: 'loading' },
   aiSummary: { status: 'idle' },
-  wikipediaConflicts: { status: 'loading' }, // Add status for Wikipedia panel
+  wikipediaConflicts: { status: 'loading' },
 };
 
 export default function ConflictDashboard() {
@@ -80,11 +80,6 @@ export default function ConflictDashboard() {
         </h1>
         <p className="text-muted-foreground mt-2">Monitor de Conflitos Armados Globais</p>
       </header>
-
-      <div className={`status-bar p-3 mb-8 rounded-md text-sm flex items-center justify-center gap-2 ${overallStatus.color} border border-current/30 shadow-sm`}>
-        {overallStatus.icon}
-        <span>{overallStatus.text}</span>
-      </div>
       
       {/* Wikipedia Macro Panel - Main View */}
       <div className="mb-8">
@@ -92,13 +87,12 @@ export default function ConflictDashboard() {
             title="Visão Macro dos Conflitos (Wikipedia)"
             icon={BookOpen}
             isLoading={apiStatuses.wikipediaConflicts.status === 'loading'}
-            className="lg:col-span-3" // Span full width
+            className="lg:col-span-3" 
             onRefresh={() => handleRefresh('wikipediaConflicts')}
-            disableMaxHeight={true} // Allow this card to expand
+            disableMaxHeight={true}
           >
             <WikipediaMacroPanel 
               onStatusChange={handleWikipediaConflictsStatusChange}
-              // triggerFetch is not implemented in WikipediaMacroPanel, it fetches on mount
             />
           </DataCard>
       </div>
@@ -144,10 +138,16 @@ export default function ConflictDashboard() {
           />
         </DataCard>
         
+        {/* Status bar moved here */}
+        <div className={`status-bar p-3 rounded-md text-sm flex items-center justify-center gap-2 ${overallStatus.color} border border-current/30 shadow-sm md:col-span-3 lg:col-span-3`}>
+          {overallStatus.icon}
+          <span>{overallStatus.text}</span>
+        </div>
+
         <DataCard 
           title="Resumo por IA (BBC/ReliefWeb)" 
           icon={Sparkles}
-          className="md:col-span-3 lg:col-span-3"
+          className="md:col-span-3 lg:col-span-3" // AI Summary card spans full width
         >
           <AiSummaryPanel onStatusChange={handleAiSummaryStatusChange} />
         </DataCard>
