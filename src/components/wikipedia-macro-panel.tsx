@@ -48,27 +48,27 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     } else {
       setIsLoading(true);
     }
-    setError(null); 
+    setError(null);
     onStatusChange({ status: 'loading' });
     try {
       const result = await getWikipediaConflictsAction({ forceRefresh });
-      
-      if (result.error && !result.data) { 
-        setError(result.error); 
+
+      if (result.error && !result.data) {
+        setError(result.error);
         onStatusChange({ status: 'error', message: result.error });
-      } else if (result.error && result.data) { 
-        setConflictsData(result.data); 
+      } else if (result.error && result.data) {
+        setConflictsData(result.data);
         setError(result.error); // Show error but still display cached data if available
         onStatusChange({ status: 'success', message: `Exibindo dados de cache. ${result.error}` });
-      } else if (!result.data || result.data.conflicts.length === 0 && !result.error){ 
-        setConflictsData(result.data || null); 
+      } else if (!result.data || result.data.conflicts.length === 0 && !result.error) {
+        setConflictsData(result.data || null);
         onStatusChange({ status: 'success', message: 'Nenhum conflito ativo encontrado nas principais categorias da Wikipedia.' });
-      } else { 
-         setConflictsData(result.data || null);
-         onStatusChange({ status: 'success' });
+      } else {
+        setConflictsData(result.data || null);
+        onStatusChange({ status: 'success' });
       }
-      
-    } catch (errCaught) { 
+
+    } catch (errCaught) {
       const errorMessage = errCaught instanceof Error ? errCaught.message : 'Erro desconhecido ao buscar dados da Wikipedia.';
       setError(errorMessage);
       onStatusChange({ status: 'error', message: errorMessage });
@@ -81,42 +81,42 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); 
+  }, [fetchData]);
 
 
   if (isLoading && !isRefreshing && !conflictsData && !error) {
     return <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />;
   }
-  
+
   // Display error if it exists and there's no data to show (or if not refreshing)
-  if (error && (!conflictsData || conflictsData.conflicts.length === 0) && !isRefreshing) { 
+  if (error && (!conflictsData || conflictsData.conflicts.length === 0) && !isRefreshing) {
     return (
-       <div className="p-4 text-center">
+      <div className="p-4 text-center">
         <ErrorDisplay message={error} />
-        <Button 
-            onClick={() => fetchData(true)} 
-            disabled={isRefreshing || isLoading}
-            variant="outline"
-            className="mt-4"
+        <Button
+          onClick={() => fetchData(true)}
+          disabled={isRefreshing || isLoading}
+          variant="outline"
+          className="mt-4"
         >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Tentando Atualizar...' : 'Tentar Atualizar Dados'}
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Tentando Atualizar...' : 'Tentar Atualizar Dados'}
         </Button>
       </div>
     );
   }
-  
+
   if (!isLoading && !isRefreshing && (!conflictsData || conflictsData.conflicts.length === 0) && !error) {
     return (
       <div className="p-4 text-center">
-         <p className="text-sm text-muted-foreground mb-4">Nenhum conflito ativo encontrado nas principais categorias da Wikipedia ou falha ao processar dados.</p>
-        <Button 
-            onClick={() => fetchData(true)} 
-            disabled={isRefreshing || isLoading}
-            variant="outline"
+        <p className="text-sm text-muted-foreground mb-4">Nenhum conflito ativo encontrado nas principais categorias da Wikipedia ou falha ao processar dados.</p>
+        <Button
+          onClick={() => fetchData(true)}
+          disabled={isRefreshing || isLoading}
+          variant="outline"
         >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Tentando Atualizar...' : 'Tentar Atualizar Dados'}
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Tentando Atualizar...' : 'Tentar Atualizar Dados'}
         </Button>
       </div>
     );
@@ -148,38 +148,46 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
               Última atualização do cache (processamento): {conflictsData.lastUpdated ? new Date(conflictsData.lastUpdated).toLocaleString('pt-BR') : 'N/A'}.
             </p>
             <p className="mt-1 text-xs">
-                Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia. O cache é atualizado a cada 24 horas ou manualmente.
+              Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia. O cache é atualizado a cada 24 horas ou manualmente.
             </p>
           </div>
         )}
-        <Button 
-            onClick={() => fetchData(true)} 
-            disabled={isRefreshing || isLoading}
-            variant="outline"
-            className="ml-auto md:ml-4 shrink-0"
+        <Button
+          onClick={() => fetchData(true)}
+          disabled={isRefreshing || isLoading}
+          variant="outline"
+          className="ml-auto md:ml-4 shrink-0"
         >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing || isLoading ? 'animate-spin' : ''}`} />
-            {isRefreshing || isLoading ? 'Atualizando...' : 'Atualizar Dados'}
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing || isLoading ? 'animate-spin' : ''}`} />
+          {isRefreshing || isLoading ? 'Atualizando...' : 'Atualizar Dados'}
         </Button>
       </div>
-      
+
       {/* Display error prominently if it occurred, even if showing cached data */}
-      {error && conflictsData && conflictsData.conflicts.length > 0 && ( 
+      {error && conflictsData && conflictsData.conflicts.length > 0 && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-700">
-            <p><strong>Aviso ao atualizar dados:</strong> {error}</p>
+          <p><strong>Aviso ao atualizar dados:</strong> {error}</p>
         </div>
       )}
-      
+
       {isRefreshing && <LoadingSpinner text="Atualizando dados da Wikipedia..." />}
 
       {/* Only render accordion and map if not loading initially AND ( (there is data) OR (there's no error implying we should show cached data despite an update error) ) */}
       {(!isLoading || isRefreshing) && conflictsData && conflictsData.conflicts && conflictsData.conflicts.length > 0 && (
         <>
-          <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full mb-6">
+          <div className="mb-6"> {/* Added mb-6 for spacing */}
+            <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
+            <MapDisplay
+              key={conflictsData?.lastUpdated || 'map-initial-loading-state'} // Key to help React remount/update map
+              conflicts={conflictsData?.conflicts || []}
+            />
+          </div>
+
+          <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full"> {/* Removed mb-6 from here */}
             {severityOrder.map((severityKey) => {
               const conflicts = groupedConflicts[severityKey];
               if (!conflicts || conflicts.length === 0) return null;
-              
+
               const severityInfo = severityMap[severityKey];
               const IconComponent = severityInfo.icon;
 
@@ -200,11 +208,11 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
                             {conflict.startDate && (
                               <p className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Início: {conflict.startDate}</p>
                             )}
-                            <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalidadesRaw}</p>
+                            <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalitiesRaw}</p>
                             {conflict.territory && (
                               <p className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Território Específico: {conflict.territory}</p>
                             )}
-                            { (conflict.latitude && conflict.longitude) && (
+                            {(conflict.latitude && conflict.longitude) && (
                               <p className="flex items-center gap-1">
                                 <MapPin className="w-3 h-3" /> Coordenadas (Aprox.): {conflict.latitude.toFixed(2)}, {conflict.longitude.toFixed(2)}
                               </p>
@@ -234,16 +242,8 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
               );
             })}
           </Accordion>
-          
-          <div className="mt-6">
-            <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
-            <MapDisplay
-              conflicts={conflictsData?.conflicts || []}
-            />
-          </div>
         </>
       )}
     </div>
   );
 }
-
