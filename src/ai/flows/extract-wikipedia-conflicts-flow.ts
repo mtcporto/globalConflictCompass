@@ -27,12 +27,12 @@ const WikipediaConflictSchema = z.object({
   name: z.string().describe("The common name of the conflict."),
   severity: z.enum(['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN']).describe("Severity based on fatality categories: HIGH (10,000+), MEDIUM (1,000-9,999), LOW (100-999), UNKNOWN if not categorizable."),
   fatalitiesRaw: z.string().describe("The raw fatality figure or range as stated on Wikipedia (e.g., '10,000+', '1,000–9,999 casualties')."),
-  locations: z.array(z.string()).describe("List of primary countries or major regions involved in the conflict."),
+  locations: z.array(z.string()).describe("List of primary countries or major regions involved in the conflict. Prioritize state actors or well-defined geographical regions if combatants list is too granular or includes many non-state actors."),
   startDate: z.string().optional().describe("The start date of the conflict, if available (e.g., '23 February 2022')."),
-  territory: z.string().optional().describe("Specific territory or sub-region where the conflict is primarily occurring, if distinct from general locations."),
+  territory: z.string().optional().describe("Specific territory or sub-region where the conflict is primarily occurring (e.g., 'Nagorno-Karabakh', 'Tigray Region', 'Gaza Strip'), if distinct from general locations. This is for a more precise geographical focus within the broader conflict."),
   detailsLink: z.string().optional().describe("A direct link to a more detailed Wikipedia page or section for this specific conflict, if identifiable from the list item."),
-  latitude: z.number().nullable().optional().describe("Approximate latitude of the conflict's primary location. Return null if not reasonably determinable or too vague."),
-  longitude: z.number().nullable().optional().describe("Approximate longitude of the conflict's primary location. Return null if not reasonably determinable or too vague."),
+  latitude: z.number().nullable().optional().describe("Approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
+  longitude: z.number().nullable().optional().describe("Approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
 });
 
 const ExtractWikipediaConflictsOutputSchema = z.object({
@@ -72,12 +72,12 @@ const extractConflictsPrompt = ai.definePrompt({
         *   "1,000–9,999 deaths...": Assign 'MEDIUM'.
         *   "100–999 deaths...": Assign 'LOW'.
         *   If a conflict cannot be clearly categorized, use 'UNKNOWN'.
-    5.  **locations**: A list of primary countries and/or major groups involved. Extract this from the 'Location' or 'Combatants' columns. Try to list main state actors or clearly defined regions.
+    5.  **locations**: A list of primary countries and/or major regions involved. Extract this from the 'Location' or 'Combatants' columns. Prioritize state actors or well-defined geographical regions if the combatants list is too granular or includes many non-state actors (e.g., for "Russo-Ukrainian War", locations should be ["Ukraine", "Russia"]).
     6.  **startDate**: The start date of the conflict as listed.
-    7.  **territory**: If a specific sub-region or territory is highlighted as the main locus of conflict (e.g., "Nagorno-Karabakh" within a broader conflict), note it here. Otherwise, this can be omitted.
+    7.  **territory**: If a specific sub-region or territory is highlighted as the main locus of conflict (e.g., "Nagorno-Karabakh", "Tigray Region", "Gaza Strip") within a broader conflict involving larger countries, note it here. This field is for a more precise geographical focus *within* the general 'locations'. If not applicable or not distinct, it can be omitted.
     8.  **detailsLink**: If the conflict name in the list is a hyperlink to a more detailed page about that specific conflict, provide that URL.
-    9.  **latitude**: Provide an approximate latitude for the primary location of the conflict. If it's a country, use the approximate center. If it's a region, use its approximate center. If highly ambiguous or not determinable, set to null.
-    10. **longitude**: Provide an approximate longitude for the primary location of the conflict. If it's a country, use the approximate center. If it's a region, use its approximate center. If highly ambiguous or not determinable, set to null.
+    9.  **latitude**: Provide an approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
+    10. **longitude**: Provide an approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
 
     Ensure that prominent, long-running conflicts that are widely known to be ongoing (e.g., Russo-Ukrainian War, Syrian Civil War, Israeli-Palestinian conflict) are included in your extraction if they appear in the specified fatality tables on the Wikipedia page you are simulating access to.
 
@@ -129,4 +129,3 @@ const extractWikipediaConflictsFlow = ai.defineFlow(
     };
   }
 );
-

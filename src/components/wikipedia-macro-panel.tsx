@@ -165,7 +165,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
             />
           </div>
 
-          <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full">
+          <Accordion type="multiple" className="w-full"> {/* Removed defaultValue to start collapsed */}
             {severityOrder.map((severityKey) => {
               const conflicts = groupedConflicts[severityKey];
               if (!conflicts || conflicts.length === 0) return null;
@@ -224,27 +224,23 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
               );
             })}
           </Accordion>
-          
-          {conflictsData?.sourcePage && (
-            <div className="mt-8 p-3 bg-muted/50 border border-border rounded-lg text-xs text-muted-foreground text-center italic">
-              <p>
-                Dados extraídos da página{" "}
-                <a href={conflictsData.sourcePage} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline text-accent">
-                  "List of ongoing armed conflicts"
-                </a>{" "}
-                da Wikipedia (em inglês).
-                Última atualização do cache (processamento): {conflictsData.lastUpdated ? new Date(conflictsData.lastUpdated).toLocaleString('pt-BR') : 'N/A'}.
-              </p>
-              <p className="mt-1">
-                Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia. O cache é atualizado a cada 24 horas ou manualmente.
-              </p>
-            </div>
-          )}
         </>
       )}
+      {conflictsData?.sourcePage && (
+          <div className="mt-8 p-3 bg-muted/50 border border-border rounded-lg text-xs text-muted-foreground text-center italic">
+            <p>
+              Dados extraídos da página{" "}
+              <a href={conflictsData.sourcePage} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline text-accent">
+                "List of ongoing armed conflicts"
+              </a>{" "}
+              da Wikipedia (em inglês).
+              Última atualização do cache (processamento): {conflictsData.lastUpdated ? new Date(conflictsData.lastUpdated).toLocaleString('pt-BR') : 'N/A'}.
+            </p>
+            <p className="mt-1">
+              Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia. O cache é atualizado a cada 24 horas ou manualmente.
+            </p>
+          </div>
+        )}
     </div>
   );
 }
-
-
-    
