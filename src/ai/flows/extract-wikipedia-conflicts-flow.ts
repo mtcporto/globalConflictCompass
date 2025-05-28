@@ -11,7 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { WikipediaConflict, WikipediaConflictsData, WikipediaConflictSeverity } from '@/lib/types';
+import type { WikipediaConflictsData } from '@/lib/types'; // WikipediaConflictSeverity will be inferred by Zod
 
 const WIKIPEDIA_CONFLICTS_PAGE_URL = "https://en.wikipedia.org/wiki/List_of_ongoing_armed_conflicts";
 
@@ -31,6 +31,8 @@ const WikipediaConflictSchema = z.object({
   startDate: z.string().optional().describe("The start date of the conflict, if available (e.g., '23 February 2022')."),
   territory: z.string().optional().describe("Specific territory or sub-region where the conflict is primarily occurring, if distinct from general locations."),
   detailsLink: z.string().optional().describe("A direct link to a more detailed Wikipedia page or section for this specific conflict, if identifiable from the list item."),
+  latitude: z.number().nullable().optional().describe("Approximate latitude of the conflict's primary location. Return null if not reasonably determinable or too vague."),
+  longitude: z.number().nullable().optional().describe("Approximate longitude of the conflict's primary location. Return null if not reasonably determinable or too vague."),
 });
 
 const ExtractWikipediaConflictsOutputSchema = z.object({
@@ -42,7 +44,8 @@ export type ExtractWikipediaConflictsOutput = z.infer<typeof ExtractWikipediaCon
 
 
 // The main exported function that calls the Genkit flow
-export async function extractWikipediaConflicts(input?: ExtractWikipediaConflictsInput): Promise<ExtractWikipediaConflictsOutput> {
+export async function extractWikipediaConflicts(input?: ExtractWikipediaConflictsInput): Promise<WikipediaConflictsData> {
+  // The output of the flow already matches WikipediaConflictsData due to schema alignment
   return extractWikipediaConflictsFlow(input || {});
 }
 
@@ -73,10 +76,12 @@ const extractConflictsPrompt = ai.definePrompt({
     6.  **startDate**: The start date of the conflict as listed.
     7.  **territory**: If a specific sub-region or territory is highlighted as the main locus of conflict (e.g., "Nagorno-Karabakh" within a broader conflict), note it here. Otherwise, this can be omitted.
     8.  **detailsLink**: If the conflict name in the list is a hyperlink to a more detailed page about that specific conflict, provide that URL.
+    9.  **latitude**: Provide an approximate latitude for the primary location of the conflict. If it's a country, use the approximate center. If it's a region, use its approximate center. If highly ambiguous or not determinable, set to null.
+    10. **longitude**: Provide an approximate longitude for the primary location of the conflict. If it's a country, use the approximate center. If it's a region, use its approximate center. If highly ambiguous or not determinable, set to null.
 
     Ensure that prominent, long-running conflicts that are widely known to be ongoing (e.g., Russo-Ukrainian War, Syrian Civil War, Israeli-Palestinian conflict) are included in your extraction if they appear in the specified fatality tables on the Wikipedia page you are simulating access to.
 
-    Adhere strictly to the output JSON schema. Ensure all fields are correctly populated according to their descriptions.
+    Adhere strictly to the output JSON schema. Ensure all fields are correctly populated according to their descriptions. Latitude and longitude must be numbers or null.
     The 'conflicts' array should only contain entries from the specified fatality tables.
     Set 'sourcePage' to "${WIKIPEDIA_CONFLICTS_PAGE_URL}".
     Set 'lastUpdated' to the current ISO datetime string when you are processing this (this instruction is for your internal processing; the final flow will ensure this field is accurate).

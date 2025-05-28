@@ -7,7 +7,6 @@ import type { WikipediaConflictsData, WikipediaConflict, WikipediaConflictSeveri
 import { getWikipediaConflictsAction } from '@/app/actions';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
-// ScrollArea removed as content should flow freely
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, MapPin, CalendarDays, AlertOctagon } from 'lucide-react';
 import {
@@ -16,6 +15,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import dynamic from 'next/dynamic';
+
+// Dynamically import MapDisplay to avoid SSR issues with Leaflet
+const MapDisplay = dynamic(() => import('./map-display'), {
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full bg-muted/30 rounded-lg flex items-center justify-center"><p className="text-muted-foreground">Carregando mapa...</p></div>,
+});
+
 
 interface WikipediaMacroPanelProps {
   onStatusChange: (status: SourceStatus) => void;
@@ -80,7 +87,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
   const severityOrder: WikipediaConflictSeverity[] = ['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
 
   return (
-    <div className="flex flex-col"> {/* Removed h-full */}
+    <div className="flex flex-col">
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
         <p>
           Dados extraídos da página{" "}
@@ -91,11 +98,11 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
           Última atualização (processamento): {new Date(conflictsData.lastUpdated).toLocaleString('pt-BR')}.
         </p>
         <p className="mt-1 text-xs">
-            Nota: A extração é feita por IA e pode conter imprecisões. A gravidade é baseada nas categorias de fatalidades da Wikipedia.
+            Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia.
         </p>
       </div>
-      {/* ScrollArea removed */}
-      <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full">
+      
+      <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full mb-6">
         {severityOrder.map((severityKey) => {
           const conflicts = groupedConflicts[severityKey];
           if (!conflicts || conflicts.length === 0) return null;
@@ -120,10 +127,15 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
                         {conflict.startDate && (
                           <p className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Início: {conflict.startDate}</p>
                         )}
-                        <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalitiesRaw}</p>
+                        <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalidadesRaw}</p>
                         {conflict.territory && (
                           <p className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Território Específico: {conflict.territory}</p>
                         )}
+                         { (conflict.latitude && conflict.longitude) && (
+                           <p className="flex items-center gap-1">
+                             <MapPin className="w-3 h-3" /> Coordenadas (Aprox.): {conflict.latitude.toFixed(2)}, {conflict.longitude.toFixed(2)}
+                           </p>
+                         )}
                       </div>
                       {conflict.locations && conflict.locations.length > 0 && (
                          <div className="mb-1.5">
@@ -149,13 +161,12 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
           );
         })}
       </Accordion>
-       {/* Placeholder for future map */}
-       <div className="mt-6 p-4 bg-muted/50 rounded-lg text-center">
-            <h3 className="text-lg font-semibold mb-2">Mapa Global de Conflitos</h3>
-            <p className="text-sm text-muted-foreground">Visualização em mapa (Leaflet) será implementada aqui.</p>
-            <div data-ai-hint="world map conflict" className="my-4 h-48 w-full bg-gray-300 rounded flex items-center justify-center text-gray-500">
-                [Espaço reservado para o mapa]
-            </div>
+      
+       <div className="mt-6">
+            <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
+             {conflictsData && conflictsData.conflicts && (
+                <MapDisplay conflicts={conflictsData.conflicts} />
+             )}
         </div>
     </div>
   );
