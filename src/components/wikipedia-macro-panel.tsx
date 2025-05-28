@@ -165,7 +165,10 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
        <div className="mt-6">
             <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
              {conflictsData && conflictsData.conflicts && (
-                <MapDisplay conflicts={conflictsData.conflicts} />
+                <MapDisplay 
+                  key={conflictsData.lastUpdated} 
+                  conflicts={conflictsData.conflicts} 
+                />
              )}
         </div>
     </div>
