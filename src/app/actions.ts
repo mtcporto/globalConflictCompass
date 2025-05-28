@@ -39,7 +39,11 @@ export async function getWikipediaConflictsAction(): Promise<{ data?: WikipediaC
  {
     let detailedErrorMessage = 'Falha ao extrair dados de conflitos da Wikipedia.';
     if (error instanceof Error) {
-      detailedErrorMessage = `Falha ao extrair dados de conflitos da Wikipedia: ${error.message}`;
+      if (error.message.includes('503') || error.message.toLowerCase().includes('model is overloaded')) {
+        detailedErrorMessage = 'O serviço de IA para extração de dados da Wikipedia está temporariamente sobrecarregado. Por favor, tente novamente mais tarde.';
+      } else {
+        detailedErrorMessage = `Falha ao extrair dados de conflitos da Wikipedia: ${error.message}`;
+      }
       console.error('Error calling Wikipedia conflicts flow. Message:', error.message, 'Stack:', error.stack);
     } else {
       console.error('Error calling Wikipedia conflicts flow (non-Error object):', error);
@@ -50,7 +54,7 @@ export async function getWikipediaConflictsAction(): Promise<{ data?: WikipediaC
 
 
 // Helper function to fetch minimal data for AI summary from BBC
-export async function fetchBbcNewsForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> { // Increased limit to 5
+export async function fetchBbcNewsForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> {
   const BBC_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http://feeds.bbci.co.uk/news/world/rss.xml';
   const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'attack', 'rebel', 'insurgent'];
   try {
@@ -71,7 +75,7 @@ export async function fetchBbcNewsForAISummary(limit: number = 5): Promise<BbcNe
 }
 
 // Helper function to fetch minimal data for AI summary from ReliefWeb
-export async function fetchReliefWebForAISummary(limit: number = 5): Promise<ReliefWebReport[]> { // Increased limit to 5
+export async function fetchReliefWebForAISummary(limit: number = 5): Promise<ReliefWebReport[]> {
   const RELIEFWEB_API_URL = `https://api.reliefweb.int/v1/reports?appname=globalconflictcompass&query[value]=conflict&limit=${limit}&preset=latest&fields[include][]=title&fields[include][]=date.created&fields[include][]=url&fields[include][]=body-html&profile=list`;
   try {
     const response = await fetch(RELIEFWEB_API_URL);
@@ -83,4 +87,3 @@ export async function fetchReliefWebForAISummary(limit: number = 5): Promise<Rel
     return [];
   }
 }
-
