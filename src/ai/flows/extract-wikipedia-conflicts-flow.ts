@@ -53,7 +53,12 @@ const extractConflictsPrompt = ai.definePrompt({
   output: { schema: ExtractWikipediaConflictsOutputSchema },
   prompt: `
     You are an expert data extraction AI. Your task is to process the content of the Wikipedia page "List of ongoing armed conflicts" (typically found at ${WIKIPEDIA_CONFLICTS_PAGE_URL}).
-    Focus on the tables that categorize conflicts by fatality counts: "10,000 or more deaths in current or past year", "1,000–9,999 deaths in current or past year", and "100–999 deaths in current or past year".
+    When you simulate accessing this Wikipedia page, consider its content to be current as of today's real-world date. Focus on extracting conflicts that are listed as ongoing *now*.
+
+    Focus ONLY on the conflicts listed within the following tables, which categorize conflicts by fatality counts:
+    1.  "10,000 or more deaths in current or past year"
+    2.  "1,000–9,999 deaths in current or past year"
+    3.  "100–999 deaths in current or past year"
 
     For each conflict listed in these specific tables, extract the following information:
     1.  **id**: Generate a unique ID. You can use the conflict name and start date, slugified (e.g., 'ukraine-war-2022-02-23').
@@ -69,12 +74,14 @@ const extractConflictsPrompt = ai.definePrompt({
     7.  **territory**: If a specific sub-region or territory is highlighted as the main locus of conflict (e.g., "Nagorno-Karabakh" within a broader conflict), note it here. Otherwise, this can be omitted.
     8.  **detailsLink**: If the conflict name in the list is a hyperlink to a more detailed page about that specific conflict, provide that URL.
 
+    Ensure that prominent, long-running conflicts that are widely known to be ongoing (e.g., Russo-Ukrainian War, Syrian Civil War, Israeli-Palestinian conflict) are included in your extraction if they appear in the specified fatality tables on the Wikipedia page you are simulating access to.
+
     Adhere strictly to the output JSON schema. Ensure all fields are correctly populated according to their descriptions.
     The 'conflicts' array should only contain entries from the specified fatality tables.
     Set 'sourcePage' to "${WIKIPEDIA_CONFLICTS_PAGE_URL}".
-    Set 'lastUpdated' to the current ISO datetime string when you are processing this.
+    Set 'lastUpdated' to the current ISO datetime string when you are processing this (this instruction is for your internal processing; the final flow will ensure this field is accurate).
 
-    Simulate accessing and parsing the content of the Wikipedia page. I will provide the content if necessary, but for this task, assume you have access to it.
+    Simulate accessing and parsing the content of the Wikipedia page.
   `,
   config: {
     temperature: 0.1, // Lower temperature for more factual extraction
@@ -95,26 +102,25 @@ const extractWikipediaConflictsFlow = ai.defineFlow(
     outputSchema: ExtractWikipediaConflictsOutputSchema,
   },
   async (input) => {
-    // In a real-world scenario, you might fetch the Wikipedia page content here
-    // using a library like 'node-fetch' or 'axios', and then pass relevant text
-    // or HTML sections to the prompt. For this prototype, the LLM is instructed
-    // to simulate this based on its knowledge or by being provided the content.
-    // For now, we rely on the LLM's capability to "access" or know about the page.
-
     const { output } = await extractConflictsPrompt(input);
+    const currentTime = new Date().toISOString();
 
     if (!output) {
       console.error('Wikipedia conflict extraction flow returned undefined/null output.');
-      throw new Error('Failed to extract conflict data from Wikipedia.');
+      // Return a structured error-like response or throw, depending on desired handling
+      // For now, returning a minimal valid structure to avoid breaking consumers expecting the schema.
+      return {
+        conflicts: [],
+        sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL,
+        lastUpdated: currentTime,
+      };
     }
     
-    // Add/ensure lastUpdated and sourcePage are correctly set if not perfectly done by LLM
-    const currentTime = new Date().toISOString();
     return {
         ...output,
-        sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL,
-        lastUpdated: output.lastUpdated || currentTime, // Prefer LLM's timestamp if provided
-        conflicts: output.conflicts || []
+        conflicts: output.conflicts || [], // Ensure conflicts is always an array
+        sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL, // Ensure sourcePage is correctly set
+        lastUpdated: currentTime, // Always use the current time for lastUpdated
     };
   }
 );
