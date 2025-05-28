@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react'; // Removed useState, useEffect
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
@@ -47,9 +47,9 @@ const createCustomIcon = (color: string) => {
 
   return L.divIcon({
     className: "custom-icon",
-    iconAnchor: [0, 24],
+    iconAnchor: [0, 24], // Adjusted for better positioning with the shape
     labelAnchor: [-6, 0],
-    popupAnchor: [0, -24],
+    popupAnchor: [0, -24], // Points to the tip of the marker
     html: `<span style="${markerHtmlStyles}" />`
   });
 };
@@ -60,11 +60,7 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
 ];
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // Removed isClient state and useEffect
 
   const validConflicts = conflicts.filter(
     (conflict) =>
@@ -74,24 +70,15 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
       typeof conflict.longitude === 'number'
   );
 
-  const mapCenter: L.LatLngExpression = [20, 0];
+  const mapCenter: L.LatLngExpression = [20, 0]; // Centered more globally
   const mapZoom = 2;
 
-  if (!isClient) {
-    return (
-      <div
-        className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative flex items-center justify-center bg-muted/30"
-        data-ai-hint="map loading placeholder"
-      >
-        <p className="text-muted-foreground">Carregando mapa...</p>
-      </div>
-    );
-  }
-
+  // The dynamic import's loading prop in WikipediaMacroPanel now handles the loading state.
+  // This component will only be rendered client-side.
   return (
-    <div key="map-wrapper-client" className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
+    <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        // Removed placeholder prop as the !isClient block handles loading.
+        // Removed placeholder prop as the dynamic import's loading prop handles it.
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
