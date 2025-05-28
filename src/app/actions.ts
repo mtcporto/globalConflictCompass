@@ -35,7 +35,8 @@ export async function getWikipediaConflictsAction(): Promise<{ data?: WikipediaC
     const result: ExtractWikipediaConflictsOutput = await extractWikipediaConflicts({});
     // The Genkit flow output (ExtractWikipediaConflictsOutput) matches WikipediaConflictsData structure
     return { data: result as WikipediaConflictsData };
-  } catch (error) {
+  } catch (error)
+ {
     let detailedErrorMessage = 'Falha ao extrair dados de conflitos da Wikipedia.';
     if (error instanceof Error) {
       detailedErrorMessage = `Falha ao extrair dados de conflitos da Wikipedia: ${error.message}`;
@@ -49,7 +50,7 @@ export async function getWikipediaConflictsAction(): Promise<{ data?: WikipediaC
 
 
 // Helper function to fetch minimal data for AI summary from BBC
-export async function fetchBbcNewsForAISummary(limit: number = 3): Promise<BbcNewsItemRss[]> {
+export async function fetchBbcNewsForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> { // Increased limit to 5
   const BBC_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http://feeds.bbci.co.uk/news/world/rss.xml';
   const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'attack', 'rebel', 'insurgent'];
   try {
@@ -70,7 +71,7 @@ export async function fetchBbcNewsForAISummary(limit: number = 3): Promise<BbcNe
 }
 
 // Helper function to fetch minimal data for AI summary from ReliefWeb
-export async function fetchReliefWebForAISummary(limit: number = 3): Promise<ReliefWebReport[]> {
+export async function fetchReliefWebForAISummary(limit: number = 5): Promise<ReliefWebReport[]> { // Increased limit to 5
   const RELIEFWEB_API_URL = `https://api.reliefweb.int/v1/reports?appname=globalconflictcompass&query[value]=conflict&limit=${limit}&preset=latest&fields[include][]=title&fields[include][]=date.created&fields[include][]=url&fields[include][]=body-html&profile=list`;
   try {
     const response = await fetch(RELIEFWEB_API_URL);

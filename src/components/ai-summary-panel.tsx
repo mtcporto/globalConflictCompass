@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Wand2 } from 'lucide-react';
+import { Wand2, Info } from 'lucide-react';
 
 interface AiSummaryPanelProps {
   onStatusChange: (status: SourceStatus) => void;
@@ -28,8 +28,8 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
     onStatusChange({ status: 'loading' });
 
     try {
-      const bbcItemsPromise = fetchBbcNewsForAISummary(3);
-      const reliefWebItemsPromise = fetchReliefWebForAISummary(3);
+      const bbcItemsPromise = fetchBbcNewsForAISummary(5); // Fetch 5 items
+      const reliefWebItemsPromise = fetchReliefWebForAISummary(5); // Fetch 5 items
 
       const [bbcData, reliefWebData] = await Promise.all([bbcItemsPromise, reliefWebItemsPromise]);
 
@@ -79,8 +79,6 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
   }, [onStatusChange]);
   
   useEffect(() => {
-    // This effect sets the initial status or clears it if no action is pending.
-    // It should not depend on `generateSummary` to avoid re-triggering.
     if (!isLoading && !summary && !error) {
       onStatusChange({ status: 'idle' });
     }
@@ -94,6 +92,14 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
         {isLoading ? 'Analisando Notícias e Gerando Resumo...' : 'Gerar Resumo de Notícias com IA'}
       </Button>
       
+      <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-start gap-2">
+        <Info className="w-4 h-4 mt-0.5 shrink-0" />
+        <span>
+          Este resumo é gerado por IA com base nas notícias mais recentes da BBC e ReliefWeb (até 5 de cada). 
+          Pode não refletir todos os conflitos ativos listados em outras seções, como a da Wikipedia.
+        </span>
+      </div>
+
       {isLoading && <LoadingSpinner text="Analisando notícias e gerando resumo..." />}
       {error && <ErrorDisplay message={error} />}
       
@@ -150,4 +156,3 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
     </div>
   );
 }
-
