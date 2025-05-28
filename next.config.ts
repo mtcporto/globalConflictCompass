@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -17,6 +18,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+        port: '',
+        pathname: '/**',
+      },
       // Add other image hostnames if needed, e.g., from news sources
       // {
       //   protocol: 'https',
@@ -27,3 +34,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+    

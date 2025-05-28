@@ -31,6 +31,7 @@ const WikipediaConflictSchema = z.object({
   startDate: z.string().optional().describe("The start date of the conflict, if available (e.g., '23 February 2022')."),
   territory: z.string().optional().describe("Specific territory or sub-region where the conflict is primarily occurring (e.g., 'Nagorno-Karabakh', 'Tigray Region', 'Gaza Strip'), if distinct from general locations. This is for a more precise geographical focus within the broader conflict."),
   detailsLink: z.string().optional().describe("A direct link to a more detailed Wikipedia page or section for this specific conflict, if identifiable from the list item."),
+  imageUrl: z.string().optional().describe("URL of the main or most representative image of the conflict, extracted from its detailed Wikipedia page (if available and identifiable, preferably a direct link to a .jpg, .png, or .svg file). Omit if not found or uncertain."),
   latitude: z.number().nullable().optional().describe("Approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
   longitude: z.number().nullable().optional().describe("Approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
 });
@@ -74,14 +75,15 @@ const extractConflictsPrompt = ai.definePrompt({
         *   If a conflict cannot be clearly categorized, use 'UNKNOWN'.
     5.  **locations**: A list of primary countries and/or major regions involved. Extract this from the 'Location' or 'Combatants' columns. Prioritize state actors or well-defined geographical regions if the combatants list is too granular or includes many non-state actors (e.g., for "Russo-Ukrainian War", locations should be ["Ukraine", "Russia"]).
     6.  **startDate**: The start date of the conflict as listed.
-    7.  **territory**: If a specific sub-region or territory is highlighted as the main locus of conflict (e.g., "Nagorno-Karabakh", "Tigray Region", "Gaza Strip") within a broader conflict involving larger countries, note it here. This field is for a more precise geographical focus *within* the general 'locations'. If not applicable or not distinct, it can be omitted.
+    7.  **territory**: If a specific sub-region or territory is highlighted as the main locus of conflict (e.g., "Nagorno-Karabakh", "Tigray Region", "Gaza Strip") within a broader conflict involving larger countries, note it in the 'territory' field. This field is for a more precise geographical focus *within* the general 'locations'. If not applicable or not distinct, it can be omitted.
     8.  **detailsLink**: If the conflict name in the list is a hyperlink to a more detailed page about that specific conflict, provide that URL.
-    9.  **latitude**: Provide an approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
-    10. **longitude**: Provide an approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
+    9.  **imageUrl**: After identifying the 'detailsLink', simulate accessing that detailed Wikipedia page. Extract the URL of the main image of the conflict, typically found in the infobox or as the primary visual representation. Prioritize direct links to image files (.jpg, .png, .svg). If no suitable image is found or you are uncertain, omit this field.
+    10. **latitude**: Provide an approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
+    11. **longitude**: Provide an approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
 
     Ensure that prominent, long-running conflicts that are widely known to be ongoing (e.g., Russo-Ukrainian War, Syrian Civil War, Israeli-Palestinian conflict) are included in your extraction if they appear in the specified fatality tables on the Wikipedia page you are simulating access to.
 
-    Adhere strictly to the output JSON schema. Ensure all fields are correctly populated according to their descriptions. Latitude and longitude must be numbers or null.
+    Adhere strictly to the output JSON schema. Ensure all fields are correctly populated according to their descriptions. Latitude and longitude must be numbers or null. ImageUrl should be a valid URL string or omitted.
     The 'conflicts' array should only contain entries from the specified fatality tables.
     Set 'sourcePage' to "${WIKIPEDIA_CONFLICTS_PAGE_URL}".
     Set 'lastUpdated' to the current ISO datetime string when you are processing this (this instruction is for your internal processing; the final flow will ensure this field is accurate).
@@ -129,3 +131,5 @@ const extractWikipediaConflictsFlow = ai.defineFlow(
     };
   }
 );
+
+    

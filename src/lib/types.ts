@@ -35,7 +35,7 @@ export interface AcledEvent {
   location: string;
   notes: string;
   country: string;
-  fatalities?: number | string;
+  fatalities?: number | string; // Made flexible
 }
 
 export interface AcledErrorDetail {
@@ -44,14 +44,14 @@ export interface AcledErrorDetail {
 }
 
 export interface AcledApiResponse {
-  status?: number | boolean; // Can be HTTP status or boolean success flag from ACLED
+  status?: number | boolean;
   success?: boolean;
   count?: number;
   data?: AcledEvent[];
-  message?: string;      // General message, sometimes used for errors
-  detail?: string;       // Detailed error message
-  status_code?: number;  // Specific ACLED status code, e.g., in error responses
-  error?: AcledErrorDetail | string; // Can be an object or a string for errors
+  message?: string;
+  detail?: string;
+  status_code?: number;
+  error?: AcledErrorDetail | string;
 }
 
 
@@ -118,6 +118,7 @@ export interface WikipediaConflict {
   startDate?: string;
   territory?: string; // Specific territory if mentioned
   detailsLink?: string; // Link to a more detailed Wikipedia page or section
+  imageUrl?: string; // URL for the conflict's main image
   latitude?: number | null; // Approximate latitude
   longitude?: number | null; // Approximate longitude
 }
@@ -128,3 +129,4 @@ export interface WikipediaConflictsData {
   lastUpdated: string; // ISO date string for when the data was fetched/processed
 }
 
+    
