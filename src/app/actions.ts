@@ -4,15 +4,58 @@
 import { summarizeConflictNews, type SummarizeConflictNewsInput, type SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
 import { extractWikipediaConflicts, type ExtractWikipediaConflictsOutput } from '@/ai/flows/extract-wikipedia-conflicts-flow';
 import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, WikipediaConflictsData } from '@/lib/types';
+import fs from 'fs/promises';
+import path from 'path';
 
+const CACHE_DIR_PATH = path.join(process.cwd(), '.cache');
+const WIKIPEDIA_CACHE_FILE_PATH = path.join(CACHE_DIR_PATH, 'wikipedia-conflicts.json');
+const CACHE_MAX_AGE_HOURS = 24; // Cache data for 24 hours
 
-export async function getAiSummaryAction(newsToSummarize: SummarizeNewsInputItem[]): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string }> {
-  if (!newsToSummarize || newsToSummarize.length === 0) {
+async function ensureCacheDirExists() {
+  try {
+    await fs.access(CACHE_DIR_PATH);
+  } catch {
+    await fs.mkdir(CACHE_DIR_PATH, { recursive: true });
+  }
+}
+
+async function readWikipediaCache(): Promise<WikipediaConflictsData | null> {
+  try {
+    await fs.access(WIKIPEDIA_CACHE_FILE_PATH);
+    const fileContent = await fs.readFile(WIKIPEDIA_CACHE_FILE_PATH, 'utf-8');
+    const cachedData = JSON.parse(fileContent) as WikipediaConflictsData;
+
+    // Check cache age
+    const cacheAgeHours = (new Date().getTime() - new Date(cachedData.lastUpdated).getTime()) / (1000 * 60 * 60);
+    if (cacheAgeHours < CACHE_MAX_AGE_HOURS) {
+      console.log('Serving Wikipedia conflicts data from cache.');
+      return cachedData;
+    }
+    console.log('Wikipedia conflicts cache is stale.');
+    return null;
+  } catch (error) {
+    console.warn('Error reading Wikipedia cache or cache is invalid/missing:', error);
+    return null;
+  }
+}
+
+async function writeWikipediaCache(data: WikipediaConflictsData): Promise<void> {
+  try {
+    await ensureCacheDirExists();
+    await fs.writeFile(WIKIPEDIA_CACHE_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    console.log('Wikipedia conflicts data cached successfully.');
+  } catch (error) {
+    console.error('Error writing Wikipedia cache:', error);
+  }
+}
+
+export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInputItem[]): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string }> {
+  if (!newsItemsToSummarize || newsItemsToSummarize.length === 0) {
     return { error: 'Nenhum item de notícia fornecido para resumo.' };
   }
 
   const input: SummarizeConflictNewsInput = {
-    newsItems: newsToSummarize,
+    newsItems: newsItemsToSummarize,
   };
 
   try {
@@ -30,13 +73,24 @@ export async function getAiSummaryAction(newsToSummarize: SummarizeNewsInputItem
   }
 }
 
-export async function getWikipediaConflictsAction(): Promise<{ data?: WikipediaConflictsData; error?: string }> {
+export async function getWikipediaConflictsAction(options: { forceRefresh?: boolean } = {}): Promise<{ data?: WikipediaConflictsData; error?: string }> {
+  const { forceRefresh = false } = options;
+
+  if (!forceRefresh) {
+    const cachedData = await readWikipediaCache();
+    if (cachedData) {
+      return { data: cachedData };
+    }
+  }
+
+  console.log(forceRefresh ? 'Forcing refresh of Wikipedia conflicts data.' : 'Fetching fresh Wikipedia conflicts data.');
   try {
     const result: ExtractWikipediaConflictsOutput = await extractWikipediaConflicts({});
     // The Genkit flow output (ExtractWikipediaConflictsOutput) matches WikipediaConflictsData structure
-    return { data: result as WikipediaConflictsData };
-  } catch (error)
- {
+    const dataToCache = result as WikipediaConflictsData;
+    await writeWikipediaCache(dataToCache);
+    return { data: dataToCache };
+  } catch (error) {
     let detailedErrorMessage = 'Falha ao extrair dados de conflitos da Wikipedia.';
     if (error instanceof Error) {
       if (error.message.includes('503') || error.message.toLowerCase().includes('model is overloaded')) {
@@ -47,6 +101,14 @@ export async function getWikipediaConflictsAction(): Promise<{ data?: WikipediaC
       console.error('Error calling Wikipedia conflicts flow. Message:', error.message, 'Stack:', error.stack);
     } else {
       console.error('Error calling Wikipedia conflicts flow (non-Error object):', error);
+    }
+    // If fetching fresh data fails, try to return stale cache as a fallback if not forcing refresh
+    if (!forceRefresh) {
+        const staleCache = await fs.readFile(WIKIPEDIA_CACHE_FILE_PATH, 'utf-8').then(JSON.parse).catch(() => null);
+        if (staleCache) {
+            console.warn('Serving stale Wikipedia cache due to fetch error.');
+            return { data: staleCache, error: `${detailedErrorMessage} (Exibindo dados de cache mais antigos).` };
+        }
     }
     return { error: detailedErrorMessage };
   }

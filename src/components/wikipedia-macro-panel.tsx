@@ -7,8 +7,9 @@ import type { WikipediaConflictsData, WikipediaConflict, WikipediaConflictSeveri
 import { getWikipediaConflictsAction } from '@/app/actions';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, MapPin, CalendarDays, AlertOctagon } from 'lucide-react';
+import { ExternalLink, MapPin, CalendarDays, AlertOctagon, RefreshCw } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -39,26 +40,34 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
   const [conflictsData, setConflictsData] = useState<WikipediaConflictsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
+  const fetchData = useCallback(async (forceRefresh = false) => {
+    if (forceRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
     onStatusChange({ status: 'loading' });
     try {
-      const result = await getWikipediaConflictsAction();
-      if (result.error) {
-        // Set local error state instead of throwing
+      const result = await getWikipediaConflictsAction({ forceRefresh });
+      if (result.error && !result.data) { // Only set error if no data (even stale) is available
         setError(result.error);
         onStatusChange({ status: 'error', message: result.error });
-        setIsLoading(false); // Ensure loading is false before returning
-        return;
-      }
-      setConflictsData(result.data || null);
-      if (!result.data || result.data.conflicts.length === 0) {
-        onStatusChange({ status: 'success', message: 'Nenhum conflito ativo encontrado nas principais categorias da Wikipedia.' });
+      } else if (result.error && result.data) { // Data (likely stale) is available, but there was an error fetching fresh
+        setError(result.error); // Show the error message, but still display stale data
+        onStatusChange({ status: 'success', message: `Exibindo dados de cache. ${result.error}` });
       } else {
-        onStatusChange({ status: 'success' });
+         onStatusChange({ status: 'success' });
       }
+      
+      setConflictsData(result.data || null);
+
+      if (!result.data && !result.error) {
+         onStatusChange({ status: 'success', message: 'Nenhum conflito ativo encontrado nas principais categorias da Wikipedia.' });
+      }
+
     } catch (err) {
       // This catch block handles unexpected errors from getWikipediaConflictsAction itself or subsequent processing
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar dados da Wikipedia.';
@@ -67,115 +76,146 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
       console.error("Wikipedia data fetch error (catch block):", err);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   }, [onStatusChange]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData]); // fetchData is memoized, so this runs once on mount
 
-  if (isLoading) return <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />;
-  if (error) return <ErrorDisplay message={error} />;
-  if (!conflictsData || conflictsData.conflicts.length === 0) {
+  if (isLoading && !isRefreshing) return <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />;
+  
+  // If there's an error AND no data at all, show ErrorDisplay
+  if (error && !conflictsData) return <ErrorDisplay message={error} />;
+  
+  // If no data and no error (e.g. successful fetch but empty results)
+  if (!conflictsData && !error && !isLoading) {
     return <p className="text-sm text-muted-foreground p-4 text-center">Nenhum conflito ativo encontrado nas principais categorias da Wikipedia ou falha ao processar dados.</p>;
   }
 
-  const groupedConflicts = conflictsData.conflicts.reduce((acc, conflict) => {
+  const groupedConflicts = conflictsData?.conflicts.reduce((acc, conflict) => {
     const severity = conflict.severity || 'UNKNOWN';
     if (!acc[severity]) {
       acc[severity] = [];
     }
     acc[severity].push(conflict);
     return acc;
-  }, {} as Record<WikipediaConflictSeverity, WikipediaConflict[]>);
+  }, {} as Record<WikipediaConflictSeverity, WikipediaConflict[]>) || {};
 
   const severityOrder: WikipediaConflictSeverity[] = ['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
 
   return (
     <div className="flex flex-col">
-      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-        <p>
-          Dados extraídos da página{" "}
-          <a href={conflictsData.sourcePage} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
-            "List of ongoing armed conflicts"
-          </a>{" "}
-          da Wikipedia (em inglês).
-          Última atualização (processamento): {new Date(conflictsData.lastUpdated).toLocaleString('pt-BR')}.
-        </p>
-        <p className="mt-1 text-xs">
-            Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia.
-        </p>
+      <div className="flex justify-between items-center mb-4">
+        {conflictsData?.sourcePage && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex-grow">
+            <p>
+              Dados extraídos da página{" "}
+              <a href={conflictsData.sourcePage} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
+                "List of ongoing armed conflicts"
+              </a>{" "}
+              da Wikipedia (em inglês).
+              Última atualização (processamento): {conflictsData.lastUpdated ? new Date(conflictsData.lastUpdated).toLocaleString('pt-BR') : 'N/A'}.
+            </p>
+            <p className="mt-1 text-xs">
+                Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia. O cache é atualizado a cada 24 horas ou manualmente.
+            </p>
+          </div>
+        )}
+        <Button 
+            onClick={() => fetchData(true)} 
+            disabled={isRefreshing || isLoading}
+            variant="outline"
+            className="ml-4"
+        >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Atualizando...' : 'Atualizar Dados'}
+        </Button>
       </div>
       
-      <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full mb-6">
-        {severityOrder.map((severityKey) => {
-          const conflicts = groupedConflicts[severityKey];
-          if (!conflicts || conflicts.length === 0) return null;
-          
-          const severityInfo = severityMap[severityKey];
-          const IconComponent = severityInfo.icon;
-
-          return (
-            <AccordionItem value={severityKey} key={severityKey}>
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                <div className="flex items-center gap-2">
-                  {IconComponent && <IconComponent className={`w-5 h-5 ${severityInfo.color.replace('bg-', 'text-')}`} />}
-                  {severityInfo.label} ({conflicts.length})
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-3">
-                  {conflicts.map((conflict) => (
-                    <div key={conflict.id} className="p-3 border rounded-md shadow-sm bg-card hover:shadow-md transition-shadow">
-                      <h4 className="font-semibold text-base mb-1">{conflict.name}</h4>
-                      <div className="text-xs text-muted-foreground space-y-0.5 mb-1">
-                        {conflict.startDate && (
-                          <p className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Início: {conflict.startDate}</p>
-                        )}
-                        <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalidadesRaw}</p>
-                        {conflict.territory && (
-                          <p className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Território Específico: {conflict.territory}</p>
-                        )}
-                         { (conflict.latitude && conflict.longitude) && (
-                           <p className="flex items-center gap-1">
-                             <MapPin className="w-3 h-3" /> Coordenadas (Aprox.): {conflict.latitude.toFixed(2)}, {conflict.longitude.toFixed(2)}
-                           </p>
-                         )}
-                      </div>
-                      {conflict.locations && conflict.locations.length > 0 && (
-                         <div className="mb-1.5">
-                           <span className="text-xs font-medium">Locais/Grupos Envolvidos: </span>
-                           {conflict.locations.map(loc => <Badge key={loc} variant="secondary" className="mr-1 mb-1 text-xs">{loc}</Badge>)}
-                         </div>
-                      )}
-                      {conflict.detailsLink && (
-                        <a
-                          href={conflict.detailsLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
-                        >
-                          Ver detalhes na Wikipedia <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
-      
-       <div className="mt-6">
-            <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
-             {conflictsData && conflictsData.conflicts && (
-                <MapDisplay 
-                  conflicts={conflictsData.conflicts} 
-                />
-             )}
+      {error && conflictsData && ( // Display error message if we have data (likely stale) but also an error
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-700">
+            <p><strong>Aviso:</strong> {error}</p>
         </div>
+      )}
+
+      {!conflictsData && !isLoading && !error && (
+         <p className="text-sm text-muted-foreground p-4 text-center">Nenhum dado de conflito da Wikipedia para exibir.</p>
+      )}
+
+      {conflictsData && conflictsData.conflicts.length > 0 && (
+        <>
+          <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full mb-6">
+            {severityOrder.map((severityKey) => {
+              const conflicts = groupedConflicts[severityKey];
+              if (!conflicts || conflicts.length === 0) return null;
+              
+              const severityInfo = severityMap[severityKey];
+              const IconComponent = severityInfo.icon;
+
+              return (
+                <AccordionItem value={severityKey} key={severityKey}>
+                  <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      {IconComponent && <IconComponent className={`w-5 h-5 ${severityInfo.color.replace('bg-', 'text-')}`} />}
+                      {severityInfo.label} ({conflicts.length})
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-3">
+                      {conflicts.map((conflict) => (
+                        <div key={conflict.id} className="p-3 border rounded-md shadow-sm bg-card hover:shadow-md transition-shadow">
+                          <h4 className="font-semibold text-base mb-1">{conflict.name}</h4>
+                          <div className="text-xs text-muted-foreground space-y-0.5 mb-1">
+                            {conflict.startDate && (
+                              <p className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Início: {conflict.startDate}</p>
+                            )}
+                            <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalidadesRaw}</p>
+                            {conflict.territory && (
+                              <p className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Território Específico: {conflict.territory}</p>
+                            )}
+                            { (conflict.latitude && conflict.longitude) && (
+                              <p className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> Coordenadas (Aprox.): {conflict.latitude.toFixed(2)}, {conflict.longitude.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                          {conflict.locations && conflict.locations.length > 0 && (
+                            <div className="mb-1.5">
+                              <span className="text-xs font-medium">Locais/Grupos Envolvidos: </span>
+                              {conflict.locations.map(loc => <Badge key={loc} variant="secondary" className="mr-1 mb-1 text-xs">{loc}</Badge>)}
+                            </div>
+                          )}
+                          {conflict.detailsLink && (
+                            <a
+                              href={conflict.detailsLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+                            >
+                              Ver detalhes na Wikipedia <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+          
+          <div className="mt-6">
+                <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
+                {conflictsData && conflictsData.conflicts && (
+                    <MapDisplay 
+                      conflicts={conflictsData.conflicts} 
+                    />
+                )}
+            </div>
+        </>
+      )}
     </div>
   );
 }
-
