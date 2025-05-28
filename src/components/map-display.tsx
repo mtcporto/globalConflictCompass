@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useRef } from 'react'; // Ensure React and hooks are imported
+import React from 'react'; // Removed useEffect, useRef
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -62,8 +62,6 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
 ];
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
-  const mapInstanceRef = useRef<L.Map | null>(null);
-
   const validConflicts = conflicts.filter(
     (conflict) =>
       conflict.latitude != null &&
@@ -75,17 +73,6 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   const mapCenter: L.LatLngExpression = [20, 0];
   const mapZoom = 2;
 
-  useEffect(() => {
-    // Cleanup function: will be called when MapDisplay unmounts
-    return () => {
-      if (mapInstanceRef.current) {
-        // console.log("MapDisplay: Manually removing map instance on unmount", mapInstanceRef.current);
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []); // Empty dependency array ensures this runs on mount and unmount of MapDisplay
-
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
@@ -95,10 +82,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
         scrollWheelZoom={true}
         maxBounds={WorldMapBounds}
         minZoom={2}
-        whenCreated={(map) => {
-          // console.log("MapDisplay: Map instance created by react-leaflet", map);
-          mapInstanceRef.current = map;
-        }}
+        // whenCreated prop removed as mapInstanceRef is removed
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
