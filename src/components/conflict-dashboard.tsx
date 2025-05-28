@@ -1,3 +1,4 @@
+
 // src/components/conflict-dashboard.tsx
 "use client";
 
@@ -9,20 +10,21 @@ import { AcledPanel } from './acled-panel';
 import { ReliefWebPanel } from './reliefweb-panel';
 import { BbcNewsPanel } from './bbc-news-panel';
 import { AiSummaryPanel } from './ai-summary-panel';
-import { BarChartBig, Globe, HelpingHand, Newspaper, Sparkles, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { WikipediaMacroPanel } from './wikipedia-macro-panel'; // Import new panel
+import { BarChartBig, Globe, HelpingHand, Newspaper, Sparkles, AlertTriangle, CheckCircle2, Loader2, BookOpen } from 'lucide-react';
 
 const initialApiStatuses: AllApiStatuses = {
   acled: { status: 'loading' },
   reliefweb: { status: 'loading' },
   bbc: { status: 'loading' },
-  aiSummary: { status: 'idle' }, // AI Summary is user-triggered
+  aiSummary: { status: 'idle' },
+  wikipediaConflicts: { status: 'loading' }, // Add status for Wikipedia panel
 };
 
 export default function ConflictDashboard() {
   const [apiStatuses, setApiStatuses] = useState<AllApiStatuses>(initialApiStatuses);
-  // Trigger state for refreshing individual panels
   const [fetchTriggers, setFetchTriggers] = useState<Record<ApiName, number>>({
-    acled: 0, reliefweb: 0, bbc: 0, aiSummary: 0,
+    acled: 0, reliefweb: 0, bbc: 0, aiSummary: 0, wikipediaConflicts: 0,
   });
 
   const handleStatusChange = useCallback((source: ApiName, status: SourceStatus) => {
@@ -45,34 +47,23 @@ export default function ConflictDashboard() {
       return { text: `Carregando ${loadingCount} fonte(s) de dados...`, icon: <Loader2 className="h-4 w-4 animate-spin" />, color: "text-blue-600 bg-blue-100" };
     }
     if (errorCount > 0) {
-      return { text: `${errorCount} fonte(s) com erro. ${successCount} funcionando.`, icon: <AlertTriangle className="h-4 w-4" />, color: "text-red-600 bg-red-100" };
+      return { text: `${errorCount} fonte(s) com erro. ${successCount + idleCount} funcionando/ociosa(s).`, icon: <AlertTriangle className="h-4 w-4" />, color: "text-red-600 bg-red-100" };
     }
-    if (successCount + idleCount === total && total > 0) { // Ensure total is not zero before claiming all operational
+    if (successCount + idleCount === total && total > 0) {
          return { text: `Todas as fontes de dados operacionais.`, icon: <CheckCircle2 className="h-4 w-4" />, color: "text-green-600 bg-green-100"};
     }
-    if (total === 0) { // Case where all panels might have been removed
+    if (total === 0) {
         return { text: "Nenhuma fonte de dados configurada.", icon: <AlertTriangle className="h-4 w-4" />, color: "text-yellow-600 bg-yellow-100"};
     }
     return { text: "Verificando status das fontes...", icon: <Loader2 className="h-4 w-4 animate-spin" />, color: "text-gray-600 bg-gray-100"};
 
   }, [apiStatuses]);
 
-  // Memoized callbacks for each panel
-  const handleAcledStatusChange = useCallback((status: SourceStatus) => {
-    handleStatusChange('acled', status);
-  }, [handleStatusChange]);
-
-  const handleReliefWebStatusChange = useCallback((status: SourceStatus) => {
-    handleStatusChange('reliefweb', status);
-  }, [handleStatusChange]);
-
-  const handleBbcStatusChange = useCallback((status: SourceStatus) => {
-    handleStatusChange('bbc', status);
-  }, [handleStatusChange]);
-
-  const handleAiSummaryStatusChange = useCallback((status: SourceStatus) => {
-    handleStatusChange('aiSummary', status);
-  }, [handleStatusChange]);
+  const handleAcledStatusChange = useCallback((status: SourceStatus) => handleStatusChange('acled', status), [handleStatusChange]);
+  const handleReliefWebStatusChange = useCallback((status: SourceStatus) => handleStatusChange('reliefweb', status), [handleStatusChange]);
+  const handleBbcStatusChange = useCallback((status: SourceStatus) => handleStatusChange('bbc', status), [handleStatusChange]);
+  const handleAiSummaryStatusChange = useCallback((status: SourceStatus) => handleStatusChange('aiSummary', status), [handleStatusChange]);
+  const handleWikipediaConflictsStatusChange = useCallback((status: SourceStatus) => handleStatusChange('wikipediaConflicts', status), [handleStatusChange]);
 
 
   return (
@@ -82,14 +73,31 @@ export default function ConflictDashboard() {
           <Globe className="w-8 h-8 sm:w-10 sm:h-10 text-accent" />
           Global Conflict Compass
         </h1>
-        <p className="text-muted-foreground mt-2">Conflitos Globais em Tempo Real</p>
+        <p className="text-muted-foreground mt-2">Monitor de Conflitos Armados Globais</p>
       </header>
 
       <div className={`status-bar p-3 mb-8 rounded-md text-sm flex items-center justify-center gap-2 ${overallStatus.color} border border-current/30 shadow-sm`}>
         {overallStatus.icon}
         <span>{overallStatus.text}</span>
       </div>
+      
+      {/* Wikipedia Macro Panel - Main View */}
+      <div className="mb-8">
+        <DataCard
+            title="Visão Macro dos Conflitos (Wikipedia)"
+            icon={BookOpen}
+            isLoading={apiStatuses.wikipediaConflicts.status === 'loading'}
+            className="lg:col-span-3" // Span full width
+            onRefresh={() => handleRefresh('wikipediaConflicts')}
+          >
+            <WikipediaMacroPanel 
+              onStatusChange={handleWikipediaConflictsStatusChange}
+              // triggerFetch is not implemented in WikipediaMacroPanel, it fetches on mount
+            />
+          </DataCard>
+      </div>
 
+      <h2 className="text-2xl font-semibold text-foreground mb-4 mt-10 text-center">Fontes de Notícias e Dados Adicionais</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <DataCard 
           title="ACLED" 
@@ -131,10 +139,9 @@ export default function ConflictDashboard() {
         </DataCard>
         
         <DataCard 
-          title="Resumo por IA" 
+          title="Resumo por IA (BBC/ReliefWeb)" 
           icon={Sparkles}
-          // AI summary has its own trigger button inside the panel
-          className="md:col-span-3 lg:col-span-3" // Adjusted to span full width if GPI is removed
+          className="md:col-span-3 lg:col-span-3"
         >
           <AiSummaryPanel onStatusChange={handleAiSummaryStatusChange} />
         </DataCard>
@@ -142,3 +149,4 @@ export default function ConflictDashboard() {
     </div>
   );
 }
+

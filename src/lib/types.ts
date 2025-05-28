@@ -11,7 +11,7 @@ export interface NewsItem {
   location?: string; // For ACLED
 }
 
-export type ApiName = 'acled' | 'reliefweb' | 'bbc' | 'aiSummary';
+export type ApiName = 'acled' | 'reliefweb' | 'bbc' | 'aiSummary' | 'wikipediaConflicts';
 export type ApiStatus = 'loading' | 'success' | 'error' | 'idle';
 
 export interface SourceStatus {
@@ -24,6 +24,7 @@ export interface AllApiStatuses {
   reliefweb: SourceStatus;
   bbc: SourceStatus;
   aiSummary: SourceStatus;
+  wikipediaConflicts: SourceStatus;
 }
 
 // ACLED specific types
@@ -34,7 +35,7 @@ export interface AcledEvent {
   location: string;
   notes: string;
   country: string;
-  fatalities?: number | string;
+  fatalities?: number | string; // Made optional and flexible
 }
 
 export interface AcledErrorDetail {
@@ -43,14 +44,14 @@ export interface AcledErrorDetail {
 }
 
 export interface AcledApiResponse {
-  status?: number | boolean; // Can be HTTP status from JSON or boolean success indicator
+  status?: number | boolean;
   success?: boolean;
   count?: number;
-  data?: AcledEvent[]; // Data might be absent in error responses
-  message?: string; // General message from API
-  detail?: string; // Detailed message, often for auth errors
-  status_code?: number; // Specific status code within JSON response
-  error?: AcledErrorDetail | string; // ACLED error object or string
+  data?: AcledEvent[];
+  message?: string;
+  detail?: string;
+  status_code?: number;
+  error?: AcledErrorDetail | string;
 }
 
 
@@ -59,7 +60,7 @@ export interface ReliefWebReportField {
   title: string;
   date?: { created: string };
   url?: string;
-  body?: string; // if description is needed
+  body?: string;
 }
 export interface ReliefWebReport {
   id: string;
@@ -79,14 +80,14 @@ export interface BbcNewsItemRss {
   guid: string;
   author: string;
   thumbnail: string;
-  description: string; // HTML content
-  content: string; // HTML content
+  description: string;
+  content: string;
   enclosure: object;
   categories: string[];
 }
 
 export interface BbcNewsRssResponse {
-  status: string; // "ok" or "error"
+  status: string;
   feed: {
     url: string;
     title: string;
@@ -98,10 +99,30 @@ export interface BbcNewsRssResponse {
   items: BbcNewsItemRss[];
 }
 
-// For AI Summary
+// For AI Summary of BBC/ReliefWeb
 export interface SummarizeNewsInputItem {
   title: string;
   description: string;
   link?: string;
+}
+
+// For Wikipedia Conflict Data Extraction
+export type WikipediaConflictSeverity = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
+
+export interface WikipediaConflict {
+  id: string;
+  name: string;
+  severity: WikipediaConflictSeverity;
+  fatalitiesRaw: string; // e.g., "10,000+" or "1,000-9,999"
+  locations: string[]; // Countries or main regions involved
+  startDate?: string;
+  territory?: string; // Specific territory if mentioned
+  detailsLink?: string; // Link to a more detailed Wikipedia page or section
+}
+
+export interface WikipediaConflictsData {
+  conflicts: WikipediaConflict[];
+  sourcePage: string;
+  lastUpdated: string; // ISO date string for when the data was fetched/processed
 }
 

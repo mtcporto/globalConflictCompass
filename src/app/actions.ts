@@ -2,7 +2,8 @@
 'use server';
 
 import { summarizeConflictNews, type SummarizeConflictNewsInput, type SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
-import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem } from '@/lib/types';
+import { extractWikipediaConflicts, type ExtractWikipediaConflictsOutput } from '@/ai/flows/extract-wikipedia-conflicts-flow';
+import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, WikipediaConflictsData } from '@/lib/types';
 
 
 export async function getAiSummaryAction(newsToSummarize: SummarizeNewsInputItem[]): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string }> {
@@ -11,7 +12,7 @@ export async function getAiSummaryAction(newsToSummarize: SummarizeNewsInputItem
   }
 
   const input: SummarizeConflictNewsInput = {
-    newsItems: newsToSummarize, // Already formatted by the caller
+    newsItems: newsToSummarize,
   };
 
   try {
@@ -21,15 +22,31 @@ export async function getAiSummaryAction(newsToSummarize: SummarizeNewsInputItem
     let detailedErrorMessage = 'Falha ao gerar resumo de IA.';
     if (error instanceof Error) {
       detailedErrorMessage = `Falha ao gerar resumo de IA: ${error.message}`;
-      // Log the full error message and stack for server-side debugging
-      console.error('Error calling AI summary flow. Message:', error.message, 'Stack:', error.stack);
+      console.error('Error calling AI summary flow. Message:', error.message, 'Stack:', error.stack, 'Details:', (error as any).details || 'N/A');
     } else {
-      // Log the error if it's not an Error instance
       console.error('Error calling AI summary flow (non-Error object):', error);
     }
-    return { error: detailedErrorMessage }; // Return the more detailed error message to the client
+    return { error: detailedErrorMessage };
   }
 }
+
+export async function getWikipediaConflictsAction(): Promise<{ data?: WikipediaConflictsData; error?: string }> {
+  try {
+    const result: ExtractWikipediaConflictsOutput = await extractWikipediaConflicts({});
+    // The Genkit flow output (ExtractWikipediaConflictsOutput) matches WikipediaConflictsData structure
+    return { data: result as WikipediaConflictsData };
+  } catch (error) {
+    let detailedErrorMessage = 'Falha ao extrair dados de conflitos da Wikipedia.';
+    if (error instanceof Error) {
+      detailedErrorMessage = `Falha ao extrair dados de conflitos da Wikipedia: ${error.message}`;
+      console.error('Error calling Wikipedia conflicts flow. Message:', error.message, 'Stack:', error.stack);
+    } else {
+      console.error('Error calling Wikipedia conflicts flow (non-Error object):', error);
+    }
+    return { error: detailedErrorMessage };
+  }
+}
+
 
 // Helper function to fetch minimal data for AI summary from BBC
 export async function fetchBbcNewsForAISummary(limit: number = 3): Promise<BbcNewsItemRss[]> {

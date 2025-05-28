@@ -11,14 +11,6 @@ import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Wand2 } from 'lucide-react';
-import dynamic from 'next/dynamic';
-
-// Placeholder for MapDisplay
-const MapDisplayPlaceholder = dynamic(() => import('./map-display').then(mod => mod.default || (() => <div className="h-[300px] w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 text-center"><p className="text-sm text-muted-foreground">Funcionalidade de mapa em desenvolvimento.</p></div>)), {
-  ssr: false,
-  loading: () => <LoadingSpinner text="Carregando mapa..." />,
-});
-
 
 interface AiSummaryPanelProps {
   onStatusChange: (status: SourceStatus) => void;
@@ -46,13 +38,12 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       bbcData.forEach((item: BbcNewsItemRss) => {
         newsItemsToSummarize.push({
           title: item.title,
-          description: item.description.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...', // Strip HTML and truncate
+          description: item.description.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...',
           link: item.link,
         });
       });
 
       reliefWebData.forEach((item: ReliefWebReport) => {
-        // ReliefWeb body-html might be actual HTML, strip it for the description
         const description = item.fields.body?.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...' || 'Sem descrição detalhada.';
         newsItemsToSummarize.push({
           title: item.fields.title,
@@ -69,7 +60,6 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       }
       
       const result = await getAiSummaryAction(newsItemsToSummarize);
-
 
       if (result.error) {
         throw new Error(result.error);
@@ -89,36 +79,31 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
   }, [onStatusChange]);
   
   useEffect(() => {
+    // This effect sets the initial status or clears it if no action is pending.
+    // It should not depend on `generateSummary` to avoid re-triggering.
     if (!isLoading && !summary && !error) {
       onStatusChange({ status: 'idle' });
     }
-  }, [onStatusChange, isLoading, summary, error]);
+  }, [isLoading, summary, error, onStatusChange]);
 
 
   return (
     <div className="flex flex-col h-full">
       <Button onClick={generateSummary} disabled={isLoading} className="mb-4 w-full bg-primary hover:bg-primary/90 text-primary-foreground">
         <Wand2 className="mr-2 h-4 w-4" />
-        {isLoading ? 'Analisando Notícias e Gerando Análise...' : 'Gerar Análise Detalhada com IA'}
+        {isLoading ? 'Analisando Notícias e Gerando Resumo...' : 'Gerar Resumo de Notícias com IA'}
       </Button>
       
-      {isLoading && <LoadingSpinner text="Analisando notícias e gerando análise detalhada..." />}
+      {isLoading && <LoadingSpinner text="Analisando notícias e gerando resumo..." />}
       {error && <ErrorDisplay message={error} />}
       
       {summary && !isLoading && (
         <ScrollArea className="flex-grow">
           <div className="p-1 md:p-3 bg-card rounded-lg shadow-md space-y-6 text-sm">
             
-            {summary.visaoGeralMacro && (
-              <div>
-                <h3 className="font-semibold text-lg mb-2 text-accent border-b pb-2">Visão Geral Macro</h3>
-                <p className="whitespace-pre-wrap text-foreground/90">{summary.visaoGeralMacro}</p>
-              </div>
-            )}
-
             {summary.resumoGeral && (
               <div>
-                <h4 className="font-semibold text-base mb-1 text-accent">Resumo Detalhado dos Eventos:</h4>
+                <h3 className="font-semibold text-lg mb-2 text-accent border-b pb-2">Resumo Geral dos Eventos:</h3>
                 <p className="whitespace-pre-wrap text-foreground/90">{summary.resumoGeral}</p>
               </div>
             )}
@@ -151,7 +136,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
                 <p className="whitespace-pre-wrap text-foreground/90">{summary.causasFatoresMencionados}</p>
               </div>
             )}
-            {(!summary.visaoGeralMacro && !summary.resumoGeral && (!summary.eventosChave || summary.eventosChave.length === 0)) && (
+            {(!summary.resumoGeral && (!summary.eventosChave || summary.eventosChave.length === 0)) && (
                 <p className="text-muted-foreground">Não foi possível extrair informações detalhadas das notícias fornecidas para esta análise.</p>
             )}
           </div>
@@ -159,11 +144,9 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       )}
       {!summary && !isLoading && !error && (
          <p className="text-sm text-muted-foreground text-center flex-grow flex items-center justify-center">
-           Clique no botão acima para gerar uma análise detalhada dos eventos e temas recorrentes.
+           Clique no botão acima para gerar um resumo das notícias da BBC e ReliefWeb.
          </p>
       )}
-       {/* Placeholder for future map integration, currently does nothing if not used */}
-       {/* <MapDisplayPlaceholder zones={[]}/> */}
     </div>
   );
 }
