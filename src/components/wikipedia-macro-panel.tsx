@@ -52,24 +52,22 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     onStatusChange({ status: 'loading' });
     try {
       const result = await getWikipediaConflictsAction({ forceRefresh });
-      if (result.error && !result.data) { // Only set error if no data (even stale) is available
+      
+      if (result.error && !result.data) { 
         setError(result.error);
         onStatusChange({ status: 'error', message: result.error });
-      } else if (result.error && result.data) { // Data (likely stale) is available, but there was an error fetching fresh
-        setError(result.error); // Show the error message, but still display stale data
+      } else if (result.error && result.data) { 
+        setError(result.error); 
         onStatusChange({ status: 'success', message: `Exibindo dados de cache. ${result.error}` });
+      } else if (!result.data && !result.error){
+        onStatusChange({ status: 'success', message: 'Nenhum conflito ativo encontrado nas principais categorias da Wikipedia.' });
       } else {
          onStatusChange({ status: 'success' });
       }
       
       setConflictsData(result.data || null);
 
-      if (!result.data && !result.error) {
-         onStatusChange({ status: 'success', message: 'Nenhum conflito ativo encontrado nas principais categorias da Wikipedia.' });
-      }
-
     } catch (err) {
-      // This catch block handles unexpected errors from getWikipediaConflictsAction itself or subsequent processing
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar dados da Wikipedia.';
       setError(errorMessage);
       onStatusChange({ status: 'error', message: errorMessage });
@@ -82,14 +80,12 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // fetchData is memoized, so this runs once on mount
+  }, [fetchData]);
 
-  if (isLoading && !isRefreshing) return <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />;
+  if (isLoading && !isRefreshing && !conflictsData && !error) return <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />;
   
-  // If there's an error AND no data at all, show ErrorDisplay
   if (error && !conflictsData) return <ErrorDisplay message={error} />;
   
-  // If no data and no error (e.g. successful fetch but empty results)
   if (!conflictsData && !error && !isLoading) {
     return <p className="text-sm text-muted-foreground p-4 text-center">Nenhum conflito ativo encontrado nas principais categorias da Wikipedia ou falha ao processar dados.</p>;
   }
@@ -127,20 +123,23 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
             onClick={() => fetchData(true)} 
             disabled={isRefreshing || isLoading}
             variant="outline"
-            className="ml-4"
+            className="ml-4 shrink-0" // Added shrink-0 to prevent button from shrinking too much
         >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Atualizando...' : 'Atualizar Dados'}
         </Button>
       </div>
       
-      {error && conflictsData && ( // Display error message if we have data (likely stale) but also an error
+      {error && conflictsData && ( 
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-700">
             <p><strong>Aviso:</strong> {error}</p>
         </div>
       )}
 
-      {!conflictsData && !isLoading && !error && (
+      {isLoading && !isRefreshing && <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />}
+
+
+      {!isLoading && !conflictsData && !error && (
          <p className="text-sm text-muted-foreground p-4 text-center">Nenhum dado de conflito da Wikipedia para exibir.</p>
       )}
 
@@ -209,13 +208,20 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
           <div className="mt-6">
                 <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
                 {conflictsData && conflictsData.conflicts && (
-                    <MapDisplay 
-                      conflicts={conflictsData.conflicts} 
+                    <MapDisplay
+                      key={conflictsData.lastUpdated || 'map-initial'} // Re-add key to force remount on data update
+                      conflicts={conflictsData.conflicts}
                     />
                 )}
             </div>
         </>
       )}
+       {!isLoading && conflictsData && conflictsData.conflicts.length === 0 && (
+        <p className="text-sm text-muted-foreground p-4 text-center">
+          Nenhum conflito ativo encontrado nas principais categorias da Wikipedia para exibir.
+        </p>
+      )}
     </div>
   );
 }
+
