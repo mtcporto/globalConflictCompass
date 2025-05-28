@@ -69,8 +69,7 @@ const MapDisplay = React.memo(function MapDisplay({ conflicts }: MapDisplayProps
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        // Removed placeholder prop as the dynamic import's loading prop handles it.
-        // No internal key needed here; parent component will control remounts with its own key.
+        key="leaflet-map-component-static" // Added a static key here
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
