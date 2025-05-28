@@ -35,8 +35,8 @@ const WikipediaConflictSchema = z.object({
 
 const ExtractWikipediaConflictsOutputSchema = z.object({
   conflicts: z.array(WikipediaConflictSchema).describe("An array of extracted ongoing armed conflicts."),
-  sourcePage: z.string().url().describe("The URL of the Wikipedia page from which data was extracted."),
-  lastUpdated: z.string().datetime().describe("ISO date string indicating when the data was processed by this flow."),
+  sourcePage: z.string().describe("The URL of the Wikipedia page from which data was extracted."),
+  lastUpdated: z.string().describe("ISO date string indicating when the data was processed by this flow."),
 });
 export type ExtractWikipediaConflictsOutput = z.infer<typeof ExtractWikipediaConflictsOutputSchema>;
 
