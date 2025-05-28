@@ -57,22 +57,18 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
         setError(result.error);
         onStatusChange({ status: 'error', message: result.error });
       } else if (result.error && result.data) { 
-        // Data from cache is available, but there was an error fetching fresh data (e.g. 503)
-        // We should display the cached data and the error message.
-        setConflictsData(result.data); // Show cached data
-        setError(result.error); // Show the error message (e.g., "service overloaded, showing older data")
+        setConflictsData(result.data); 
+        setError(result.error); 
         onStatusChange({ status: 'success', message: `Exibindo dados de cache. ${result.error}` });
       } else if (!result.data && !result.error){
-        // No data and no error likely means the AI found no conflicts matching criteria
         setConflictsData(null);
         onStatusChange({ status: 'success', message: 'Nenhum conflito ativo encontrado nas principais categorias da Wikipedia.' });
       } else {
-         // Success, data is available
          setConflictsData(result.data || null);
          onStatusChange({ status: 'success' });
       }
       
-    } catch (err) { // This catch is for unexpected errors in fetchData itself, not from getWikipediaConflictsAction's handled errors
+    } catch (err) { 
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar dados da Wikipedia.';
       setError(errorMessage);
       onStatusChange({ status: 'error', message: errorMessage });
@@ -85,20 +81,17 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // fetchData is memoized, so this runs once on mount
+  }, [fetchData]); 
 
-  // Initial loading state before any data or error
   if (isLoading && !isRefreshing && !conflictsData && !error) {
     return <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />;
   }
   
-  // If there's an error and absolutely no data to show (not even stale cache)
   if (error && !conflictsData) {
     return <ErrorDisplay message={error} />;
   }
   
-  // If there's no data, no error, and not loading - could be that AI found nothing
-  if (!conflictsData && !error && !isLoading) {
+  if (!conflictsData && !error && !isLoading && !isRefreshing) {
     return <p className="text-sm text-muted-foreground p-4 text-center">Nenhum conflito ativo encontrado nas principais categorias da Wikipedia ou falha ao processar dados.</p>;
   }
 
@@ -115,9 +108,9 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
 
   return (
     <div className="flex flex-col">
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2"> {/* Added flex-wrap and gap */}
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
         {conflictsData?.sourcePage && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex-grow min-w-[300px]"> {/* Added min-w */}
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex-grow min-w-[300px]">
             <p>
               Dados extraídos da página{" "}
               <a href={conflictsData.sourcePage} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
@@ -127,7 +120,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
               Última atualização do cache (processamento): {conflictsData.lastUpdated ? new Date(conflictsData.lastUpdated).toLocaleString('pt-BR') : 'N/A'}.
             </p>
             <p className="mt-1 text-xs">
-                Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia. O cache é atualizado a cada {24} horas ou manualmente.
+                Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia. O cache é atualizado a cada 24 horas ou manualmente.
             </p>
           </div>
         )}
@@ -135,25 +128,21 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
             onClick={() => fetchData(true)} 
             disabled={isRefreshing || isLoading}
             variant="outline"
-            className="ml-auto md:ml-4 shrink-0" // Adjusted margin for responsiveness
+            className="ml-auto md:ml-4 shrink-0"
         >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Atualizando...' : 'Atualizar Dados'}
         </Button>
       </div>
       
-      {/* Display error message if there's an error, even if showing cached data */}
       {error && ( 
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-700">
             <p><strong>Aviso:</strong> {error}</p>
         </div>
       )}
 
-      {/* Show loading spinner if loading and not just refreshing in background */}
-      {isLoading && !isRefreshing && <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />}
+      {(isLoading && !isRefreshing) && <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />}
 
-
-      {/* If there's no conflict data to display (even after loading/error checks) */}
       {!isLoading && (!conflictsData || !conflictsData.conflicts || conflictsData.conflicts.length === 0) && (
          <p className="text-sm text-muted-foreground p-4 text-center">Nenhum dado de conflito da Wikipedia para exibir.</p>
       )}
@@ -222,17 +211,13 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
           
           <div className="mt-6">
                 <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
-                {conflictsData && conflictsData.conflicts && (
-                    <MapDisplay
-                      // Removed key here to make MapDisplay more persistent
-                      conflicts={conflictsData.conflicts}
-                    />
-                )}
+                <MapDisplay 
+                  key={conflictsData?.lastUpdated || 'no-data-map-key'} 
+                  conflicts={conflictsData?.conflicts || []} 
+                />
             </div>
         </>
       )}
     </div>
   );
 }
-
-    
