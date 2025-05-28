@@ -1,23 +1,25 @@
 
 "use client";
 
-import React from 'react'; // Ensure React is imported for React.memo
+import React from 'react'; // Keep React for JSX
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
 
-// Robust icon patch to ensure it only runs once per page load, even with HMR
+// More robust icon patch to ensure it only runs effectively once.
+// We check for a custom flag on the prototype itself.
 // @ts-ignore
-if (typeof window !== 'undefined' && !window._leafletIconPatched) {
+if (typeof L !== 'undefined' && !L.Icon.Default.prototype._iconUrlsPatchedByGlobalConflictCompass) {
   // @ts-ignore
   delete L.Icon.Default.prototype._getIconUrl; // Delete the original method
+
   L.Icon.Default.mergeOptions({
     iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default,
     iconUrl: require('leaflet/dist/images/marker-icon.png').default,
     shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
   });
   // @ts-ignore
-  window._leafletIconPatched = true; // Use a global flag on window
+  L.Icon.Default.prototype._iconUrlsPatchedByGlobalConflictCompass = true;
 }
 
 
@@ -46,15 +48,15 @@ const createCustomIcon = (color: string) => {
     border: 1px solid #FFFFFF;`;
 
   return L.divIcon({
-    className: "custom-icon",
-    iconAnchor: [0, 24],
-    popupAnchor: [0, -24],
+    className: "custom-icon", // a generic class for potential global styling
+    iconAnchor: [0, 24], // point of the icon which will correspond to marker's location
+    popupAnchor: [0, -24], // point from which the popup should open relative to the iconAnchor
     html: `<span style="${markerHtmlStyles}" />`
   });
 };
 
-// Wrap MapDisplay with React.memo
-const MapDisplay = React.memo(function MapDisplay({ conflicts }: MapDisplayProps) {
+// Removed React.memo; parent component's key will handle remounting.
+function MapDisplay({ conflicts }: MapDisplayProps) {
   const validConflicts = conflicts.filter(
     (conflict) =>
       conflict.latitude != null &&
@@ -63,16 +65,13 @@ const MapDisplay = React.memo(function MapDisplay({ conflicts }: MapDisplayProps
       typeof conflict.longitude === 'number'
   );
 
-  const mapCenter: L.LatLngExpression = [20, 0];
+  const mapCenter: L.LatLngExpression = [20, 0]; // Centered view
   const mapZoom = 2;
-
-  // Dynamic key for MapContainer to force remount when data presence changes
-  const mapKey = validConflicts.length > 0 ? 'map-with-data' : 'map-empty';
 
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        key={mapKey} // Add a dynamic key to MapContainer
+        // Removed dynamic key from here; parent's key on <MapDisplay> controls its lifecycle.
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
@@ -124,7 +123,8 @@ const MapDisplay = React.memo(function MapDisplay({ conflicts }: MapDisplayProps
       )}
     </div>
   );
-});
-MapDisplay.displayName = 'MapDisplay'; // Optional: for better debugging names
-
+}
+// Explicitly export MapDisplay as default if it's the main export, or named if preferred.
+// Default export is common for components dynamically imported.
 export default MapDisplay;
+
