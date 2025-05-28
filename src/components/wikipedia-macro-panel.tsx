@@ -48,28 +48,27 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     } else {
       setIsLoading(true);
     }
-    setError(null); // Clear previous errors
+    setError(null); 
     onStatusChange({ status: 'loading' });
     try {
       const result = await getWikipediaConflictsAction({ forceRefresh });
       
       if (result.error && !result.data) { 
-        setError(result.error); // Set error state to display in ErrorDisplay
+        setError(result.error); 
         onStatusChange({ status: 'error', message: result.error });
-      } else if (result.error && result.data) { // Data from cache, but fetch failed
+      } else if (result.error && result.data) { 
         setConflictsData(result.data); 
-        setError(result.error); // Show error alongside cached data
+        setError(result.error); 
         onStatusChange({ status: 'success', message: `Exibindo dados de cache. ${result.error}` });
-      } else if (!result.data && !result.error){ // No data and no error (e.g. AI returned empty valid response)
+      } else if (!result.data && !result.error){ 
         setConflictsData(null);
         onStatusChange({ status: 'success', message: 'Nenhum conflito ativo encontrado nas principais categorias da Wikipedia.' });
-      } else { // Success
+      } else { 
          setConflictsData(result.data || null);
          onStatusChange({ status: 'success' });
       }
       
     } catch (err) { 
-      // This catch block is for unexpected errors during the action call itself, not API errors handled by the action
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar dados da Wikipedia.';
       setError(errorMessage);
       onStatusChange({ status: 'error', message: errorMessage });
@@ -82,13 +81,11 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // Initial fetch
+  }, [fetchData]); 
 
-  // This effect handles displaying the specific error for "model overloaded" without throwing
   useEffect(() => {
-    if (error && error.includes("model is overloaded")) {
+    if (error) {
       // Error is already set, ErrorDisplay component will show it
-      // No need to throw new Error here
     }
   }, [error]);
 
@@ -97,12 +94,10 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     return <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />;
   }
   
-  // Display error using ErrorDisplay if error is set and no data is available to show
-  if (error && !conflictsData) {
+  if (error && !conflictsData && !isRefreshing) { // Show main error if no data at all and not just a refresh problem
     return <ErrorDisplay message={error} />;
   }
   
-  // If no data, no error, and not loading (e.g., AI returned empty but valid)
   if (!conflictsData && !error && !isLoading && !isRefreshing) {
     return <p className="text-sm text-muted-foreground p-4 text-center">Nenhum conflito ativo encontrado nas principais categorias da Wikipedia ou falha ao processar dados.</p>;
   }
@@ -147,7 +142,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
         </Button>
       </div>
       
-      {error && conflictsData && ( // Show error message even if displaying cached data
+      {error && conflictsData && ( 
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-700">
             <p><strong>Aviso:</strong> {error}</p>
         </div>
@@ -227,6 +222,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
           <div className="mt-6">
                 <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
                 <MapDisplay
+                  key="static-map-display-instance" // Added static key
                   conflicts={conflictsData?.conflicts || []}
                 />
             </div>
@@ -235,3 +231,4 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     </div>
   );
 }
+
