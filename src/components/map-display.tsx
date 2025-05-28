@@ -79,7 +79,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
 
   if (!isClient) {
     return (
-      <div 
+      <div
         className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative flex items-center justify-center bg-muted/30"
         data-ai-hint="map loading placeholder"
       >
@@ -91,6 +91,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
+        key="global-conflict-map" // Added a static key
         placeholder={<div style={{height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f4f7' }}><p>Loading map...</p></div>}
         center={mapCenter}
         zoom={mapZoom}
