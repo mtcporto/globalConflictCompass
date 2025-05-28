@@ -6,11 +6,9 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
 
-// CSS is globally imported in layout.tsx
-
 // Robust icon patch to ensure it only runs once per page load, even with HMR
 // @ts-ignore
-if (typeof window !== 'undefined' && !L.Icon.Default.prototype._iconUrlsPatched) {
+if (typeof window !== 'undefined' && !window._leafletIconPatched) {
   // @ts-ignore
   delete L.Icon.Default.prototype._getIconUrl; // Delete the original method
   L.Icon.Default.mergeOptions({
@@ -19,7 +17,7 @@ if (typeof window !== 'undefined' && !L.Icon.Default.prototype._iconUrlsPatched)
     shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
   });
   // @ts-ignore
-  L.Icon.Default.prototype._iconUrlsPatched = true; // Use a flag on the prototype
+  window._leafletIconPatched = true; // Use a global flag on window
 }
 
 
