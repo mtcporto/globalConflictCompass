@@ -2,8 +2,7 @@
 "use client";
 
 import type React from 'react';
-// Removed useEffect as ChangeView is being removed
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'; // Removed useMap
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
@@ -55,17 +54,7 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
   [85, 190]  // Northeast
 ];
 
-// Removed ChangeView component
-
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
-  if (typeof window === 'undefined') {
-    return (
-      <div className="h-[400px] w-full bg-muted/30 rounded-lg flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando mapa...</p>
-      </div>
-    );
-  }
-
   const validConflicts = conflicts.filter(
     (conflict) =>
       conflict.latitude != null &&
@@ -91,7 +80,6 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
         />
-        {/* ChangeView component removed from here */}
 
         {validConflicts.map((conflict) => (
           <Marker
@@ -103,7 +91,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
               <div className="text-sm">
                 <h4 className="font-semibold text-base mb-1">{conflict.name}</h4>
                 <p><strong>Severidade:</strong> {conflict.severity}</p>
-                <p><strong>Fatalidades:</strong> {conflict.fatalitiesRaw}</p>
+                <p><strong>Fatalidades:</strong> {conflict.fatalidadesRaw}</p>
                 {conflict.locations && <p><strong>Locais:</strong> {conflict.locations.join(', ')}</p>}
                 {conflict.startDate && <p><strong>Início:</strong> {conflict.startDate}</p>}
                 {conflict.detailsLink && (
