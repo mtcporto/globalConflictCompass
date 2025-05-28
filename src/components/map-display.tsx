@@ -62,7 +62,7 @@ function ChangeView({ center, zoom }: {center: L.LatLngExpression, zoom: number}
     if (map) {
       map.setView(center, zoom);
     }
-  }, [map, center, zoom]); // Add dependencies
+  }, [map, center, zoom]); 
   return null;
 }
 
@@ -84,15 +84,28 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
 
   if (validConflicts.length === 0) {
     return (
-      <div className="h-[400px] w-full bg-muted/30 rounded-lg flex items-center justify-center" data-ai-hint="world map illustration">
-         <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true} maxBounds={WorldMapBounds} minZoom={2}>
+      <div className="h-[400px] w-full bg-muted/30 rounded-lg flex items-center justify-center relative" data-ai-hint="world map illustration">
+         <MapContainer 
+            key="map-no-conflicts"
+            center={mapCenter} 
+            zoom={mapZoom} 
+            style={{ height: '100%', width: '100%' }} 
+            scrollWheelZoom={true} 
+            maxBounds={WorldMapBounds} 
+            minZoom={2}
+          >
             <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
             />
              <ChangeView center={mapCenter} zoom={mapZoom} />
         </MapContainer>
-        <p className="absolute text-muted-foreground bg-background/70 p-2 rounded">Nenhum conflito com coordenadas para exibir no mapa.</p>
+        <p 
+          className="absolute text-muted-foreground bg-background/70 p-2 rounded"
+          style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+        >
+          Nenhum conflito com coordenadas para exibir no mapa.
+        </p>
       </div>
     );
   }
@@ -100,7 +113,15 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
 
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md" data-ai-hint="world map conflict hotspots">
-      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true} maxBounds={WorldMapBounds} minZoom={2}>
+      <MapContainer 
+        key="map-with-conflicts"
+        center={mapCenter} 
+        zoom={mapZoom} 
+        style={{ height: '100%', width: '100%' }} 
+        scrollWheelZoom={true} 
+        maxBounds={WorldMapBounds} 
+        minZoom={2}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
