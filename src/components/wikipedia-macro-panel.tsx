@@ -58,7 +58,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
         onStatusChange({ status: 'error', message: result.error });
       } else if (result.error && result.data) { 
         setConflictsData(result.data); 
-        setError(result.error); 
+        setError(result.error); // Show error but still display cached data if available
         onStatusChange({ status: 'success', message: `Exibindo dados de cache. ${result.error}` });
       } else if (!result.data || result.data.conflicts.length === 0 && !result.error){ 
         setConflictsData(result.data || null); 
@@ -88,8 +88,22 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     return <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />;
   }
   
-  if (error && !conflictsData && !isRefreshing) { 
-    return <ErrorDisplay message={error} />;
+  // Display error if it exists and there's no data to show (or if not refreshing)
+  if (error && (!conflictsData || conflictsData.conflicts.length === 0) && !isRefreshing) { 
+    return (
+       <div className="p-4 text-center">
+        <ErrorDisplay message={error} />
+        <Button 
+            onClick={() => fetchData(true)} 
+            disabled={isRefreshing || isLoading}
+            variant="outline"
+            className="mt-4"
+        >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Tentando Atualizar...' : 'Tentar Atualizar Dados'}
+        </Button>
+      </div>
+    );
   }
   
   if (!isLoading && !isRefreshing && (!conflictsData || conflictsData.conflicts.length === 0) && !error) {
@@ -149,6 +163,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
         </Button>
       </div>
       
+      {/* Display error prominently if it occurred, even if showing cached data */}
       {error && conflictsData && conflictsData.conflicts.length > 0 && ( 
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-700">
             <p><strong>Aviso ao atualizar dados:</strong> {error}</p>
@@ -157,6 +172,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
       
       {isRefreshing && <LoadingSpinner text="Atualizando dados da Wikipedia..." />}
 
+      {/* Only render accordion and map if not loading initially AND ( (there is data) OR (there's no error implying we should show cached data despite an update error) ) */}
       {(!isLoading || isRefreshing) && conflictsData && conflictsData.conflicts && conflictsData.conflicts.length > 0 && (
         <>
           <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full mb-6">
@@ -222,7 +238,6 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
           <div className="mt-6">
             <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
             <MapDisplay
-              key={conflictsData?.lastUpdated || 'map-initial-loading-state'} // Force remount when data updates
               conflicts={conflictsData?.conflicts || []}
             />
           </div>
@@ -231,3 +246,4 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     </div>
   );
 }
+
