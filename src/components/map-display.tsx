@@ -73,13 +73,10 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   const mapCenter: L.LatLngExpression = [20, 0];
   const mapZoom = 2;
 
-  // Key to help React re-initialize MapContainer if the conflict presence changes significantly
-  const mapKey = `map-container-${validConflicts.length > 0 ? 'with-data' : 'no-data'}`;
-
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        key={mapKey} // Add a dynamic key to MapContainer
+        // Removed dynamic key to make MapContainer instance more persistent
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
