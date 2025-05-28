@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
@@ -60,6 +60,12 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
 ];
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const validConflicts = conflicts.filter(
     (conflict) =>
       conflict.latitude != null &&
@@ -70,6 +76,17 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
 
   const mapCenter: L.LatLngExpression = [20, 0];
   const mapZoom = 2;
+
+  if (!isClient) {
+    return (
+      <div 
+        className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative flex items-center justify-center bg-muted/30"
+        data-ai-hint="map loading placeholder"
+      >
+        <p className="text-muted-foreground">Carregando mapa...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
@@ -116,7 +133,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
         ))}
       </MapContainer>
 
-      {validConflicts.length === 0 && (
+      {validConflicts.length === 0 && isClient && ( // Only show this overlay if client-side and no conflicts
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
           <p
             className="text-background bg-foreground/70 p-3 rounded-md shadow-lg"
