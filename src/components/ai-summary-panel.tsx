@@ -13,8 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Wand2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-// Placeholder for MapDisplay as its AI-driven functionality was reverted.
-// Will be re-implemented later if a map feature based on API data (e.g., ACLED with geocoding) is developed.
+// Placeholder for MapDisplay
 const MapDisplayPlaceholder = dynamic(() => import('./map-display').then(mod => mod.default || (() => <div className="h-[300px] w-full flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 text-center"><p className="text-sm text-muted-foreground">Funcionalidade de mapa em desenvolvimento.</p></div>)), {
   ssr: false,
   loading: () => <LoadingSpinner text="Carregando mapa..." />,
@@ -42,33 +41,35 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
 
       const [bbcData, reliefWebData] = await Promise.all([bbcItemsPromise, reliefWebItemsPromise]);
 
-      const newsToSummarize: SummarizeNewsInputItem[] = [];
+      const newsItemsToSummarize: SummarizeNewsInputItem[] = [];
 
       bbcData.forEach((item: BbcNewsItemRss) => {
-        newsToSummarize.push({
+        newsItemsToSummarize.push({
           title: item.title,
-          description: item.description.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...',
+          description: item.description.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...', // Strip HTML and truncate
           link: item.link,
         });
       });
 
       reliefWebData.forEach((item: ReliefWebReport) => {
-        newsToSummarize.push({
+        // ReliefWeb body-html might be actual HTML, strip it for the description
+        const description = item.fields.body?.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...' || 'Sem descrição detalhada.';
+        newsItemsToSummarize.push({
           title: item.fields.title,
-          description: item.fields.body?.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...' || 'Sem descrição detalhada.',
+          description: description,
           link: item.fields.url,
         });
       });
       
-      if (newsToSummarize.length === 0) {
+      if (newsItemsToSummarize.length === 0) {
         setError("Nenhuma notícia encontrada para gerar o resumo. Tente atualizar as outras fontes primeiro ou verifique a conexão.");
         onStatusChange({ status: 'error', message: "Nenhuma notícia para resumir." });
         setIsLoading(false);
         return;
       }
       
-      // Pass the newsToSummarize array directly
-      const result = await getAiSummaryAction(newsToSummarize);
+      const result = await getAiSummaryAction(newsItemsToSummarize);
+
 
       if (result.error) {
         throw new Error(result.error);
@@ -88,11 +89,6 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
   }, [onStatusChange]);
   
   useEffect(() => {
-    // Set initial status or handle other side effects if needed
-    // For now, this useEffect simply ensures onStatusChange is part of the component's lifecycle
-    // and its stability is managed by the parent (ConflictDashboard) via useCallback.
-    // If this panel were to auto-trigger a summary on load, logic would go here.
-    // Currently, it's user-triggered, so an 'idle' status is appropriate until generation.
     if (!isLoading && !summary && !error) {
       onStatusChange({ status: 'idle' });
     }
@@ -113,9 +109,16 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
         <ScrollArea className="flex-grow">
           <div className="p-1 md:p-3 bg-card rounded-lg shadow-md space-y-6 text-sm">
             
+            {summary.visaoGeralMacro && (
+              <div>
+                <h3 className="font-semibold text-lg mb-2 text-accent border-b pb-2">Visão Geral Macro</h3>
+                <p className="whitespace-pre-wrap text-foreground/90">{summary.visaoGeralMacro}</p>
+              </div>
+            )}
+
             {summary.resumoGeral && (
               <div>
-                <h4 className="font-semibold text-base mb-1 text-accent">Resumo Geral:</h4>
+                <h4 className="font-semibold text-base mb-1 text-accent">Resumo Detalhado dos Eventos:</h4>
                 <p className="whitespace-pre-wrap text-foreground/90">{summary.resumoGeral}</p>
               </div>
             )}
@@ -148,7 +151,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
                 <p className="whitespace-pre-wrap text-foreground/90">{summary.causasFatoresMencionados}</p>
               </div>
             )}
-            {(!summary.resumoGeral && (!summary.eventosChave || summary.eventosChave.length === 0)) && (
+            {(!summary.visaoGeralMacro && !summary.resumoGeral && (!summary.eventosChave || summary.eventosChave.length === 0)) && (
                 <p className="text-muted-foreground">Não foi possível extrair informações detalhadas das notícias fornecidas para esta análise.</p>
             )}
           </div>
@@ -159,6 +162,9 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
            Clique no botão acima para gerar uma análise detalhada dos eventos e temas recorrentes.
          </p>
       )}
+       {/* Placeholder for future map integration, currently does nothing if not used */}
+       {/* <MapDisplayPlaceholder zones={[]}/> */}
     </div>
   );
 }
+

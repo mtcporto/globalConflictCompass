@@ -23,11 +23,12 @@ const SummarizeConflictNewsInputSchema = z.object({
 export type SummarizeConflictNewsInput = z.infer<typeof SummarizeConflictNewsInputSchema>;
 
 const SummarizeConflictNewsOutputSchema = z.object({
+  visaoGeralMacro: z.string().optional().describe("Uma ou duas frases de abertura que pintem um quadro geral e amplo da situação dos conflitos globais, com base APENAS nos títulos e descrições das notícias fornecidas. Deve ser o ponto de partida da análise."),
   eventosChave: z.array(z.string()).optional().describe("Lista dos eventos chave ou desenvolvimentos mais significativos nas notícias. Se nenhum evento chave for identificado, retornar um array vazio [] ou omitir este campo."),
   atoresEnvolvidos: z.array(z.string()).optional().describe("Principais atores (países, grupos formações políticas, etc.) explicitamente mencionados como envolvidos nos conflitos. Se nenhum ator for identificado, retornar um array vazio [] ou omitir este campo."),
   impactoHumanitario: z.string().optional().describe('Breve descrição do impacto humanitário mencionado (e.g., deslocados, vítimas, necessidade de ajuda), se houver. Se não houver, pode omitir o campo ou retornar "Não mencionado explicitamente nas notícias fornecidas".'),
   causasFatoresMencionados: z.string().optional().describe('Breve descrição das causas ou fatores que contribuem para os conflitos, conforme explicitamente mencionado nas notícias. Não especule. Se não houver, pode omitir o campo ou retornar "Não mencionado explicitamente nas notícias fornecidas".'),
-  resumoGeral: z.string().describe('Um resumo geral conciso dos eventos e da situação, em português brasileiro.'),
+  resumoGeral: z.string().describe('Um resumo geral conciso dos eventos e da situação, em português brasileiro, conectando os pontos principais após a visão macro e os detalhes.'),
 });
 
 export type SummarizeConflictNewsOutput = z.infer<typeof SummarizeConflictNewsOutputSchema>;
@@ -53,6 +54,8 @@ Itens de Notícia:
 
 Com base APENAS nos itens de notícia fornecidos, preencha os seguintes campos:
 
+0.  **Visão Geral Macro** (campo: \`visaoGeralMacro\`): Comece com uma ou duas frases que forneçam uma visão ampla e de alto nível do cenário de conflitos globais, com base estritamente nos títulos e descrições das notícias recebidas. Este deve ser o ponto de partida da sua análise, oferecendo um contexto geral antes dos detalhes. Se não for possível inferir uma visão macro das notícias, omita este campo.
+
 1.  **Eventos Chave** (campo: \`eventosChave\`): Liste os eventos ou desenvolvimentos mais importantes e recentes mencionados.
     - Se houver dados, retorne um array de strings (ex: \`["Evento 1", "Evento 2"]\`).
     - Se NÃO houver dados, você DEVE omitir completamente o campo \`eventosChave\` da resposta JSON OU retornar um array vazio \`[]\`.
@@ -71,13 +74,13 @@ Com base APENAS nos itens de notícia fornecidos, preencha os seguintes campos:
     - Se não houver menção clara, você DEVE omitir o campo \`causasFatoresMencionados\` OU fornecer a string "Não mencionado explicitamente nas notícias fornecidas".
     - IMPORTANTE: NÃO retorne \`null\` para este campo.
 
-5.  **Resumo Geral** (campo: \`resumoGeral\`): Forneça um parágrafo de resumo geral que conecte os pontos principais e a situação atual conforme as notícias. Este campo é OBRIGATÓRIO.
+5.  **Resumo Geral** (campo: \`resumoGeral\`): Forneça um parágrafo de resumo geral que conecte os pontos principais e a situação atual conforme as notícias. Este campo é OBRIGATÓRIO e deve ser um resumo mais detalhado dos eventos, sucedendo a 'Visão Geral Macro' e os campos de detalhamento.
 
 Instruções CRÍTICAS para o formato da resposta:
 - O resultado DEVE estar em português brasileiro (pt-BR).
 - É ABSOLUTAMENTE CRUCIAL que a sua resposta respeite o schema de output JSON fornecido.
 - Para campos de array opcionais (\`eventosChave\`, \`atoresEnvolvidos\`): se não houver dados, siga as instruções detalhadas acima (omitir o campo ou retornar \`[]\`).
-- Para campos de string opcionais (\`impactoHumanitario\`, \`causasFatoresMencionados\`): se nenhuma informação for encontrada, siga as instruções detalhadas acima (omitir o campo ou retornar "Não mencionado explicitamente nas notícias fornecidas").
+- Para campos de string opcionais (\`visaoGeralMacro\`, \`impactoHumanitario\`, \`causasFatoresMencionados\`): se nenhuma informação for encontrada, siga as instruções detalhadas acima (omitir o campo ou retornar a string padrão, quando aplicável).
 - O campo \`resumoGeral\` é obrigatório e deve sempre ser uma string.
 
 Mantenha o resultado conciso e focado nos fatos dos artigos.
