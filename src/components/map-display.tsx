@@ -69,7 +69,7 @@ const MapDisplay = React.memo(function MapDisplay({ conflicts }: MapDisplayProps
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        key="leaflet-map-component-static" // Added a static key here
+        // Removed static key "leaflet-map-component-static"
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
