@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-// Removed: import 'leaflet/dist/leaflet.css'; // Leaflet CSS is imported in MapDisplay component
+import 'leaflet/dist/leaflet.css'; // Ensure Leaflet CSS is imported here
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

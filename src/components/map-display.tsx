@@ -4,7 +4,7 @@
 import React from 'react'; // Removed useEffect, useRef
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+// import 'leaflet/dist/leaflet.css'; // Removed from here, CSS is in RootLayout
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
 
 // Fix for default marker icon issue with Webpack/Next.js
@@ -82,7 +82,6 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
         scrollWheelZoom={true}
         maxBounds={WorldMapBounds}
         minZoom={2}
-        // whenCreated prop removed as mapInstanceRef is removed
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
