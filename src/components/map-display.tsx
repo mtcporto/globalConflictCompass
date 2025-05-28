@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react'; // Removed useEffect, useRef
+import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
@@ -74,6 +74,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
+        placeholder={<div style={{height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f4f7' }}><p>Loading map...</p></div>}
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
