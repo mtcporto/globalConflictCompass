@@ -2,8 +2,8 @@
 "use client";
 
 import type React from 'react';
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+// Removed useEffect as ChangeView is being removed
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'; // Removed useMap
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
@@ -43,9 +43,9 @@ const createCustomIcon = (color: string) => {
 
   return L.divIcon({
     className: "custom-icon",
-    iconAnchor: [0, 24], // Adjusted for the diamond shape center bottom
+    iconAnchor: [0, 24],
     labelAnchor: [-6, 0],
-    popupAnchor: [0, -24], // Adjusted for the diamond shape center top
+    popupAnchor: [0, -24],
     html: `<span style="${markerHtmlStyles}" />`
   });
 };
@@ -55,15 +55,7 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
   [85, 190]  // Northeast
 ];
 
-function ChangeView({ center, zoom }: {center: L.LatLngExpression, zoom: number}) {
-  const map = useMap();
-  useEffect(() => {
-    if (map) {
-      map.setView(center, zoom);
-    }
-  }, [map, center, zoom]);
-  return null;
-}
+// Removed ChangeView component
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
   if (typeof window === 'undefined') {
@@ -88,7 +80,6 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        // Using a stable key or no key for the single MapContainer instance
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
@@ -100,7 +91,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
         />
-        <ChangeView center={mapCenter} zoom={mapZoom} />
+        {/* ChangeView component removed from here */}
 
         {validConflicts.map((conflict) => (
           <Marker
@@ -131,7 +122,6 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
         ))}
       </MapContainer>
 
-      {/* Overlay message if no valid conflicts to display markers for */}
       {validConflicts.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
           <p
