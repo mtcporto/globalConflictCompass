@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useRef } from 'react'; // Added useEffect, useRef
+import React from 'react'; // Removed useEffect, useRef
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
@@ -60,8 +60,6 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
 ];
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
-  const mapRef = useRef<L.Map | null>(null); // Ref to store the Leaflet map instance
-
   const validConflicts = conflicts.filter(
     (conflict) =>
       conflict.latitude != null &&
@@ -73,20 +71,9 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   const mapCenter: L.LatLngExpression = [20, 0];
   const mapZoom = 2;
 
-  useEffect(() => {
-    // This effect's cleanup function will run when the MapDisplay component unmounts.
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove(); // Explicitly tell Leaflet to destroy the map instance
-        mapRef.current = null;   // Clear our reference to the map instance
-      }
-    };
-  }, []); // Empty dependency array ensures this cleanup runs only on component unmount
-
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        whenCreated={(mapInstance) => { mapRef.current = mapInstance; }} // Store the map instance in our ref
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}

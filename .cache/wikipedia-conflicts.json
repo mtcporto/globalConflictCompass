@@ -1,0 +1,134 @@
+{
+  "conflicts": [
+    {
+      "fatalitiesRaw": "10,000+",
+      "id": "ukraine-war-2022-02-24",
+      "locations": [
+        "Ukraine",
+        "Russia"
+      ],
+      "name": "Russo-Ukrainian War",
+      "severity": "HIGH",
+      "detailsLink": "https://en.wikipedia.org/wiki/Russo-Ukrainian_War",
+      "latitude": 48.3794,
+      "longitude": 31.1656,
+      "startDate": "20 February 2014 (initial stage)",
+      "territory": "Ukraine"
+    },
+    {
+      "fatalitiesRaw": "10,000+",
+      "id": "war-in-sudan-2023-04-15",
+      "locations": [
+        "Sudan"
+      ],
+      "name": "War in Sudan",
+      "severity": "HIGH",
+      "detailsLink": "https://en.wikipedia.org/wiki/2023_Sudan_conflict",
+      "latitude": 15.5,
+      "longitude": 32.5,
+      "startDate": "15 April 2023",
+      "territory": "Sudan"
+    },
+    {
+      "fatalitiesRaw": "10,000+",
+      "id": "israeli-palestinian-conflict-2023-10-07",
+      "locations": [
+        "Israel",
+        "Palestine"
+      ],
+      "name": "Israeli–Palestinian conflict",
+      "severity": "HIGH",
+      "detailsLink": "https://en.wikipedia.org/wiki/Israeli%E2%80%93Palestinian_conflict",
+      "latitude": 31.9522,
+      "longitude": 35.2332,
+      "startDate": "7 October 2023",
+      "territory": "Gaza Strip"
+    },
+    {
+      "fatalitiesRaw": "10,000+",
+      "id": "syrian-civil-war-2011-03-15",
+      "locations": [
+        "Syria"
+      ],
+      "name": "Syrian Civil War",
+      "severity": "HIGH",
+      "detailsLink": "https://en.wikipedia.org/wiki/Syrian_civil_war",
+      "latitude": 34.8021,
+      "longitude": 38.9968,
+      "startDate": "15 March 2011",
+      "territory": "Syria"
+    },
+    {
+      "fatalitiesRaw": "1,000+",
+      "id": "ethiopian-civil-war-2020-11-03",
+      "locations": [
+        "Ethiopia"
+      ],
+      "name": "Ethiopian civil conflict",
+      "severity": "MEDIUM",
+      "detailsLink": "https://en.wikipedia.org/wiki/Ethiopian_civil_conflict",
+      "latitude": 9.145,
+      "longitude": 40.4897,
+      "startDate": "3 November 2020",
+      "territory": "Tigray Region"
+    },
+    {
+      "fatalitiesRaw": "1,000+",
+      "id": "myanmar-civil-war-2021-05-05",
+      "locations": [
+        "Myanmar"
+      ],
+      "name": "Myanmar civil war",
+      "severity": "MEDIUM",
+      "detailsLink": "https://en.wikipedia.org/wiki/Myanmar_civil_war",
+      "latitude": 21.9139,
+      "longitude": 95.9562,
+      "startDate": "5 May 2021"
+    },
+    {
+      "fatalitiesRaw": "1,000+",
+      "id": "sahel-insurgency-2017-10-01",
+      "locations": [
+        "Burkina Faso",
+        "Mali",
+        "Niger"
+      ],
+      "name": "Sahel insurgency",
+      "severity": "MEDIUM",
+      "detailsLink": "https://en.wikipedia.org/wiki/Sahel_insurgency",
+      "latitude": 15,
+      "longitude": -2,
+      "startDate": "October 2017"
+    },
+    {
+      "fatalitiesRaw": "100+",
+      "id": "insurgency-in-southern-thailand-2004-01-04",
+      "locations": [
+        "Thailand"
+      ],
+      "name": "Insurgency in Southern Thailand",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/South_Thailand_insurgency",
+      "latitude": 6.5,
+      "longitude": 101.75,
+      "startDate": "4 January 2004",
+      "territory": "Southern Thailand"
+    },
+    {
+      "fatalitiesRaw": "100+",
+      "id": "kashmir-conflict-1989-01-01",
+      "locations": [
+        "India",
+        "Pakistan"
+      ],
+      "name": "Kashmir conflict",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Kashmir_conflict",
+      "latitude": 34.3,
+      "longitude": 74.6,
+      "startDate": "1989"
+    }
+  ],
+  "lastUpdated": "2025-05-28T12:53:40.868Z",
+  "sourcePage": "https://en.wikipedia.org/wiki/List_of_ongoing_armed_conflicts"
+}
