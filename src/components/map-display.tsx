@@ -91,8 +91,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        // Removed id="global-conflict-map-container" and key="global-conflict-map"
-        placeholder={<div style={{height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f4f7' }}><p>Loading map...</p></div>}
+        // Removed placeholder prop as the !isClient block handles loading.
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
@@ -134,7 +133,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
         ))}
       </MapContainer>
 
-      {validConflicts.length === 0 && isClient && (
+      {validConflicts.length === 0 && isClient && ( // Ensure isClient is true here too for consistency
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
           <p
             className="text-background bg-foreground/70 p-3 rounded-md shadow-lg"
@@ -146,3 +145,5 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
     </div>
   );
 }
+
+    
