@@ -2,6 +2,7 @@
 "use client";
 
 import type React from 'react';
+import { useEffect } from 'react'; // Import useEffect
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -57,7 +58,11 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
 
 function ChangeView({ center, zoom }: {center: L.LatLngExpression, zoom: number}) {
   const map = useMap();
-  map.setView(center, zoom);
+  useEffect(() => {
+    if (map) {
+      map.setView(center, zoom);
+    }
+  }, [map, center, zoom]); // Add dependencies
   return null;
 }
 
@@ -100,6 +105,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
         />
+        <ChangeView center={mapCenter} zoom={mapZoom} />
         {validConflicts.map((conflict) => (
           <Marker
             key={conflict.id}
@@ -131,3 +137,4 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
     </div>
   );
 }
+
