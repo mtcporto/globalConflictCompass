@@ -47,7 +47,11 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     try {
       const result = await getWikipediaConflictsAction();
       if (result.error) {
-        throw new Error(result.error);
+        // Set local error state instead of throwing
+        setError(result.error);
+        onStatusChange({ status: 'error', message: result.error });
+        setIsLoading(false); // Ensure loading is false before returning
+        return;
       }
       setConflictsData(result.data || null);
       if (!result.data || result.data.conflicts.length === 0) {
@@ -56,10 +60,11 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
         onStatusChange({ status: 'success' });
       }
     } catch (err) {
+      // This catch block handles unexpected errors from getWikipediaConflictsAction itself or subsequent processing
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar dados da Wikipedia.';
       setError(errorMessage);
       onStatusChange({ status: 'error', message: errorMessage });
-      console.error("Wikipedia data fetch error:", err);
+      console.error("Wikipedia data fetch error (catch block):", err);
     } finally {
       setIsLoading(false);
     }
@@ -173,3 +178,4 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     </div>
   );
 }
+
