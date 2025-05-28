@@ -27,8 +27,20 @@ export default function ConflictDashboard() {
     acled: 0, reliefweb: 0, bbc: 0, aiSummary: 0, wikipediaConflicts: 0,
   });
 
-  const handleStatusChange = useCallback((source: ApiName, status: SourceStatus) => {
-    setApiStatuses(prev => ({ ...prev, [source]: status }));
+  const handleAcledStatusChange = useCallback((status: SourceStatus) => {
+    setApiStatuses(prev => ({ ...prev, acled: status }));
+  }, []);
+  const handleReliefWebStatusChange = useCallback((status: SourceStatus) => {
+    setApiStatuses(prev => ({ ...prev, reliefweb: status }));
+  }, []);
+  const handleBbcStatusChange = useCallback((status: SourceStatus) => {
+    setApiStatuses(prev => ({ ...prev, bbc: status }));
+  }, []);
+  const handleAiSummaryStatusChange = useCallback((status: SourceStatus) => {
+    setApiStatuses(prev => ({ ...prev, aiSummary: status }));
+  }, []);
+  const handleWikipediaConflictsStatusChange = useCallback((status: SourceStatus) => {
+    setApiStatuses(prev => ({ ...prev, wikipediaConflicts: status }));
   }, []);
 
   const handleRefresh = (source: ApiName) => {
@@ -59,13 +71,6 @@ export default function ConflictDashboard() {
 
   }, [apiStatuses]);
 
-  const handleAcledStatusChange = useCallback((status: SourceStatus) => handleStatusChange('acled', status), [handleStatusChange]);
-  const handleReliefWebStatusChange = useCallback((status: SourceStatus) => handleStatusChange('reliefweb', status), [handleStatusChange]);
-  const handleBbcStatusChange = useCallback((status: SourceStatus) => handleStatusChange('bbc', status), [handleStatusChange]);
-  const handleAiSummaryStatusChange = useCallback((status: SourceStatus) => handleStatusChange('aiSummary', status), [handleStatusChange]);
-  const handleWikipediaConflictsStatusChange = useCallback((status: SourceStatus) => handleStatusChange('wikipediaConflicts', status), [handleStatusChange]);
-
-
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8">
       <header className="text-center mb-8">
@@ -89,6 +94,7 @@ export default function ConflictDashboard() {
             isLoading={apiStatuses.wikipediaConflicts.status === 'loading'}
             className="lg:col-span-3" // Span full width
             onRefresh={() => handleRefresh('wikipediaConflicts')}
+            disableMaxHeight={true} // Allow this card to expand
           >
             <WikipediaMacroPanel 
               onStatusChange={handleWikipediaConflictsStatusChange}
@@ -149,4 +155,3 @@ export default function ConflictDashboard() {
     </div>
   );
 }
-

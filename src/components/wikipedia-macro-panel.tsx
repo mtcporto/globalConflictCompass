@@ -7,7 +7,7 @@ import type { WikipediaConflictsData, WikipediaConflict, WikipediaConflictSeveri
 import { getWikipediaConflictsAction } from '@/app/actions';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// ScrollArea removed as content should flow freely
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, MapPin, CalendarDays, AlertOctagon } from 'lucide-react';
 import {
@@ -80,7 +80,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
   const severityOrder: WikipediaConflictSeverity[] = ['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col"> {/* Removed h-full */}
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
         <p>
           Dados extraídos da página{" "}
@@ -94,62 +94,61 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
             Nota: A extração é feita por IA e pode conter imprecisões. A gravidade é baseada nas categorias de fatalidades da Wikipedia.
         </p>
       </div>
-      <ScrollArea className="flex-grow">
-        <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full">
-          {severityOrder.map((severityKey) => {
-            const conflicts = groupedConflicts[severityKey];
-            if (!conflicts || conflicts.length === 0) return null;
-            
-            const severityInfo = severityMap[severityKey];
-            const IconComponent = severityInfo.icon;
+      {/* ScrollArea removed */}
+      <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full">
+        {severityOrder.map((severityKey) => {
+          const conflicts = groupedConflicts[severityKey];
+          if (!conflicts || conflicts.length === 0) return null;
+          
+          const severityInfo = severityMap[severityKey];
+          const IconComponent = severityInfo.icon;
 
-            return (
-              <AccordionItem value={severityKey} key={severityKey}>
-                <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    {IconComponent && <IconComponent className={`w-5 h-5 ${severityInfo.color.replace('bg-', 'text-')}`} />}
-                    {severityInfo.label} ({conflicts.length})
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-3">
-                    {conflicts.map((conflict) => (
-                      <div key={conflict.id} className="p-3 border rounded-md shadow-sm bg-card hover:shadow-md transition-shadow">
-                        <h4 className="font-semibold text-base mb-1">{conflict.name}</h4>
-                        <div className="text-xs text-muted-foreground space-y-0.5 mb-1">
-                          {conflict.startDate && (
-                            <p className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Início: {conflict.startDate}</p>
-                          )}
-                          <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalitiesRaw}</p>
-                          {conflict.territory && (
-                            <p className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Território Específico: {conflict.territory}</p>
-                          )}
-                        </div>
-                        {conflict.locations && conflict.locations.length > 0 && (
-                           <div className="mb-1.5">
-                             <span className="text-xs font-medium">Locais/Grupos Envolvidos: </span>
-                             {conflict.locations.map(loc => <Badge key={loc} variant="secondary" className="mr-1 mb-1 text-xs">{loc}</Badge>)}
-                           </div>
+          return (
+            <AccordionItem value={severityKey} key={severityKey}>
+              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+                <div className="flex items-center gap-2">
+                  {IconComponent && <IconComponent className={`w-5 h-5 ${severityInfo.color.replace('bg-', 'text-')}`} />}
+                  {severityInfo.label} ({conflicts.length})
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-3">
+                  {conflicts.map((conflict) => (
+                    <div key={conflict.id} className="p-3 border rounded-md shadow-sm bg-card hover:shadow-md transition-shadow">
+                      <h4 className="font-semibold text-base mb-1">{conflict.name}</h4>
+                      <div className="text-xs text-muted-foreground space-y-0.5 mb-1">
+                        {conflict.startDate && (
+                          <p className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Início: {conflict.startDate}</p>
                         )}
-                        {conflict.detailsLink && (
-                          <a
-                            href={conflict.detailsLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
-                          >
-                            Ver detalhes na Wikipedia <ExternalLink className="w-3 h-3" />
-                          </a>
+                        <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalitiesRaw}</p>
+                        {conflict.territory && (
+                          <p className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Território Específico: {conflict.territory}</p>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
-      </ScrollArea>
+                      {conflict.locations && conflict.locations.length > 0 && (
+                         <div className="mb-1.5">
+                           <span className="text-xs font-medium">Locais/Grupos Envolvidos: </span>
+                           {conflict.locations.map(loc => <Badge key={loc} variant="secondary" className="mr-1 mb-1 text-xs">{loc}</Badge>)}
+                         </div>
+                      )}
+                      {conflict.detailsLink && (
+                        <a
+                          href={conflict.detailsLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+                        >
+                          Ver detalhes na Wikipedia <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
        {/* Placeholder for future map */}
        <div className="mt-6 p-4 bg-muted/50 rounded-lg text-center">
             <h3 className="text-lg font-semibold mb-2">Mapa Global de Conflitos</h3>
@@ -161,4 +160,3 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     </div>
   );
 }
-

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { RefreshCw } from 'lucide-react';
 import type React from 'react';
+import { cn } from '@/lib/utils';
 
 interface DataCardProps {
   title: string;
@@ -11,9 +12,10 @@ interface DataCardProps {
   isLoading?: boolean;
   children: React.ReactNode;
   className?: string;
+  disableMaxHeight?: boolean; // New prop
 }
 
-export function DataCard({ title, icon: Icon, onRefresh, isLoading, children, className }: DataCardProps) {
+export function DataCard({ title, icon: Icon, onRefresh, isLoading, children, className, disableMaxHeight = false }: DataCardProps) {
   return (
     <Card className={cn("flex flex-col shadow-lg", className)}>
       <CardHeader className="bg-[hsl(var(--app-header-background))] text-[hsl(var(--app-header-foreground))] p-4 rounded-t-lg">
@@ -36,14 +38,14 @@ export function DataCard({ title, icon: Icon, onRefresh, isLoading, children, cl
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-4 flex-grow overflow-y-auto max-h-[400px]">
+      <CardContent className={cn(
+        "p-4 flex-grow",
+        !disableMaxHeight && "overflow-y-auto max-h-[400px]" // Apply only if not disabled
+      )}>
         {children}
       </CardContent>
     </Card>
   );
 }
 
-// Helper for cn if not globally available, or import from lib
-function cn(...inputs: Array<string | undefined | null | boolean>): string {
-  return inputs.filter(Boolean).join(' ');
-}
+// Helper for cn was removed as it's imported from lib/utils
