@@ -10,16 +10,16 @@ import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
 
 // Robust icon patch to ensure it only runs once per page load, even with HMR
 // @ts-ignore
-if (typeof window !== 'undefined' && !window._leafletIconPatched) {
+if (typeof window !== 'undefined' && !L.Icon.Default.prototype._iconUrlsPatched) {
   // @ts-ignore
-  delete L.Icon.Default.prototype._getIconUrl;
+  delete L.Icon.Default.prototype._getIconUrl; // Delete the original method
   L.Icon.Default.mergeOptions({
     iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default,
     iconUrl: require('leaflet/dist/images/marker-icon.png').default,
     shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
   });
   // @ts-ignore
-  window._leafletIconPatched = true;
+  L.Icon.Default.prototype._iconUrlsPatched = true; // Use a flag on the prototype
 }
 
 
@@ -50,16 +50,10 @@ const createCustomIcon = (color: string) => {
   return L.divIcon({
     className: "custom-icon",
     iconAnchor: [0, 24],
-    labelAnchor: [-6, 0],
     popupAnchor: [0, -24],
     html: `<span style="${markerHtmlStyles}" />`
   });
 };
-
-// const WorldMapBounds: L.LatLngBoundsExpression = [
-//   [-60, -170], // Southwest
-//   [85, 190]  // Northeast
-// ];
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
   const validConflicts = conflicts.filter(
@@ -76,13 +70,12 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        // Removed dynamic key to make MapContainer instance more persistent
+        // Removed placeholder prop as the dynamic import's loading prop handles it.
+        // No internal key needed here; parent component will control remounts with its own key.
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
-        // maxBounds={WorldMapBounds} // Removed to simplify
-        // minZoom={2} // Removed to simplify
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -91,7 +84,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
 
         {validConflicts.map((conflict) => (
           <Marker
-            key={conflict.id}
+            key={conflict.id} // Key for list items is important
             position={[conflict.latitude as number, conflict.longitude as number]}
             icon={createCustomIcon(severityColorMap[conflict.severity || 'UNKNOWN'])}
           >
@@ -118,6 +111,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
         ))}
       </MapContainer>
 
+      {/* Overlay message if no conflicts to display */}
       {validConflicts.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
           <p
