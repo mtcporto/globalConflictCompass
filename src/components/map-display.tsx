@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React from 'react'; // Ensure React is imported for React.memo
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
@@ -53,7 +53,8 @@ const createCustomIcon = (color: string) => {
   });
 };
 
-export default function MapDisplay({ conflicts }: MapDisplayProps) {
+// Wrap MapDisplay with React.memo
+const MapDisplay = React.memo(function MapDisplay({ conflicts }: MapDisplayProps) {
   const validConflicts = conflicts.filter(
     (conflict) =>
       conflict.latitude != null &&
@@ -121,4 +122,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
       )}
     </div>
   );
-}
+});
+MapDisplay.displayName = 'MapDisplay'; // Optional: for better debugging names
+
+export default MapDisplay;
