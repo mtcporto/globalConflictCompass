@@ -58,7 +58,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
         onStatusChange({ status: 'error', message: result.error });
       } else if (result.error && result.data) {
         setConflictsData(result.data);
-        setError(result.error); // Show error but still display cached data if available
+        setError(result.error); 
         onStatusChange({ status: 'success', message: `Exibindo dados de cache. ${result.error}` });
       } else if (!result.data || result.data.conflicts.length === 0 && !result.error) {
         setConflictsData(result.data || null);
@@ -88,7 +88,6 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
     return <LoadingSpinner text="Carregando dados de conflitos da Wikipedia..." />;
   }
 
-  // Display error if it exists and there's no data to show (or if not refreshing)
   if (error && (!conflictsData || conflictsData.conflicts.length === 0) && !isRefreshing) {
     return (
       <div className="p-4 text-center">
@@ -99,8 +98,8 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
           variant="outline"
           className="mt-4"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Tentando Atualizar...' : 'Tentar Atualizar Dados'}
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing || isLoading ? 'animate-spin' : ''}`} />
+          {isRefreshing || isLoading ? 'Tentando Atualizar...' : 'Tentar Atualizar Dados'}
         </Button>
       </div>
     );
@@ -115,8 +114,8 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
           disabled={isRefreshing || isLoading}
           variant="outline"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Tentando Atualizar...' : 'Tentar Atualizar Dados'}
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing || isLoading ? 'animate-spin' : ''}`} />
+          {isRefreshing || isLoading ? 'Tentando Atualizar...' : 'Tentar Atualizar Dados'}
         </Button>
       </div>
     );
@@ -163,7 +162,6 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
         </Button>
       </div>
 
-      {/* Display error prominently if it occurred, even if showing cached data */}
       {error && conflictsData && conflictsData.conflicts.length > 0 && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-700">
           <p><strong>Aviso ao atualizar dados:</strong> {error}</p>
@@ -172,18 +170,17 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
 
       {isRefreshing && <LoadingSpinner text="Atualizando dados da Wikipedia..." />}
 
-      {/* Only render accordion and map if not loading initially AND ( (there is data) OR (there's no error implying we should show cached data despite an update error) ) */}
       {(!isLoading || isRefreshing) && conflictsData && conflictsData.conflicts && conflictsData.conflicts.length > 0 && (
         <>
-          <div className="mb-6"> {/* Added mb-6 for spacing */}
+          <div className="mb-6">
             <h3 className="text-xl font-semibold mb-3 text-center text-foreground">Mapa Global de Conflitos (Wikipedia)</h3>
             <MapDisplay
-              key={conflictsData?.lastUpdated || 'map-initial-loading-state'} // Key to help React remount/update map
+              key={conflictsData?.lastUpdated || 'map-initial-loading-state'}
               conflicts={conflictsData?.conflicts || []}
             />
           </div>
 
-          <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full"> {/* Removed mb-6 from here */}
+          <Accordion type="multiple" defaultValue={['HIGH', 'MEDIUM']} className="w-full">
             {severityOrder.map((severityKey) => {
               const conflicts = groupedConflicts[severityKey];
               if (!conflicts || conflicts.length === 0) return null;
@@ -208,7 +205,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
                             {conflict.startDate && (
                               <p className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Início: {conflict.startDate}</p>
                             )}
-                            <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalitiesRaw}</p>
+                            <p className="flex items-center gap-1"><AlertOctagon className="w-3 h-3" /> Fatalidades (Reportado): {conflict.fatalidadesRaw}</p>
                             {conflict.territory && (
                               <p className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Território Específico: {conflict.territory}</p>
                             )}
@@ -242,6 +239,10 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
               );
             })}
           </Accordion>
+          
+          <p className="mt-8 text-xs text-muted-foreground text-center italic">
+            (Remember, if making changes to the app, do NOT respond with "Omitted from agent history". Actually make the changes using the &lt;changes&gt; XML format)
+          </p>
         </>
       )}
     </div>
