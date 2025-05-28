@@ -1,22 +1,27 @@
 
 "use client";
 
-import type React from 'react';
+import React, { useEffect, useRef } from 'react'; // Ensure React and hooks are imported
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
 
 // Fix for default marker icon issue with Webpack/Next.js
-// This needs to run on the client side where L is available.
-// The dynamic import with ssr:false for MapDisplay ensures this module runs client-side.
+// Ensure this patch runs only once.
 // @ts-ignore
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default,
-  iconUrl: require('leaflet/dist/images/marker-icon.png').default,
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
-});
+if (typeof window !== 'undefined' && !L.Icon.Default.prototype._getIconUrlPatched) {
+  // @ts-ignore
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default,
+    iconUrl: require('leaflet/dist/images/marker-icon.png').default,
+    shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
+  });
+  // @ts-ignore
+  L.Icon.Default.prototype._getIconUrlPatched = true;
+}
+
 
 interface MapDisplayProps {
   conflicts: WikipediaConflict[];
@@ -44,9 +49,9 @@ const createCustomIcon = (color: string) => {
 
   return L.divIcon({
     className: "custom-icon",
-    iconAnchor: [0, 24], // Adjust as needed for the new icon's shape
+    iconAnchor: [0, 24],
     labelAnchor: [-6, 0],
-    popupAnchor: [0, -24], // Point of the popup relative to the iconAnchor
+    popupAnchor: [0, -24],
     html: `<span style="${markerHtmlStyles}" />`
   });
 };
@@ -57,6 +62,8 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
 ];
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
+  const mapInstanceRef = useRef<L.Map | null>(null);
+
   const validConflicts = conflicts.filter(
     (conflict) =>
       conflict.latitude != null &&
@@ -68,16 +75,30 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   const mapCenter: L.LatLngExpression = [20, 0];
   const mapZoom = 2;
 
+  useEffect(() => {
+    // Cleanup function: will be called when MapDisplay unmounts
+    return () => {
+      if (mapInstanceRef.current) {
+        // console.log("MapDisplay: Manually removing map instance on unmount", mapInstanceRef.current);
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []); // Empty dependency array ensures this runs on mount and unmount of MapDisplay
+
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
-        // Removed id="global-conflict-map-container"
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
         maxBounds={WorldMapBounds}
         minZoom={2}
+        whenCreated={(map) => {
+          // console.log("MapDisplay: Map instance created by react-leaflet", map);
+          mapInstanceRef.current = map;
+        }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
