@@ -56,10 +56,10 @@ const createCustomIcon = (color: string) => {
   });
 };
 
-const WorldMapBounds: L.LatLngBoundsExpression = [
-  [-60, -170], // Southwest
-  [85, 190]  // Northeast
-];
+// const WorldMapBounds: L.LatLngBoundsExpression = [
+//   [-60, -170], // Southwest
+//   [85, 190]  // Northeast
+// ];
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
   const validConflicts = conflicts.filter(
@@ -81,8 +81,8 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
-        maxBounds={WorldMapBounds}
-        minZoom={2}
+        // maxBounds={WorldMapBounds} // Removed to simplify
+        // minZoom={2} // Removed to simplify
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
