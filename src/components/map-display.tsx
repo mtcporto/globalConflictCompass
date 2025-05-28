@@ -8,6 +8,8 @@ import 'leaflet/dist/leaflet.css';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
 
 // Fix for default marker icon issue with Webpack/Next.js
+// This needs to run on the client side where L is available.
+// The dynamic import with ssr:false for MapDisplay ensures this module runs client-side.
 // @ts-ignore
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -42,9 +44,9 @@ const createCustomIcon = (color: string) => {
 
   return L.divIcon({
     className: "custom-icon",
-    iconAnchor: [0, 24],
+    iconAnchor: [0, 24], // Adjust as needed for the new icon's shape
     labelAnchor: [-6, 0],
-    popupAnchor: [0, -24],
+    popupAnchor: [0, -24], // Point of the popup relative to the iconAnchor
     html: `<span style="${markerHtmlStyles}" />`
   });
 };
@@ -69,6 +71,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
   return (
     <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
+        id="global-conflict-map-container" // Added a stable ID
         center={mapCenter}
         zoom={mapZoom}
         style={{ height: '100%', width: '100%' }}
