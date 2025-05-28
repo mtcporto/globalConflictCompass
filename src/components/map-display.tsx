@@ -2,7 +2,7 @@
 "use client";
 
 import type React from 'react';
-import { useEffect } from 'react'; // Import useEffect
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -43,9 +43,9 @@ const createCustomIcon = (color: string) => {
 
   return L.divIcon({
     className: "custom-icon",
-    iconAnchor: [0, 24],
+    iconAnchor: [0, 24], // Adjusted for the diamond shape center bottom
     labelAnchor: [-6, 0],
-    popupAnchor: [0, -36],
+    popupAnchor: [0, -24], // Adjusted for the diamond shape center top
     html: `<span style="${markerHtmlStyles}" />`
   });
 };
@@ -55,20 +55,23 @@ const WorldMapBounds: L.LatLngBoundsExpression = [
   [85, 190]  // Northeast
 ];
 
-
 function ChangeView({ center, zoom }: {center: L.LatLngExpression, zoom: number}) {
   const map = useMap();
   useEffect(() => {
     if (map) {
       map.setView(center, zoom);
     }
-  }, [map, center, zoom]); 
+  }, [map, center, zoom]);
   return null;
 }
 
 export default function MapDisplay({ conflicts }: MapDisplayProps) {
   if (typeof window === 'undefined') {
-    return <div className="h-[400px] w-full bg-muted/30 rounded-lg flex items-center justify-center"><p className="text-muted-foreground">Carregando mapa...</p></div>;
+    return (
+      <div className="h-[400px] w-full bg-muted/30 rounded-lg flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando mapa...</p>
+      </div>
+    );
   }
 
   const validConflicts = conflicts.filter(
@@ -79,47 +82,18 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
       typeof conflict.longitude === 'number'
   );
 
-  const mapCenter: L.LatLngExpression = [20, 0]; // Default center of the map
-  const mapZoom = 2; // Default zoom level
-
-  if (validConflicts.length === 0) {
-    return (
-      <div className="h-[400px] w-full bg-muted/30 rounded-lg flex items-center justify-center relative" data-ai-hint="world map illustration">
-         <MapContainer 
-            key="map-no-conflicts"
-            center={mapCenter} 
-            zoom={mapZoom} 
-            style={{ height: '100%', width: '100%' }} 
-            scrollWheelZoom={true} 
-            maxBounds={WorldMapBounds} 
-            minZoom={2}
-          >
-            <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
-            />
-             <ChangeView center={mapCenter} zoom={mapZoom} />
-        </MapContainer>
-        <p 
-          className="absolute text-muted-foreground bg-background/70 p-2 rounded"
-          style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
-        >
-          Nenhum conflito com coordenadas para exibir no mapa.
-        </p>
-      </div>
-    );
-  }
-  
+  const mapCenter: L.LatLngExpression = [20, 0];
+  const mapZoom = 2;
 
   return (
-    <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md" data-ai-hint="world map conflict hotspots">
-      <MapContainer 
-        key="map-with-conflicts"
-        center={mapCenter} 
-        zoom={mapZoom} 
-        style={{ height: '100%', width: '100%' }} 
-        scrollWheelZoom={true} 
-        maxBounds={WorldMapBounds} 
+    <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
+      <MapContainer
+        // Using a stable key or no key for the single MapContainer instance
+        center={mapCenter}
+        zoom={mapZoom}
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={true}
+        maxBounds={WorldMapBounds}
         minZoom={2}
       >
         <TileLayer
@@ -127,6 +101,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
         />
         <ChangeView center={mapCenter} zoom={mapZoom} />
+
         {validConflicts.map((conflict) => (
           <Marker
             key={conflict.id}
@@ -140,7 +115,7 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
                 <p><strong>Fatalidades:</strong> {conflict.fatalitiesRaw}</p>
                 {conflict.locations && <p><strong>Locais:</strong> {conflict.locations.join(', ')}</p>}
                 {conflict.startDate && <p><strong>Início:</strong> {conflict.startDate}</p>}
-                 {conflict.detailsLink && (
+                {conflict.detailsLink && (
                   <a
                     href={conflict.detailsLink}
                     target="_blank"
@@ -155,7 +130,17 @@ export default function MapDisplay({ conflicts }: MapDisplayProps) {
           </Marker>
         ))}
       </MapContainer>
+
+      {/* Overlay message if no valid conflicts to display markers for */}
+      {validConflicts.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
+          <p
+            className="text-background bg-foreground/70 p-3 rounded-md shadow-lg"
+          >
+            Nenhum conflito com coordenadas para exibir no mapa.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
-
