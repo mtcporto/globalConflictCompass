@@ -135,22 +135,7 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
 
   return (
     <div className="flex flex-col">
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-        {conflictsData?.sourcePage && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex-grow min-w-[300px]">
-            <p>
-              Dados extraídos da página{" "}
-              <a href={conflictsData.sourcePage} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
-                "List of ongoing armed conflicts"
-              </a>{" "}
-              da Wikipedia (em inglês).
-              Última atualização do cache (processamento): {conflictsData.lastUpdated ? new Date(conflictsData.lastUpdated).toLocaleString('pt-BR') : 'N/A'}.
-            </p>
-            <p className="mt-1 text-xs">
-              Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia. O cache é atualizado a cada 24 horas ou manualmente.
-            </p>
-          </div>
-        )}
+      <div className="flex justify-end items-center mb-4 flex-wrap gap-2">
         <Button
           onClick={() => fetchData(true)}
           disabled={isRefreshing || isLoading}
@@ -240,11 +225,26 @@ export function WikipediaMacroPanel({ onStatusChange }: WikipediaMacroPanelProps
             })}
           </Accordion>
           
-          <p className="mt-8 text-xs text-muted-foreground text-center italic">
-            (Remember, if making changes to the app, do NOT respond with "Omitted from agent history". Actually make the changes using the &lt;changes&gt; XML format)
-          </p>
+          {conflictsData?.sourcePage && (
+            <div className="mt-8 p-3 bg-muted/50 border border-border rounded-lg text-xs text-muted-foreground text-center italic">
+              <p>
+                Dados extraídos da página{" "}
+                <a href={conflictsData.sourcePage} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline text-accent">
+                  "List of ongoing armed conflicts"
+                </a>{" "}
+                da Wikipedia (em inglês).
+                Última atualização do cache (processamento): {conflictsData.lastUpdated ? new Date(conflictsData.lastUpdated).toLocaleString('pt-BR') : 'N/A'}.
+              </p>
+              <p className="mt-1">
+                Nota: A extração é feita por IA e pode conter imprecisões, incluindo coordenadas geográficas. A gravidade é baseada nas categorias de fatalidades da Wikipedia. O cache é atualizado a cada 24 horas ou manualmente.
+              </p>
+            </div>
+          )}
         </>
       )}
     </div>
   );
 }
+
+
+    
