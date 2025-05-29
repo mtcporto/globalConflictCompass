@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
+import type { CuratedConflictEntry, ConflictSeverityCategory } from '@/lib/types';
 
 // Patch Leaflet's default icon path (ensure this runs only once)
 if (typeof window !== 'undefined') {
@@ -15,30 +15,29 @@ if (typeof window !== 'undefined') {
       iconUrl: require('leaflet/dist/images/marker-icon.png').default,
       shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
     });
-    L.Icon.Default.prototype._iconUrlPatched = true;
+    (L.Icon.Default.prototype as any)._iconUrlPatched = true;
   }
 }
 
 interface MapDisplayProps {
-  conflicts: WikipediaConflict[];
+  conflicts: CuratedConflictEntry[];
 }
 
-const leafletSeverityColorMap: Record<WikipediaConflictSeverity, string> = {
-  HIGH: '#DC2626',    // Red-600
-  MEDIUM: '#F59E0B',  // Amber-500
-  LOW: '#FACC15',     // Yellow-400
-  UNKNOWN: '#6B7280', // Gray-500
+const leafletSeverityColorMap: Record<ConflictSeverityCategory, string> = {
+  "Alta Gravidade": '#DC2626',    // Red-600
+  "Média Gravidade": '#F59E0B',  // Amber-500
+  "Baixa Gravidade": '#FACC15',     // Yellow-400
 };
 
 const defaultCountryStyle = {
-  fillColor: "#CBD5E1", // slate-300
+  fillColor: "#E2E8F0", 
   weight: 1,
   opacity: 1,
-  color: 'white', // White border for countries
-  fillOpacity: 0.7
+  color: 'white', 
+  fillOpacity: 0.6
 };
 
-const LegendControl = ({ severityMap }: { severityMap: Record<WikipediaConflictSeverity, string> }) => {
+const LegendControl = ({ severityMap }: { severityMap: Record<ConflictSeverityCategory, string> }) => {
   const map = useMap();
 
   useEffect(() => {
@@ -47,14 +46,9 @@ const LegendControl = ({ severityMap }: { severityMap: Record<WikipediaConflictS
     legend.onAdd = () => {
       const div = L.DomUtil.create("div", "info legend bg-background/80 p-2 rounded-md shadow-md text-xs");
       let labels = ['<strong class="text-sm">Gravidade do Conflito</strong>'];
-      (Object.keys(severityMap) as WikipediaConflictSeverity[]).forEach(severity => {
-        const severityLabel = 
-          severity === 'HIGH' ? 'Alta (10k+ mortes)' :
-          severity === 'MEDIUM' ? 'Média (1k-10k mortes)' :
-          severity === 'LOW' ? 'Baixa (100-1k mortes)' :
-          'Desconhecida';
+      (Object.keys(severityMap) as ConflictSeverityCategory[]).forEach(severityKey => {
         labels.push(
-          `<i style="background:${severityMap[severity]}; width: 12px; height: 12px; display: inline-block; margin-right: 4px; border-radius: 50%;"></i> ${severityLabel}`
+          `<i style="background:${severityMap[severityKey]}; width: 12px; height: 12px; display: inline-block; margin-right: 4px; border-radius: 50%;"></i> ${severityKey}`
         );
       });
       div.innerHTML = labels.join('<br>');
@@ -63,7 +57,6 @@ const LegendControl = ({ severityMap }: { severityMap: Record<WikipediaConflictS
     legend.addTo(map);
 
     return () => {
-      // Check if map instance and legend exist before trying to remove
       if (map && legend && legend.getContainer()) {
          map.removeControl(legend);
       }
@@ -94,29 +87,31 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
   }, []);
 
   const validConflicts = conflicts.filter(
-    (conflict) => conflict.latitude != null && conflict.longitude != null &&
-      typeof conflict.latitude === 'number' &&
-      typeof conflict.longitude === 'number'
+    (conflict) => conflict.coordenadas && typeof conflict.coordenadas[0] === 'number' && typeof conflict.coordenadas[1] === 'number'
   );
 
   const getCountryStyle = (feature: any) => {
     const countryName = feature.properties.name;
     const involvedConflicts = conflicts.filter(c => 
-      c.locations.some(loc => loc.toLowerCase() === countryName.toLowerCase() || loc.toLowerCase().includes(countryName.toLowerCase()) || countryName.toLowerCase().includes(loc.toLowerCase()) )
+      c.envolvidos && Array.isArray(c.envolvidos) && c.envolvidos.some(loc => 
+        loc.toLowerCase() === countryName.toLowerCase() || 
+        loc.toLowerCase().includes(countryName.toLowerCase()) || 
+        countryName.toLowerCase().includes(loc.toLowerCase())
+      )
     );
 
     if (involvedConflicts.length > 0) {
-      // Prioritize by severity: HIGH > MEDIUM > LOW > UNKNOWN
-      let highestSeverity: WikipediaConflictSeverity = 'UNKNOWN';
-      if (involvedConflicts.some(c => c.severity === 'HIGH')) highestSeverity = 'HIGH';
-      else if (involvedConflicts.some(c => c.severity === 'MEDIUM')) highestSeverity = 'MEDIUM';
-      else if (involvedConflicts.some(c => c.severity === 'LOW')) highestSeverity = 'LOW';
+      let highestSeverityCategory: ConflictSeverityCategory = "Baixa Gravidade"; // Default
+      
+      if (involvedConflicts.some(c => c.severityCategory === 'Alta Gravidade')) highestSeverityCategory = 'Alta Gravidade';
+      else if (involvedConflicts.some(c => c.severityCategory === 'Média Gravidade')) highestSeverityCategory = 'Média Gravidade';
+      // 'Baixa Gravidade' is already the default if the others are not met.
       
       return {
-        fillColor: leafletSeverityColorMap[highestSeverity],
+        fillColor: leafletSeverityColorMap[highestSeverityCategory] || defaultCountryStyle.fillColor,
         weight: 1.5,
         opacity: 1,
-        color: '#4B5563', // Gray-700 border for highlighted countries
+        color: '#4B5563', 
         fillOpacity: 0.5
       };
     }
@@ -126,7 +121,11 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
   const onEachCountryFeature = (feature: any, layer: L.Layer) => {
     const countryName = feature.properties.name;
     const relatedConflicts = conflicts.filter(c => 
-      c.locations.some(loc => loc.toLowerCase() === countryName.toLowerCase() || loc.toLowerCase().includes(countryName.toLowerCase()) || countryName.toLowerCase().includes(loc.toLowerCase()))
+      c.envolvidos && Array.isArray(c.envolvidos) && c.envolvidos.some(loc => 
+        loc.toLowerCase() === countryName.toLowerCase() || 
+        loc.toLowerCase().includes(countryName.toLowerCase()) || 
+        countryName.toLowerCase().includes(loc.toLowerCase())
+      )
     );
     if (relatedConflicts.length > 0) {
       const popupContent = `
@@ -134,7 +133,7 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
           <h4 class="font-semibold text-base mb-1">${countryName}</h4>
           <p class="font-medium">Conflitos Envolvidos:</p>
           <ul class="list-disc list-inside ml-1 text-xs">
-            ${relatedConflicts.map(c => `<li>${c.name} (Gravidade: ${c.severity})</li>`).join('')}
+            ${relatedConflicts.map(c => `<li>${c.nome} (Gravidade: ${c.severityCategory || 'N/A'})</li>`).join('')}
           </ul>
         </div>
       `;
@@ -142,19 +141,19 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
     }
   };
   
-  const mapCenter: L.LatLngTuple = [20, 0]; // Centered more globally
+  const mapCenter: L.LatLngTuple = [20, 0];
   const mapZoom = 2;
 
   if (loadingGeoJson) {
     return (
-      <div className="h-[400px] w-full rounded-lg overflow-hidden shadow-md relative bg-muted/30 flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando dados do mapa...</p>
+      <div className="h-[600px] md:h-[700px] w-full rounded-lg overflow-hidden shadow-md relative bg-muted/30 flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando dados do mapa geográfico...</p>
       </div>
     );
   }
 
   return (
-    <div className="h-[500px] md:h-[600px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
+    <div className="h-[600px] md:h-[700px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
         center={mapCenter}
         zoom={mapZoom}
@@ -169,49 +168,57 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
 
         {countriesGeoJson && (
           <GeoJSON
-            key={JSON.stringify(conflicts)} // Re-render GeoJSON if conflicts change
+            key={JSON.stringify(conflicts.map(c => ({ nome: c.nome, envolvidos: c.envolvidos, severityCategory: c.severityCategory})))} 
             data={countriesGeoJson}
             style={getCountryStyle}
             onEachFeature={onEachCountryFeature}
           />
         )}
 
-        {validConflicts.map((conflict) => (
-          <CircleMarker
-            key={conflict.id}
-            center={[conflict.latitude as number, conflict.longitude as number]}
-            radius={conflict.severity === 'HIGH' ? 8 : conflict.severity === 'MEDIUM' ? 6 : 4}
-            pathOptions={{ 
-              color: leafletSeverityColorMap[conflict.severity || 'UNKNOWN'],
-              fillColor: leafletSeverityColorMap[conflict.severity || 'UNKNOWN'],
-              fillOpacity: 0.7,
-              weight: 1,
-            }}
-          >
-            <Popup>
-              <div className="text-sm max-w-xs">
-                <h4 className="font-semibold text-base mb-1">{conflict.name}</h4>
-                <p><span className="font-medium">Gravidade:</span> {conflict.severity}</p>
-                <p><span className="font-medium">Fatalidades:</span> {conflict.fatalitiesRaw}</p>
-                {conflict.territory && <p><span className="font-medium">Território Específico:</span> {conflict.territory}</p>}
-                {conflict.locations && conflict.locations.length > 0 && (
-                  <p><span className="font-medium">Locais:</span> {conflict.locations.join(', ')}</p>
-                )}
-                {conflict.startDate && <p><span className="font-medium">Início:</span> {conflict.startDate}</p>}
-                {conflict.detailsLink && (
-                  <a
-                    href={conflict.detailsLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline mt-1.5 block"
-                  >
-                    Detalhes na Wikipedia →
-                  </a>
-                )}
-              </div>
-            </Popup>
-          </CircleMarker>
-        ))}
+        {validConflicts.map((conflict) => {
+          const severityCat = conflict.severityCategory || "Baixa Gravidade";
+          const color = leafletSeverityColorMap[severityCat] || '#6B7280';
+          let radius = 4;
+          if (severityCat === "Alta Gravidade") radius = 8;
+          else if (severityCat === "Média Gravidade") radius = 6;
+
+          return (
+            <CircleMarker
+              key={conflict.nome} // Assuming nome is unique for key
+              center={[conflict.coordenadas[0], conflict.coordenadas[1]]}
+              radius={radius}
+              pathOptions={{ 
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.7,
+                weight: 1,
+              }}
+            >
+              <Popup>
+                <div className="text-sm max-w-xs">
+                  <h4 className="font-semibold text-base mb-1">{conflict.nome}</h4>
+                  <p><span className="font-medium">Gravidade:</span> {severityCat}</p>
+                  <p><span className="font-medium">Fatalidades:</span> {conflict.fatalidades_texto}</p>
+                  {conflict.territorio && <p><span className="font-medium">Território Específico:</span> {conflict.territorio}</p>}
+                  {conflict.envolvidos && conflict.envolvidos.length > 0 && (
+                    <p><span className="font-medium">Envolvidos (Países/Grupos):</span> {conflict.envolvidos.join(', ')}</p>
+                  )}
+                  {conflict.inicio && <p><span className="font-medium">Início:</span> {conflict.inicio}</p>}
+                  {conflict.wikipedia_link && (
+                    <a
+                      href={conflict.wikipedia_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 hover:underline mt-1.5 block"
+                    >
+                      Detalhes na Wikipedia →
+                    </a>
+                  )}
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
         <LegendControl severityMap={leafletSeverityColorMap} />
       </MapContainer>
       
@@ -228,3 +235,4 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
 }
 
 export default React.memo(MapDisplay);
+

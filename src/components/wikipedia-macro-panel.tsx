@@ -2,10 +2,11 @@
 "use client";
 
 import type React from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import type { CuratedConflictEntry, CuratedConflictData, WikipediaConflictSeverity } from '@/lib/types'; // WikipediaConflictSeverity will be inferred by Zod
+import type { CuratedConflictEntry, CuratedConflictData, ConflictSeverityCategory } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, MapPin, CalendarDays, Users, AlertOctagon, TrendingUp, ShieldAlert, Globe, Info, BarChart3, Activity, UsersRound, MessageSquareWarning, TrendingDown, LocateFixed, Map, CalendarClock, Landmark, Scale, Route, AlertTriangle, Handshake, HelpCircle } from 'lucide-react';
+import { ExternalLink, MapPin, CalendarDays, Users, AlertOctagon, ShieldAlert, TrendingUp, Globe, Info, BarChart3, Activity, UsersRound, MessageSquareWarning, TrendingDown, LocateFixed, Map as MapIcon, CalendarClock, Landmark, Scale, Route, AlertTriangle, Handshake, HelpCircle, RefreshCw } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -13,57 +14,65 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import dynamic from 'next/dynamic';
-import curatedConflictData from '@/data/curated-conflict-data.json'; // Importar diretamente
+import curatedConflictDataJson from '@/data/curated-conflict-data.json'; // Importar diretamente
+import { LoadingSpinner } from './loading-spinner';
+import { ErrorDisplay } from './error-display';
 
 const MapDisplay = dynamic(() => import('./map-display'), {
   ssr: false,
-  loading: () => <div className="h-[400px] md:h-[600px] w-full bg-muted/30 rounded-lg flex items-center justify-center"><p className="text-muted-foreground">Carregando mapa...</p></div>,
+  loading: () => <div className="h-[600px] md:h-[700px] w-full bg-muted/30 rounded-lg flex items-center justify-center"><p className="text-muted-foreground">Carregando mapa...</p></div>,
 });
 
-// Tradução dos níveis de severidade para o cabeçalho do AccordionTrigger
-const severityTranslationMap: Record<string, string> = {
-  "Alta Gravidade": "Alta Gravidade (Fatalidades Anuais > 10.000 Estimadas)",
-  "Média Gravidade": "Média Gravidade (Fatalidades Anuais 1.000-9.999 Estimadas)",
-  "Baixa Gravidade": "Baixa Gravidade (Fatalidades Anuais 100-999 Estimadas)",
-};
-
-const severityIconMap: Record<string, React.ElementType | null> = {
+const severityIconMap: Record<ConflictSeverityCategory, React.ElementType> = {
   "Alta Gravidade": AlertOctagon,
   "Média Gravidade": ShieldAlert,
   "Baixa Gravidade": TrendingUp,
 };
 
-// Cores baseadas nas classes Tailwind para consistência, mas usadas para ícones aqui
-const severityColorClasses: Record<string, string> = {
+const severityColorClasses: Record<ConflictSeverityCategory, string> = {
   "Alta Gravidade": "text-red-500",
   "Média Gravidade": "text-orange-500",
   "Baixa Gravidade": "text-yellow-500",
 };
 
-const fallbackImageUrl = `https://placehold.co/600x400.png?text=Imagem+Indispon%C3%ADvel`;
+const fallbackImageUrl = `https://placehold.co/600x400/eeeeee/cccccc?text=Imagem+Indispon%C3%ADvel`;
 
-// Mapeamento de campos para ícones e rótulos
-const fieldDisplayConfig = [
+const fieldDisplayConfig: Array<{ key: keyof CuratedConflictEntry; label: string; icon: React.ElementType }> = [
   { key: 'inicio', label: 'Início', icon: CalendarDays },
   { key: 'fatalidades_texto', label: 'Fatalidades (Reportado)', icon: AlertTriangle },
   { key: 'data_ultima_atualizacao_fatalidades', label: 'Última Atualização Fatalidades', icon: CalendarClock },
   { key: 'territorio', label: 'Território Principal', icon: LocateFixed },
-  // { key: 'coordenadas', label: 'Coords.', icon: Globe }, // Coordenadas já estão no mapa
   { key: 'status', label: 'Status', icon: Activity },
   { key: 'tipo_conflito', label: 'Tipo de Conflito', icon: BarChart3 },
   { key: 'impacto_humanitario', label: 'Impacto Humanitário', icon: UsersRound },
   { key: 'atores_externos_envolvidos', label: 'Atores Externos', icon: Handshake },
   { key: 'tendencia_recente', label: 'Tendência Recente', icon: TrendingDown },
   { key: 'fonte_dados_especifica', label: 'Fontes Específicas', icon: Landmark },
-  { key: 'regiao_geopolitica', label: 'Região Geopolítica', icon: Map },
+  { key: 'regiao_geopolitica', label: 'Região Geopolítica', icon: MapIcon },
 ];
 
-
 export function WikipediaMacroPanel() {
-  const data: CuratedConflictData = curatedConflictData as CuratedConflictData;
+  // Directly use the imported JSON data
+  const data: CuratedConflictData = curatedConflictDataJson;
 
-  const allConflicts: CuratedConflictEntry[] = Object.values(data).flat();
-  const severityOrder = ["Alta Gravidade", "Média Gravidade", "Baixa Gravidade"];
+  // Flatten all conflicts into a single array for the map, adding severityCategory
+  const allConflictsWithSeverity: CuratedConflictEntry[] = [];
+  (Object.keys(data) as ConflictSeverityCategory[]).forEach(severityKey => {
+    data[severityKey].forEach(conflict => {
+      allConflictsWithSeverity.push({ ...conflict, severityCategory: severityKey });
+    });
+  });
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    if (target.src !== fallbackImageUrl) {
+      target.src = fallbackImageUrl;
+    }
+  };
+  
+  if (!data) {
+    return <LoadingSpinner text="Carregando dados dos conflitos..." />;
+  }
 
   return (
     <div className="flex flex-col">
@@ -71,20 +80,19 @@ export function WikipediaMacroPanel() {
         <h3 className="text-xl font-semibold text-foreground">Mapa Global de Conflitos</h3>
       </div>
 
-      <div className="mb-6 h-[500px] md:h-[700px] w-full"> {/* Aumentar altura do mapa */}
+      <div className="mb-6 h-[600px] md:h-[700px] w-full">
         <MapDisplay
-          key={JSON.stringify(allConflicts)} // Força recriação se os dados mudarem
-          conflicts={allConflicts || []}
+          key={allConflictsWithSeverity.length > 0 ? 'map-loaded' : 'map-empty'} // Ensure re-render if conflicts appear/disappear
+          conflicts={allConflictsWithSeverity}
         />
       </div>
 
       <h3 className="text-xl font-semibold text-foreground mb-3 mt-6">Visão Macro dos Conflitos</h3>
       <Accordion type="multiple" className="w-full">
-        {severityOrder.map((severityKey) => {
-          const conflictsInCategory = data[severityKey as keyof CuratedConflictData];
+        {(Object.keys(data) as ConflictSeverityCategory[]).map((severityKey) => {
+          const conflictsInCategory = data[severityKey];
           if (!conflictsInCategory || conflictsInCategory.length === 0) return null;
 
-          const translatedSeverity = severityTranslationMap[severityKey] || severityKey;
           const IconComponent = severityIconMap[severityKey];
           const iconColorClass = severityColorClasses[severityKey];
 
@@ -93,14 +101,14 @@ export function WikipediaMacroPanel() {
               <AccordionTrigger className="text-lg font-medium hover:no-underline">
                 <div className="flex items-center gap-2">
                   {IconComponent && <IconComponent className={`w-5 h-5 ${iconColorClass}`} />}
-                  {translatedSeverity} ({conflictsInCategory.length})
+                  {severityKey} ({conflictsInCategory.length})
                 </div>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="flex flex-wrap justify-center gap-4">
                   {conflictsInCategory.map((conflict) => (
                     <div
-                      key={conflict.nome}
+                      key={conflict.nome} // Assuming 'nome' is unique
                       className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-lg transition-shadow max-w-[350px] w-full sm:w-auto flex flex-col"
                     >
                       <div className="relative w-full h-48 mb-3 rounded-md overflow-hidden bg-muted">
@@ -111,32 +119,27 @@ export function WikipediaMacroPanel() {
                           style={{ objectFit: 'cover' }}
                           className="bg-muted"
                           data-ai-hint="war impact armed conflict"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            if (target.src !== fallbackImageUrl) {
-                              target.src = fallbackImageUrl;
-                            }
-                          }}
+                          onError={handleImageError}
                         />
                       </div>
                       <h4 className="font-semibold text-base mb-1.5">{conflict.nome}</h4>
 
                       {fieldDisplayConfig.map(field => {
                         const value = conflict[field.key as keyof CuratedConflictEntry];
-                        if (value) {
-                          return (
-                            <p key={field.key} className="text-xs text-muted-foreground mb-0.5 flex items-start gap-1.5">
-                              <field.icon className="w-3.5 h-3.5 mt-0.5 text-primary/80 shrink-0" />
-                              <span><strong>{field.label}:</strong> {String(value)}</span>
-                            </p>
-                          );
-                        }
-                        return null;
+                         // For array types like 'envolvidos', we handle them separately below
+                        if (field.key === 'envolvidos' || !value) return null;
+
+                        return (
+                          <p key={field.key} className="text-xs text-muted-foreground mb-0.5 flex items-start gap-1.5">
+                            <field.icon className="w-3.5 h-3.5 mt-0.5 text-primary/80 shrink-0" />
+                            <span><strong>{field.label}:</strong> {String(value)}</span>
+                          </p>
+                        );
                       })}
                       
                       {conflict.envolvidos && conflict.envolvidos.length > 0 && (
-                        <div className="mt-1.5 mb-2">
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
+                        <div className="mt-1.5 mb-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5 mb-0.5">
                             <Users className="w-3.5 h-3.5 text-primary/80 shrink-0" />
                             <strong>Principais Envolvidos:</strong>
                           </div>
@@ -166,7 +169,7 @@ export function WikipediaMacroPanel() {
       </Accordion>
       <div className="mt-8 p-3 bg-muted/50 border border-border rounded-lg text-xs text-muted-foreground text-center italic">
         <p>
-          Dados apresentados são curados manualmente e podem não refletir todas as atualizações em tempo real. Fatalidades são estimativas baseadas em diversas fontes.
+          Dados apresentados são curados manualmente e baseados no arquivo <code>src/data/curated-conflict-data.json</code>.
         </p>
         <p className="mt-1">
           Este painel é para fins informativos e educacionais.
@@ -175,5 +178,3 @@ export function WikipediaMacroPanel() {
     </div>
   );
 }
-
-    

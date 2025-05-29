@@ -11,7 +11,7 @@ export interface NewsItem {
   location?: string; // For ACLED
 }
 
-export type ApiName = 'acled' | 'reliefweb' | 'bbc' | 'aiSummary' | 'wikipediaConflicts';
+export type ApiName = 'acled' | 'reliefweb' | 'bbc' | 'aiSummary' | 'wikipediaConflicts'; // wikipediaConflicts is now curated
 export type ApiStatus = 'loading' | 'success' | 'error' | 'idle';
 
 export interface SourceStatus {
@@ -24,7 +24,7 @@ export interface AllApiStatuses {
   reliefweb: SourceStatus;
   bbc: SourceStatus;
   aiSummary: SourceStatus;
-  wikipediaConflicts: SourceStatus;
+  wikipediaConflicts: SourceStatus; // For the curated data panel
 }
 
 // ACLED specific types
@@ -35,7 +35,7 @@ export interface AcledEvent {
   location: string;
   notes: string;
   country: string;
-  fatalities?: number | string; // Made flexible
+  fatalities?: number | string;
 }
 
 export interface AcledErrorDetail {
@@ -51,7 +51,7 @@ export interface AcledApiResponse {
   message?: string;
   detail?: string;
   status_code?: number;
-  error?: AcledErrorDetail | string;
+  error?: AcledErrorDetail | string; 
 }
 
 
@@ -106,27 +106,33 @@ export interface SummarizeNewsInputItem {
   link?: string;
 }
 
-// For Wikipedia Conflict Data Extraction
-export type WikipediaConflictSeverity = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
+// For Curated Conflict Data (replaces Wikipedia extraction)
+export type ConflictSeverityCategory = "Alta Gravidade" | "Média Gravidade" | "Baixa Gravidade";
 
-export interface WikipediaConflict {
-  id: string;
-  name: string;
-  severity: WikipediaConflictSeverity;
-  fatalitiesRaw: string; // e.g., "10,000+" or "1,000-9,999"
-  locations: string[]; // Countries or main regions involved
-  startDate?: string;
-  territory?: string; // Specific territory if mentioned
-  detailsLink?: string; // Link to a more detailed Wikipedia page or section
-  imageUrl?: string; // URL for the conflict's main image
-  latitude?: number | null; // Approximate latitude
-  longitude?: number | null; // Approximate longitude
+export interface CuratedConflictEntry {
+  nome: string;
+  imagem_url: string;
+  inicio: string;
+  fatalidades_reportadas?: number; // Added as per JSON
+  fatalidades_texto: string;
+  territorio: string;
+  coordenadas: [number, number];
+  envolvidos: string[];
+  wikipedia_link: string;
+  status: string;
+  tipo_conflito: string;
+  data_ultima_atualizacao_fatalidades: string;
+  impacto_humanitario: string;
+  atores_externos_envolvidos: string;
+  tendencia_recente: string;
+  fonte_dados_especifica: string;
+  regiao_geopolitica: string;
+  severityCategory?: ConflictSeverityCategory; // Added to carry severity info
 }
 
-export interface WikipediaConflictsData {
-  conflicts: WikipediaConflict[];
-  sourcePage: string;
-  lastUpdated: string; // ISO date string for when the data was fetched/processed
+export interface CuratedConflictData {
+  "Alta Gravidade": CuratedConflictEntry[];
+  "Média Gravidade": CuratedConflictEntry[];
+  "Baixa Gravidade": CuratedConflictEntry[];
+  // Add more keys if your JSON structure has them
 }
-
-    
