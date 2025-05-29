@@ -33,9 +33,17 @@ export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInpu
   }
 }
 
-export async function getWikipediaConflictsAction(): Promise<{ data?: CuratedConflictData; error?: string }> {
+export async function getCuratedConflictsAction(): Promise<{ data?: CuratedConflictData; error?: string }> {
   try {
-    return { data: curatedConflictDataJson as CuratedConflictData };
+    // Simulating a delay as if fetching from a DB or slow API
+    // await new Promise(resolve => setTimeout(resolve, 1500)); 
+    
+    const data: CuratedConflictData = curatedConflictDataJson as CuratedConflictData;
+    if (!data) {
+      return { error: 'Falha ao carregar dados de conflitos curados: arquivo não encontrado ou vazio.' };
+    }
+    return { data };
+
   } catch (error) {
     let detailedErrorMessage = 'Falha ao carregar dados de conflitos curados.';
     if (error instanceof Error) {
@@ -107,8 +115,8 @@ export async function fetchAlJazeeraForAISummary(limit: number = 5): Promise<Bbc
 
 // Helper function to fetch minimal data for AI summary from Reuters
 export async function fetchReutersForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> {
-  // Changed from worldNews to topNews
-  const REUTERS_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.reuters.com%2Freuters%2FtopNews';
+  // Changed from topNews back to worldNews
+  const REUTERS_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.reuters.com%2FReuters%2FworldNews';
   const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'attack', 'rebel', 'insurgent', 'crisis'];
   try {
     const response = await fetch(REUTERS_NEWS_API_URL);
