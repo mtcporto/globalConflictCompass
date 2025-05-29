@@ -1,8 +1,9 @@
+
 {
   "Alta Gravidade": [
     {
       "nome": "Guerra Russo-Ucraniana",
-      "imagem_url": "https://placehold.co/600x400/FF6347/FFFFFF?text=Guerra+Russo-Ucraniana",
+      "imagem_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Kyiv_after_Russian_shelling%2C_2022-10-10_%28073%29.webp/330px-Kyiv_after_Russian_shelling%2C_2022-10-10_%28073%29.webp.png",
       "inicio": "2014",
       "fatalidades_reportadas": 77633,
       "fatalidades_texto": "77,633",
@@ -21,7 +22,7 @@
     },
     {
       "nome": "Conflito Árabe-Israelense",
-      "imagem_url": "https://placehold.co/600x400/4682B4/FFFFFF?text=Conflito+Árabe-Israelense",
+      "imagem_url": "https://static01.nyt.com/images/2025/04/04/multimedia/04israel-gaza-01-jmcl/04israel-gaza-01-jmcl-square640.jpg",
       "inicio": "2002",
       "fatalidades_reportadas": 53655,
       "fatalidades_texto": "53,655+",
@@ -40,7 +41,7 @@
     },
     {
       "nome": "Insurgência no Sahel (Magrebe)",
-      "imagem_url": "https://placehold.co/600x400/3CB371/FFFFFF?text=Insurgência+no+Sahel",
+      "imagem_url": "https://microsites-live-backend.cfr.org/cdn/ff/j7uAdXVPmESztv-KrC7Ws4bexNApTzCYKg-JknUkcas/1677872491/public/2023-03/SahelFinal_04.jpg",
       "inicio": "2002",
       "fatalidades_reportadas": 47880,
       "fatalidades_texto": "47,880+",
@@ -59,7 +60,7 @@
     },
     {
       "nome": "Conflito no Mianmar",
-      "imagem_url": "https://placehold.co/600x400/FFD700/000000?text=Conflito+no+Mianmar",
+      "imagem_url": "https://i.guim.co.uk/img/media/85df6fff4cab964ca499312c973b5907938e1634/0_116_3500_2101/master/3500.jpg",
       "inicio": "1948",
       "fatalidades_reportadas": 19715,
       "fatalidades_texto": "19,715",
@@ -78,14 +79,14 @@
     },
     {
       "nome": "Conflitos no Sudão/Sul do Sudão",
-      "imagem_url": "https://placehold.co/600x400/8A2BE2/FFFFFF?text=Conflitos+Sudão",
+      "imagem_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Screengrab_of_refugee_camp_from_Number_of_Refugees_Who_Fled_Sudan_for_Chad_Double_in_Week.jpg/330px-Screengrab_of_refugee_camp_from_Number_of_Refugees_Who_Fled_Sudan_for_Chad_Double_in_Week.jpg",
       "inicio": "2011",
       "fatalidades_reportadas": 16575,
       "fatalidades_texto": "16,575",
       "territorio": "Sudão/Sul do Sudão",
       "coordenadas": [15.5, 32.5],
       "envolvidos": ["Governos do Sudão e do Sul do Sudão", "vários grupos rebeldes locais"],
-      "wikipedia_link": "https://en.wikipedia.org/wiki/Sudanese_Civil_War",
+      "wikipedia_link": "https://en.wikipedia.org/wiki/Sudanese_civil_war_(2023%E2%80%93present)",
       "status": "Ativo",
       "tipo_conflito": "Guerra Civil, Conflito Étnico",
       "data_ultima_atualizacao_fatalidades": "A ser pesquisado",
@@ -97,7 +98,7 @@
     },
     {
       "nome": "Conflito Civil Etíope",
-      "imagem_url": "https://placehold.co/600x400/D2691E/FFFFFF?text=Conflito+Etíope",
+      "imagem_url": "https://dl6pgk4f88hky.cloudfront.net/2024/02/26/Tigray.jpg",
       "inicio": "2018",
       "fatalidades_reportadas": 10179,
       "fatalidades_texto": "10,179",
@@ -470,7 +471,7 @@
       "coordenadas": [18.02, -76.81],
       "envolvidos": ["Governo da Jamaica", "JLP vs PNP (contexto histórico)", "gangues urbanas (associadas ou não à política)"],
       "wikipedia_link": "https://en.wikipedia.org/wiki/Jamaican_political_conflict",
-      "status": "Ativo (violência de gangues, não necessarily conflito político direto como no passado)",
+      "status": "Ativo (violência de gangues, não necessariamente conflito político direto como no passado)",
       "tipo_conflito": "Violência de Gangues, Crime Organizado (com raízes históricas em violência política).",
       "data_ultima_atualizacao_fatalidades": "Polícia Jamaicana, relatórios de segurança",
       "impacto_humanitario": "Altas taxas de homicídio, extorsão, medo em comunidades afetadas.",
