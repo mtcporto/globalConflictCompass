@@ -1,6 +1,4 @@
 
-'use server';
-
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
@@ -37,7 +35,7 @@ try {
 }
 
 
-export function addAiSummary(summary: SummarizeConflictNewsOutput): void {
+export async function addAiSummary(summary: SummarizeConflictNewsOutput): Promise<void> {
   if (!db) {
     console.error('DB not initialized, cannot add summary.');
     throw new Error('Database not initialized.');
@@ -53,7 +51,7 @@ export function addAiSummary(summary: SummarizeConflictNewsOutput): void {
   }
 }
 
-export function getLatestAiSummary(): CachedAiSummary | null {
+export async function getLatestAiSummary(): Promise<CachedAiSummary | null> {
   if (!db) {
     console.error('DB not initialized, cannot get latest summary.');
     return null; // Or throw, depending on desired error handling
