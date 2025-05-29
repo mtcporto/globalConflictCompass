@@ -27,6 +27,8 @@ import {
   Skull,
   Network,
   Eye,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   Accordion,
@@ -51,7 +53,7 @@ const MapDisplay = dynamic(() => import('./map-display'), {
 const severityIconMap: Record<ConflictSeverityCategory, React.ElementType> = {
   "Alta Gravidade": AlertOctagon,
   "Média Gravidade": ShieldAlert,
-  "Baixa Gravidade": Activity, // Mantido Activity para Baixa Gravidade
+  "Baixa Gravidade": Activity,
 };
 
 const severityColorClasses: Record<ConflictSeverityCategory, string> = {
@@ -60,11 +62,18 @@ const severityColorClasses: Record<ConflictSeverityCategory, string> = {
   "Baixa Gravidade": "text-yellow-500",
 };
 
-const fallbackImageUrl = `https://placehold.co/600x400/eeeeee/cccccc?text=Imagem+Indispon%C3%ADvel`;
+const severityTranslations: Record<ConflictSeverityCategory, string> = {
+  "Alta Gravidade": "Alta Gravidade (10.000+ mortes/ano)",
+  "Média Gravidade": "Média Gravidade (1.000-9.999 mortes/ano)",
+  "Baixa Gravidade": "Baixa Gravidade (100-999 mortes/ano)",
+};
+
+
+const fallbackImageUrl = `https://placehold.co/300x200/eeeeee/cccccc?text=Imagem+Indispon%C3%ADvel`;
 
 const fieldDisplayConfig: Array<{ key: keyof CuratedConflictEntry; label: string; icon: React.ElementType, isList?: boolean }> = [
   { key: 'inicio', label: 'Início', icon: CalendarDays },
-  { key: 'fatalidades_texto', label: 'Fatalidades (Estimativa)', icon: Skull },
+  { key: 'fatalidades_texto', label: 'Fatalidades', icon: Skull },
   { key: 'data_ultima_atualizacao_fatalidades', label: 'Últ. Info Fatalidades', icon: CalendarClock },
   { key: 'territorio', label: 'Território Principal', icon: LocateFixed },
   { key: 'status', label: 'Status', icon: Activity },
@@ -75,6 +84,7 @@ const fieldDisplayConfig: Array<{ key: keyof CuratedConflictEntry; label: string
   { key: 'fonte_dados_especifica', label: 'Fontes Adicionais', icon: Landmark },
   { key: 'regiao_geopolitica', label: 'Região Geopolítica', icon: Globe },
 ];
+
 
 export function WikipediaMacroPanel() {
   const data: CuratedConflictData = curatedConflictDataJson as CuratedConflictData;
@@ -93,18 +103,13 @@ export function WikipediaMacroPanel() {
 
   const totalFatalities = useMemo(() => {
     return allConflicts.reduce((sum, conflict) => {
-      let fatalities = 0;
-      if (typeof conflict.fatalidades_reportadas === 'number') {
-        fatalities = conflict.fatalidades_reportadas;
-      } else if (typeof conflict.fatalidades_texto === 'string') {
-        const match = conflict.fatalidades_texto.replace(/[,.+]/g, '').match(/\d+/);
-        if (match) {
-          fatalities = parseInt(match[0], 10);
-        }
-      }
-      return sum + fatalities;
+      const fatalitiesNum = typeof conflict.fatalidades_reportadas === 'string'
+        ? parseInt(conflict.fatalidades_reportadas.replace(/[,.+]/g, ''), 10)
+        : conflict.fatalidades_reportadas;
+      return sum + (isNaN(fatalitiesNum) ? 0 : fatalitiesNum);
     }, 0);
   }, [allConflicts]);
+
 
   const activeGeopoliticalRegions = useMemo(() => {
     const regions = new Set<string>();
@@ -129,13 +134,15 @@ export function WikipediaMacroPanel() {
       .map(([actor, count]) => `${actor} (${count}x)`);
   }, [allConflicts]);
 
+
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
     if (target.src !== fallbackImageUrl) {
       target.src = fallbackImageUrl;
+      target.srcset = ""; // Clear srcset if fallback is used
     }
   };
-
+  
   const conflictCategories = Object.keys(data) as ConflictSeverityCategory[];
 
   return (
@@ -148,61 +155,63 @@ export function WikipediaMacroPanel() {
           <MapDisplay conflicts={allConflicts} />
         </div>
 
+        {/* Mini Dashboard Section */}
         <div className="mb-8 p-4 border bg-card rounded-lg shadow-sm">
           <h3 className="text-lg font-semibold text-foreground mb-4 text-center">Panorama Numérico dos Conflitos Atuais</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            {/* Total de Conflitos Ativos */}
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Sigma className="w-7 h-7 text-primary mb-1" />
               <span className="font-semibold text-xl">{totalActiveConflicts}</span>
               <span className="text-muted-foreground text-xs">Total de Conflitos Ativos</span>
             </div>
+            {/* Total Estimado de Fatalidades */}
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Skull className="w-7 h-7 text-destructive mb-1" />
               <span className="font-semibold text-xl">{totalFatalities.toLocaleString('pt-BR')}</span>
               <span className="text-muted-foreground text-xs">Total Estimado de Fatalidades</span>
             </div>
+            {/* Regiões Geopolíticas Ativas */}
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Globe className="w-7 h-7 text-accent mb-1" />
-              <span className="font-semibold text-xl">{activeGeopoliticalRegions.length}</span>
-              <span className="text-muted-foreground text-xs">Regiões Geopolíticas Ativas</span>
-              {activeGeopoliticalRegions.length > 0 && (
+              {activeGeopoliticalRegions.length > 0 ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="text-xs text-muted-foreground mt-1 text-center opacity-80 cursor-help">
-                      ({activeGeopoliticalRegions.slice(0, 2).join(', ')}{activeGeopoliticalRegions.length > 2 ? ', ...' : ''}) <Eye className="w-3 h-3 opacity-70 inline-block ml-1" />
-                    </div>
+                    <span className="text-muted-foreground text-xs cursor-help underline decoration-dotted hover:text-accent">Regiões Geopolíticas Ativas</span>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
-                    <p className="font-medium mb-1">Regiões Ativas:</p>
+                    <p className="font-medium mb-1">Regiões Geopolíticas Ativas ({activeGeopoliticalRegions.length}):</p>
                     <ul className="list-disc list-inside space-y-0.5">
                       {activeGeopoliticalRegions.map(region => <li key={region}>{region}</li>)}
                     </ul>
                   </TooltipContent>
                 </Tooltip>
+              ) : (
+                <span className="text-muted-foreground text-xs">Regiões Geopolíticas Ativas</span>
               )}
             </div>
+            {/* Atores em Múltiplos Conflitos */}
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Network className="w-7 h-7 text-orange-500 mb-1" />
-              <span className="font-semibold text-xl">{involvedActorsInMultipleConflicts.length}</span>
-              <span className="text-muted-foreground text-xs">Atores em Múltiplos Conflitos</span>
-              {involvedActorsInMultipleConflicts.length > 0 && (
-                 <Tooltip>
+               {involvedActorsInMultipleConflicts.length > 0 ? (
+                <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="text-xs text-muted-foreground mt-1 text-center opacity-80 cursor-help">
-                      ({involvedActorsInMultipleConflicts.slice(0,1).join(', ')}{involvedActorsInMultipleConflicts.length > 1 ? ', ...' : ''}) <Eye className="w-3 h-3 opacity-70 inline-block ml-1" />
-                    </div>
+                     <span className="text-muted-foreground text-xs cursor-help underline decoration-dotted hover:text-orange-500">Atores em Múltiplos Conflitos</span>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
-                    <p className="font-medium mb-1">Atores em múltiplos conflitos:</p>
+                    <p className="font-medium mb-1">Atores em múltiplos conflitos ({involvedActorsInMultipleConflicts.length}):</p>
                     <ul className="list-disc list-inside space-y-0.5">
                       {involvedActorsInMultipleConflicts.map(actor => <li key={actor}>{actor}</li>)}
                     </ul>
                   </TooltipContent>
                 </Tooltip>
+              ) : (
+                <span className="text-muted-foreground text-xs">Atores em Múltiplos Conflitos</span>
               )}
             </div>
           </div>
         </div>
+
 
         <h3 className="text-xl font-semibold text-foreground mb-3">Visão Macro dos Conflitos</h3>
         <Accordion type="multiple" className="w-full">
@@ -212,13 +221,14 @@ export function WikipediaMacroPanel() {
 
             const IconComponent = severityIconMap[severityKey];
             const iconColorClass = severityColorClasses[severityKey];
+            const translatedSeverityTitle = severityTranslations[severityKey] || severityKey;
 
             return (
               <AccordionItem value={severityKey} key={severityKey}>
                 <AccordionTrigger className="text-lg font-medium hover:no-underline">
                   <div className="flex items-center gap-2">
                     {IconComponent && <IconComponent className={`w-5 h-5 ${iconColorClass}`} />}
-                    {severityKey} ({conflictsInCategory.length})
+                    {translatedSeverityTitle} ({conflictsInCategory.length})
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -236,15 +246,15 @@ export function WikipediaMacroPanel() {
                             style={{ objectFit: 'cover' }}
                             className="bg-muted"
                             onError={handleImageError}
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 350px"
                             data-ai-hint="war impact armed conflict"
                           />
                         </div>
                         <h4 className="font-semibold text-base mb-1.5">{conflict.nome}</h4>
-
+                        
                         {fieldDisplayConfig.map(fieldInfo => {
                           let value = conflict[fieldInfo.key as keyof CuratedConflictEntry];
-                          if (value === undefined || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && value.length === 0) ) return null;
+                          if (value === undefined || value === null || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && value.length === 0) ) return null;
                           
                           let displayValue: React.ReactNode = String(value);
                           if (Array.isArray(value)) {
@@ -260,8 +270,8 @@ export function WikipediaMacroPanel() {
                         })}
                         
                         {conflict.envolvidos && conflict.envolvidos.length > 0 && (
-                          <div className="mt-1.5 mb-2 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1.5 mb-0.5">
+                          <div className="mt-1.5 mb-2 text-xs">
+                            <div className="flex items-center gap-1.5 mb-0.5 text-muted-foreground">
                               <Users className="w-3.5 h-3.5 text-primary/80 shrink-0" />
                               <strong>Principais Envolvidos:</strong>
                             </div>
@@ -294,7 +304,7 @@ export function WikipediaMacroPanel() {
             Dados apresentados são curados manualmente e baseados no arquivo <code>src/data/curated-conflict-data.json</code>.
           </p>
           <p className="mt-1">
-            Este painel é para fins informativos e educacionais.
+            Este painel é para fins informativos e educacionais. As informações podem não ser exaustivas ou em tempo real.
           </p>
         </div>
       </div>
