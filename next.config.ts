@@ -67,38 +67,86 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https', // Added for Guerra Civil da Somália
+        protocol: 'https',
         hostname: 'img.lemde.fr',
         port: '',
         pathname: '/**',
       },
       {
-        protocol: 'https', // Added for Conflitos na RDC
+        protocol: 'https',
         hostname: 'www.vaticannews.va',
         port: '',
         pathname: '/**',
       },
       {
-        protocol: 'https', // Added for Conflitos na Nigéria & Afeganistão
+        protocol: 'https',
         hostname: 'www.hrw.org',
         port: '',
         pathname: '/**',
       },
       {
-        protocol: 'https', // Added for Conflito na Colômbia
+        protocol: 'https',
         hostname: 'agenciabrasil.ebc.com.br',
         port: '',
         pathname: '/**',
       },
       {
-        protocol: 'https', // Added for Conflito na Colômbia (outro host)
+        protocol: 'https',
         hostname: 'imagens.ebc.com.br',
         port: '',
         pathname: '/**',
       },
       {
-        protocol: 'http', // Added for Guerra Civil no Iêmen (Washington Post usa http para o link fornecido)
+        protocol: 'http',
         hostname: 'img.washingtonpost.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'media.assettype.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'moderndiplomacy.eu',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.iasexpress.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'static.toiimg.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.i-scmp.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.americanprogress.org',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'live-production.wcms.abc-cdn.net.au',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.jakpost.net',
         port: '',
         pathname: '/**',
       }
@@ -107,3 +155,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+    

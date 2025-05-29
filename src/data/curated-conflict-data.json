@@ -269,7 +269,7 @@
       "fonte_dados_especifica": "INDEPAZ, OCHA, ACNUR",
       "regiao_geopolitica": "América do Sul"
     },
-    {
+     {
       "nome": "Conflitos nos Camarões",
       "imagem_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Internally_displaced_people_from_the_Anglophone_crisis_in_Douala.png/330px-Internally_displaced_people_from_the_Anglophone_crisis_in_Douala.png",
       "inicio": "2014",
@@ -311,7 +311,7 @@
   "Baixa Gravidade": [
     {
       "nome": "Conflito Interno em Bangladesh",
-      "imagem_url": "https://placehold.co/600x400/8FBC8F/000000?text=Conflito+Bangladesh",
+      "imagem_url": "https://media.assettype.com/freepressjournal/2024-08-09/y0spyaaw/Bangladesh%20crisis.jpg?width=1200",
       "inicio": "1999",
       "fatalidades_reportadas": 925,
       "fatalidades_texto": "925",
@@ -330,7 +330,7 @@
     },
     {
       "nome": "Conflito no Iraque",
-      "imagem_url": "https://placehold.co/600x400/B0C4DE/000000?text=Conflito+Iraque",
+      "imagem_url": "https://static01.nyt.com/images/2023/03/21/multimedia/20garcianavarro-1-gkjf/20garcianavarro-1-gkjf-superJumbo.jpg?quality=75&auto=webp",
       "inicio": "2003",
       "fatalidades_reportadas": 962,
       "fatalidades_texto": "962",
@@ -349,7 +349,7 @@
     },
     {
       "nome": "Insurgências no Paquistão",
-      "imagem_url": "https://placehold.co/600x400/ADD8E6/000000?text=Insurgências+Paquistão",
+      "imagem_url": "https://moderndiplomacy.eu/wp-content/uploads/2018/08/pakistan-terrorism.jpg",
       "inicio": "1948",
       "fatalidades_reportadas": 860,
       "fatalidades_texto": "860",
@@ -368,7 +368,7 @@
     },
     {
       "nome": "Insurgências na Índia",
-      "imagem_url": "https://placehold.co/600x400/F0E68C/000000?text=Insurgências+Índia",
+      "imagem_url": "https://www.iasexpress.net/wp-content/uploads/2019/10/insurgency-in-north-east-india-upsc-ias-essay-notes-mindmap.jpg",
       "inicio": "1954",
       "fatalidades_reportadas": 850,
       "fatalidades_texto": "850",
@@ -387,7 +387,7 @@
     },
     {
       "nome": "Conflitos India-Paquistão",
-      "imagem_url": "https://placehold.co/600x400/98FB98/000000?text=Índia-Paquistão",
+      "imagem_url": "https://static.toiimg.com/imagenext/toiblogs/photo/blogs/wp-content/uploads/2025/04/unnamed.png",
       "inicio": "1947",
       "fatalidades_reportadas": 680,
       "fatalidades_texto": "680",
@@ -406,7 +406,7 @@
     },
     {
       "nome": "Conflito Civil nas Filipinas",
-      "imagem_url": "https://placehold.co/600x400/AFEEEE/000000?text=Conflito+Filipinas",
+      "imagem_url": "https://cdn.i-scmp.com/sites/default/files/styles/1200x800/public/d8/images/canvas/2024/02/23/fdf9aa17-6dde-4fc1-acf3-82f40852501a_cf7c931e.jpg?itok=IvG6bJJm&v=1708659677",
       "inicio": "1969",
       "fatalidades_reportadas": 647,
       "fatalidades_texto": "647",
@@ -425,7 +425,7 @@
     },
     {
       "nome": "Insurgências Curda",
-      "imagem_url": "https://placehold.co/600x400/DB7093/FFFFFF?text=Insurgências+Curda",
+      "imagem_url": "https://www.americanprogress.org/wp-content/uploads/sites/2/2019/08/TurkishKurdishConflictReport.jpg?w=1040",
       "inicio": "1918",
       "fatalidades_reportadas": 409,
       "fatalidades_texto": "409",
@@ -444,7 +444,7 @@
     },
     {
       "nome": "Violência Étnica em Papua-Nova Guiné",
-      "imagem_url": "https://placehold.co/600x400/FFEFD5/000000?text=Violência+PNG",
+      "imagem_url": "https://live-production.wcms.abc-cdn.net.au/0afb3300da68bd84953f0d018832be9b?impolicy=wcms_crop_resize&cropH=1152&cropW=2048&xPos=0&yPos=192&width=862&height=485&imformat=generic",
       "inicio": "1988",
       "fatalidades_reportadas": 335,
       "fatalidades_texto": "335",
@@ -463,7 +463,7 @@
     },
     {
       "nome": "Conflito Político na Jamaica",
-      "imagem_url": "https://placehold.co/600x400/FFFACD/000000?text=Conflito+Jamaica",
+      "imagem_url": "https://i.guim.co.uk/img/static/sys-images/Guardian/Pix/pictures/2010/5/25/1274820001236/A-wounded-man-is-carried--006.jpg?width=620&dpr=1&s=none&crop=none",
       "inicio": "1943",
       "fatalidades_reportadas": 332,
       "fatalidades_texto": "332",
@@ -482,7 +482,7 @@
     },
     {
       "nome": "Conflito em Papua (Indonésia)",
-      "imagem_url": "https://placehold.co/600x400/FAFAD2/000000?text=Conflito+Papua+Indonésia",
+      "imagem_url": "https://img.jakpost.net/c/2025/03/25/2025_03_25_161504_1742913940._large.jpg",
       "inicio": "1962",
       "fatalidades_reportadas": 154,
       "fatalidades_texto": "154",
@@ -501,7 +501,7 @@
     },
     {
       "nome": "Guerra de Cabinda",
-      "imagem_url": "https://placehold.co/600x400/D3D3D3/000000?text=Guerra+de+Cabinda",
+      "imagem_url": "https://www.hrw.org/sites/default/files/media_2025/01/202501digital_askarray_bg.jpg",
       "inicio": "1975",
       "fatalidades_reportadas": 112,
       "fatalidades_texto": "112",
@@ -520,3 +520,5 @@
     }
   ]
 }
+
+    
