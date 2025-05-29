@@ -12,7 +12,6 @@ const CACHE_DIR_PATH = path.join(process.cwd(), '.cache');
 const WIKIPEDIA_CACHE_FILE_PATH = path.join(CACHE_DIR_PATH, 'wikipedia-conflicts.json');
 const CACHE_MAX_AGE_HOURS = 24; // Cache data for 24 hours
 
-// Create a map for quick lookup of manual overrides
 const manualOverridesMap = new Map(manualConflictData.map(item => [item.id, item]));
 
 async function ensureCacheDirExists() {
@@ -31,7 +30,7 @@ async function readWikipediaCache(): Promise<WikipediaConflictsData | null> {
 
     const cacheAgeHours = (new Date().getTime() - new Date(cachedData.lastUpdated).getTime()) / (1000 * 60 * 60);
     if (cacheAgeHours < CACHE_MAX_AGE_HOURS) {
-      console.log('Serving Wikipedia conflicts data from cache.');
+      // Data from cache is still considered "raw" here, will be processed later
       return cachedData;
     }
     console.log('Wikipedia conflicts cache is stale.');
@@ -45,6 +44,7 @@ async function readWikipediaCache(): Promise<WikipediaConflictsData | null> {
 async function writeWikipediaCache(data: WikipediaConflictsData): Promise<void> {
   try {
     await ensureCacheDirExists();
+    // Data passed here is already processed and includes the correct lastUpdated from AI or cache.
     await fs.writeFile(WIKIPEDIA_CACHE_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
     console.log('Wikipedia conflicts data cached successfully.');
   } catch (error) {
@@ -52,12 +52,49 @@ async function writeWikipediaCache(data: WikipediaConflictsData): Promise<void> 
   }
 }
 
+// Helper function to process conflict data (clean imageUrl, apply overrides)
+function processWikipediaData(rawData: ExtractWikipediaConflictsOutput): WikipediaConflictsData {
+    const processedConflicts = rawData.conflicts.map(aiConflict => {
+      // Start with imageUrl from AI, clean it up.
+      let currentImageUrl = (typeof aiConflict.imageUrl === 'string' && (aiConflict.imageUrl.startsWith('http://') || aiConflict.imageUrl.startsWith('https://')))
+                              ? aiConflict.imageUrl
+                              : undefined;
+      let currentDetailsLink = aiConflict.detailsLink;
+
+      const override = manualOverridesMap.get(aiConflict.id);
+      if (override) {
+        // Apply manual override for imageUrl if it exists and is a valid URL
+        if (override.hasOwnProperty('imageUrl')) {
+            if (typeof override.imageUrl === 'string' && (override.imageUrl.startsWith('http://') || override.imageUrl.startsWith('https://'))) {
+                currentImageUrl = override.imageUrl;
+            } else {
+                // If override.imageUrl is present but invalid (e.g., empty string, "string"), set to undefined
+                currentImageUrl = undefined;
+            }
+        }
+        // Apply manual override for detailsLink if it exists
+        currentDetailsLink = override.detailsLinkOverride || currentDetailsLink;
+      }
+
+      return {
+        ...aiConflict,
+        imageUrl: currentImageUrl,
+        detailsLink: currentDetailsLink,
+      };
+    });
+
+    return {
+      ...rawData, // This includes sourcePage and lastUpdated from the input rawData
+      conflicts: processedConflicts,
+    };
+}
+
+
 export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInputItem[]): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string }> {
   if (!newsItemsToSummarize || newsItemsToSummarize.length === 0) {
     return { error: 'Nenhum item de notícia fornecido para resumo.' };
   }
 
-  // The argument newsItemsToSummarize is now directly the array.
   const input: SummarizeConflictNewsInput = {
     newsItems: newsItemsToSummarize,
   };
@@ -79,68 +116,63 @@ export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInpu
 
 export async function getWikipediaConflictsAction(options: { forceRefresh?: boolean } = {}): Promise<{ data?: WikipediaConflictsData; error?: string }> {
   const { forceRefresh = false } = options;
+  let rawConflictData: ExtractWikipediaConflictsOutput | null = null;
+  let dataSource: 'cache' | 'ai' = 'ai';
 
   if (!forceRefresh) {
     const cachedData = await readWikipediaCache();
     if (cachedData) {
-      return { data: cachedData };
+      rawConflictData = cachedData;
+      dataSource = 'cache';
+      console.log('Serving Wikipedia conflicts data from cache (will be processed).');
     }
   }
 
-  console.log(forceRefresh ? 'Forcing refresh of Wikipedia conflicts data.' : 'Fetching fresh Wikipedia conflicts data.');
-  try {
-    const aiResult: ExtractWikipediaConflictsOutput = await extractWikipediaConflicts({});
-    
-    // Apply manual overrides and clean up imageUrl
-    const processedConflicts = aiResult.conflicts.map(aiConflict => {
-      // Clean the imageUrl from AI before considering overrides
-      let currentImageUrl = (typeof aiConflict.imageUrl === 'string' && (aiConflict.imageUrl.startsWith('http://') || aiConflict.imageUrl.startsWith('https://')))
-                              ? aiConflict.imageUrl
-                              : undefined;
-      let currentDetailsLink = aiConflict.detailsLink;
-
-      const override = manualOverridesMap.get(aiConflict.id);
-      if (override) {
-        currentImageUrl = override.imageUrl || currentImageUrl; // Prioritize override's imageUrl
-        currentDetailsLink = override.detailsLinkOverride || currentDetailsLink; // Prioritize override's detailsLink
-      }
-
-      return {
-        ...aiConflict,
-        imageUrl: currentImageUrl, // This will be either a valid URL or undefined
-        detailsLink: currentDetailsLink,
-      };
-    });
-
-    const dataToCache: WikipediaConflictsData = {
-      ...aiResult,
-      conflicts: processedConflicts,
-      lastUpdated: new Date().toISOString(), // Ensure lastUpdated is always fresh after AI call + processing
-    };
-    
-    await writeWikipediaCache(dataToCache);
-    return { data: dataToCache };
-  } catch (error) {
-    let detailedErrorMessage = 'Falha ao extrair dados de conflitos da Wikipedia.';
-    if (error instanceof Error) {
-      if (error.message.includes('503') || error.message.toLowerCase().includes('model is overloaded')) {
-        detailedErrorMessage = 'O serviço de IA para extração de dados da Wikipedia está temporariamente sobrecarregado. Por favor, tente novamente mais tarde.';
-      } else {
-        detailedErrorMessage = `Falha ao extrair dados de conflitos da Wikipedia: ${error.message}`;
-      }
-      console.error('Error calling Wikipedia conflicts flow. Message:', error.message, 'Stack:', error.stack);
-    } else {
-      console.error('Error calling Wikipedia conflicts flow (non-Error object):', error);
-    }
-    if (!forceRefresh) {
-        const staleCache = await fs.readFile(WIKIPEDIA_CACHE_FILE_PATH, 'utf-8').then(JSON.parse).catch(() => null);
-        if (staleCache) {
-            console.warn('Serving stale Wikipedia cache due to fetch error.');
-            return { data: staleCache, error: `${detailedErrorMessage} (Exibindo dados de cache mais antigos).` };
+  if (forceRefresh || !rawConflictData) {
+    dataSource = 'ai';
+    console.log(forceRefresh ? 'Forcing refresh of Wikipedia conflicts data.' : 'Cache miss or stale, fetching fresh Wikipedia conflicts data.');
+    try {
+      const aiResult = await extractWikipediaConflicts({});
+      rawConflictData = aiResult; // AI result already contains a fresh lastUpdated
+    } catch (error) {
+      let detailedErrorMessage = 'Falha ao extrair dados de conflitos da Wikipedia.';
+      if (error instanceof Error) {
+        if (error.message.includes('503') || error.message.toLowerCase().includes('model is overloaded')) {
+          detailedErrorMessage = 'O serviço de IA para extração de dados da Wikipedia está temporariamente sobrecarregado. Por favor, tente novamente mais tarde.';
+        } else {
+          detailedErrorMessage = `Falha ao extrair dados de conflitos da Wikipedia: ${error.message}`;
         }
+        console.error('Error calling Wikipedia conflicts flow. Message:', error.message, 'Stack:', error.stack);
+      } else {
+        console.error('Error calling Wikipedia conflicts flow (non-Error object):', error);
+      }
+
+      if (!forceRefresh) {
+          const staleCache = await fs.readFile(WIKIPEDIA_CACHE_FILE_PATH, 'utf-8').then(JSON.parse).catch(() => null) as ExtractWikipediaConflictsOutput | null;
+          if (staleCache) {
+              console.warn('AI fetch error. Processing and serving stale Wikipedia cache.');
+              const processedStaleData = processWikipediaData(staleCache);
+              return { data: processedStaleData, error: `${detailedErrorMessage} (Exibindo dados de cache mais antigos).` };
+          }
+      }
+      return { error: detailedErrorMessage };
     }
-    return { error: detailedErrorMessage };
   }
+
+  if (!rawConflictData) {
+    return { error: 'Não foi possível obter dados dos conflitos da Wikipedia.' };
+  }
+
+  // Always process the data, whether from cache or AI
+  const processedData = processWikipediaData(rawConflictData);
+
+  // If data was freshly fetched from AI, update the cache with the PROCESSED data
+  // The 'lastUpdated' field in processedData is from the AI call, so it's fresh.
+  if (dataSource === 'ai') {
+    await writeWikipediaCache(processedData);
+  }
+  
+  return { data: processedData };
 }
 
 
