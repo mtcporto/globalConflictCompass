@@ -40,8 +40,8 @@ const defaultCountryStyle = {
 };
 
 const WorldMapBounds = L.latLngBounds(
-  L.latLng(-60, -180),
-  L.latLng(85, 180)
+  L.latLng(-85.05112878, -180), // Corrected latitude bounds
+  L.latLng(85.05112878, 180)   // Corrected latitude bounds
 );
 
 const LegendControl = ({ severityMap }: { severityMap: Record<ConflictSeverityCategory, string> }) => {
@@ -135,7 +135,6 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
     );
 
     if (relatedConflicts.length > 0) {
-      // Popup HTML will use Tailwind classes, assuming default Leaflet popup (light background)
       const popupContent = `
         <div class="text-sm">
           <h4 class="font-semibold text-base mb-1 text-slate-800">${countryName}</h4>
@@ -152,7 +151,7 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
   const mapCenter: L.LatLngTuple = [20, 0]; // Initial center of the map
   const initialMapZoom = 2; // Initial zoom level
   const minMapZoom = 2; // Prevents zooming out too much
-  const maxMapZoom = 6; // Prevents zooming in too much
+  const maxZoom = 6; // Prevents zooming in too much // DEFINED HERE
 
   if (loadingGeoJson) {
     return (
@@ -212,12 +211,12 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
                 <div className="text-sm max-w-xs">
                   <h4 className="font-semibold text-base mb-1 text-slate-800">{conflict.nome}</h4>
                   <p className="text-slate-700"><span className="font-medium">Gravidade:</span> {severityCat}</p>
-                  <p className="text-slate-700"><span className="font-medium">Fatalidades:</span> {conflict.fatalidades_texto}</p>
-                  {conflict.territorio && <p className="text-slate-700"><span className="font-medium">Território Específico:</span> {conflict.territorio}</p>}
+                  <p className="text-slate-700"><span className="font-medium">Fatalidades:</span> ${conflict.fatalidades_texto}</p>
+                  {conflict.territorio && <p className="text-slate-700"><span className="font-medium">Território Específico:</span> ${conflict.territorio}</p>}
                   {conflict.envolvidos && conflict.envolvidos.length > 0 && (
                     <p className="text-slate-700"><span className="font-medium">Envolvidos (Países/Grupos):</span> {conflict.envolvidos.join(', ')}</p>
                   )}
-                  {conflict.inicio && <p className="text-slate-700"><span className="font-medium">Início:</span> {conflict.inicio}</p>}
+                  {conflict.inicio && <p className="text-slate-700"><span className="font-medium">Início:</span> ${conflict.inicio}</p>}
                   {conflict.wikipedia_link && (
                     <a
                       href={conflict.wikipedia_link}
@@ -249,5 +248,3 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
 }
 
 export default React.memo(MapDisplayComponent);
-
-    
