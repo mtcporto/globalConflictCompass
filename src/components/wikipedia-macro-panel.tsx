@@ -26,9 +26,9 @@ import {
   Sigma,
   Skull,
   Network,
-  Eye,
   ChevronDown,
   ChevronUp,
+  Eye, // Ícone para o tooltip
 } from 'lucide-react';
 import {
   Accordion,
@@ -68,7 +68,6 @@ const severityTranslations: Record<ConflictSeverityCategory, string> = {
   "Baixa Gravidade": "Baixa Gravidade (100-999 mortes/ano)",
 };
 
-
 const fallbackImageUrl = `https://placehold.co/300x200/eeeeee/cccccc?text=Imagem+Indispon%C3%ADvel`;
 
 const fieldDisplayConfig: Array<{ key: keyof CuratedConflictEntry; label: string; icon: React.ElementType, isList?: boolean }> = [
@@ -93,6 +92,7 @@ export function WikipediaMacroPanel() {
     const conflicts: CuratedConflictEntry[] = [];
     (Object.keys(data) as ConflictSeverityCategory[]).forEach(severityKey => {
       data[severityKey].forEach(conflict => {
+        // Adiciona a categoria de severidade ao objeto do conflito
         conflicts.push({ ...conflict, severityCategory: severityKey });
       });
     });
@@ -137,9 +137,9 @@ export function WikipediaMacroPanel() {
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
-    if (target.src !== fallbackImageUrl) {
+    if (target.src !== fallbackImageUrl && !target.src.includes('data:image')) { // Prevent loop if fallback also fails or if it's already a data URI
       target.src = fallbackImageUrl;
-      target.srcset = ""; // Clear srcset if fallback is used
+      target.srcset = "";
     }
   };
   
@@ -159,44 +159,44 @@ export function WikipediaMacroPanel() {
         <div className="mb-8 p-4 border bg-card rounded-lg shadow-sm">
           <h3 className="text-lg font-semibold text-foreground mb-4 text-center">Panorama Numérico dos Conflitos Atuais</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-            {/* Total de Conflitos Ativos */}
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Sigma className="w-7 h-7 text-primary mb-1" />
               <span className="font-semibold text-xl">{totalActiveConflicts}</span>
-              <span className="text-muted-foreground text-xs">Total de Conflitos Ativos</span>
+              <span className="text-muted-foreground text-xs text-center">Total de Conflitos Ativos</span>
             </div>
-            {/* Total Estimado de Fatalidades */}
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Skull className="w-7 h-7 text-destructive mb-1" />
               <span className="font-semibold text-xl">{totalFatalities.toLocaleString('pt-BR')}</span>
-              <span className="text-muted-foreground text-xs">Total Estimado de Fatalidades</span>
+              <span className="text-muted-foreground text-xs text-center">Total Estimado de Fatalidades</span>
             </div>
-            {/* Regiões Geopolíticas Ativas */}
+            
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Globe className="w-7 h-7 text-accent mb-1" />
-              {activeGeopoliticalRegions.length > 0 ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-muted-foreground text-xs cursor-help underline decoration-dotted hover:text-accent">Regiões Geopolíticas Ativas</span>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
-                    <p className="font-medium mb-1">Regiões Geopolíticas Ativas ({activeGeopoliticalRegions.length}):</p>
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {activeGeopoliticalRegions.map(region => <li key={region}>{region}</li>)}
-                    </ul>
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                <span className="text-muted-foreground text-xs">Regiões Geopolíticas Ativas</span>
-              )}
+              <span className="font-semibold text-xl">{activeGeopoliticalRegions.length}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-muted-foreground text-xs text-center cursor-help underline decoration-dotted hover:text-accent">
+                    Regiões Geopolíticas Ativas
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
+                  <p className="font-medium mb-1">Regiões Geopolíticas Envolvidas ({activeGeopoliticalRegions.length}):</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {activeGeopoliticalRegions.map(region => <li key={region}>{region}</li>)}
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
             </div>
-            {/* Atores em Múltiplos Conflitos */}
+
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Network className="w-7 h-7 text-orange-500 mb-1" />
-               {involvedActorsInMultipleConflicts.length > 0 ? (
+               <span className="font-semibold text-xl">{involvedActorsInMultipleConflicts.length}</span>
+              {involvedActorsInMultipleConflicts.length > 0 ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                     <span className="text-muted-foreground text-xs cursor-help underline decoration-dotted hover:text-orange-500">Atores em Múltiplos Conflitos</span>
+                     <span className="text-muted-foreground text-xs text-center cursor-help underline decoration-dotted hover:text-orange-500">
+                       Atores em Múltiplos Conflitos
+                     </span>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
                     <p className="font-medium mb-1">Atores em múltiplos conflitos ({involvedActorsInMultipleConflicts.length}):</p>
@@ -206,12 +206,11 @@ export function WikipediaMacroPanel() {
                   </TooltipContent>
                 </Tooltip>
               ) : (
-                <span className="text-muted-foreground text-xs">Atores em Múltiplos Conflitos</span>
+                <span className="text-muted-foreground text-xs text-center">Atores em Múltiplos Conflitos</span>
               )}
             </div>
           </div>
         </div>
-
 
         <h3 className="text-xl font-semibold text-foreground mb-3">Visão Macro dos Conflitos</h3>
         <Accordion type="multiple" className="w-full">
@@ -236,7 +235,7 @@ export function WikipediaMacroPanel() {
                     {conflictsInCategory.map((conflict) => (
                       <div
                         key={conflict.nome}
-                        className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-lg transition-shadow max-w-[350px] w-full sm:w-auto flex flex-col"
+                        className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-lg transition-shadow max-w-[350px] w-full sm:w-auto flex flex-col" // Adicionado flex flex-col
                       >
                         <div className="relative w-full h-48 mb-3 rounded-md overflow-hidden bg-muted">
                           <Image
@@ -254,12 +253,17 @@ export function WikipediaMacroPanel() {
                         
                         {fieldDisplayConfig.map(fieldInfo => {
                           let value = conflict[fieldInfo.key as keyof CuratedConflictEntry];
-                          if (value === undefined || value === null || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && value.length === 0) ) return null;
+                          // Tratar array 'atores_externos_envolvidos' como string unida por vírgulas
+                          if (fieldInfo.key === 'atores_externos_envolvidos' && Array.isArray(value)) {
+                            value = value.join(', ');
+                          }
+
+                          if (value === undefined || value === null || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && value.length === 0 && fieldInfo.key !== 'atores_externos_envolvidos') ) return null;
                           
                           let displayValue: React.ReactNode = String(value);
-                          if (Array.isArray(value)) {
-                            displayValue = value.join('; ');
-                          }
+                          // Não precisamos mais tratar 'envolvidos' aqui, pois será listado abaixo
+                          if (fieldInfo.key === 'envolvidos') return null;
+
 
                           return (
                             <p key={fieldInfo.key} className="text-xs text-muted-foreground mb-0.5 flex items-start gap-1.5">
@@ -286,7 +290,7 @@ export function WikipediaMacroPanel() {
                             href={conflict.wikipedia_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline flex items-center gap-1 mt-auto pt-2"
+                            className="text-xs text-primary hover:underline flex items-center gap-1 mt-auto pt-2" // mt-auto para empurrar para baixo
                           >
                             Ver detalhes na Wikipedia <ExternalLink className="w-3 h-3" />
                           </a>
@@ -311,5 +315,3 @@ export function WikipediaMacroPanel() {
     </TooltipProvider>
   );
 }
-
-    
