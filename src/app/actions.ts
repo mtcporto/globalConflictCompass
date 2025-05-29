@@ -2,11 +2,41 @@
 'use server';
 
 import { summarizeConflictNews, type SummarizeConflictNewsInput, type SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
-import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, CuratedConflictData } from '@/lib/types';
+import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, CuratedConflictData, CachedAiSummary } from '@/lib/types';
 import curatedConflictDataJson from '@/data/curated-conflict-data.json';
+import fs from 'fs/promises';
+import path from 'path';
+import { addAiSummary, getLatestAiSummary } from '@/lib/db';
 
 
-export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInputItem[]): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string }> {
+export async function getAiSummaryAction(
+  newsItemsToSummarize: SummarizeNewsInputItem[],
+  forceRefresh: boolean = false
+): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string; lastGenerated?: string; dataSource?: 'db' | 'ai' }> {
+  
+  if (!forceRefresh) {
+    try {
+      const cachedData = getLatestAiSummary();
+      if (cachedData) {
+        // Simple cache validation: if we have a summary, use it.
+        // More advanced: check if cachedData.lastGenerated is within a certain timeframe (e.g., 24 hours)
+        // For now, if it exists, we use it unless forceRefresh is true.
+        console.log("AI Summary: Found in DB, using latest entry.");
+        return { 
+          summary: cachedData.summary, 
+          lastGenerated: cachedData.lastGenerated,
+          dataSource: 'db' 
+        };
+      }
+      console.log("AI Summary: Not found in DB or too old, will generate new one.");
+    } catch (dbError) {
+      console.error("AI Summary: Error reading from DB, will generate new one.", dbError);
+      // Proceed to generate new summary if DB read fails
+    }
+  }
+
+  // If forceRefresh is true, or if no valid cache from DB
+  console.log(`AI Summary: Generating new summary (forceRefresh: ${forceRefresh}).`);
   if (!newsItemsToSummarize || newsItemsToSummarize.length === 0) {
     return { error: 'Nenhum item de notícia fornecido para resumo.' };
   }
@@ -17,7 +47,14 @@ export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInpu
 
   try {
     const result = await summarizeConflictNews(input);
-    return { summary: result };
+    addAiSummary(result); // Save to DB
+    const now = new Date().toISOString();
+    console.log("AI Summary: New summary generated and saved to DB.");
+    return { 
+      summary: result,
+      lastGenerated: now,
+      dataSource: 'ai'
+    };
   } catch (error) {
     let detailedErrorMessage = 'Falha ao gerar resumo de IA.';
     if (error instanceof Error) {
@@ -33,10 +70,13 @@ export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInpu
   }
 }
 
+
 export async function getCuratedConflictsAction(): Promise<{ data?: CuratedConflictData; error?: string }> {
   try {
-    const data: CuratedConflictData = curatedConflictDataJson as CuratedConflictData;
+    // For curated data, we directly import/read the JSON. No server-side caching file like .cache needed.
+    const data: CuratedConflictData = curatedConflictDataJson as CuratedConflictData; 
     if (!data) {
+      // This case should ideally not happen if the JSON file is part of the deployment
       return { error: 'Falha ao carregar dados de conflitos curados: arquivo não encontrado ou vazio.' };
     }
     return { data };

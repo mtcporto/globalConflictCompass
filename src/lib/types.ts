@@ -1,4 +1,6 @@
 
+import type { SummarizeConflictNewsOutput } from "@/ai/flows/summarize-conflict-news";
+
 export interface NewsItem {
   id: string;
   date: string;
@@ -19,7 +21,7 @@ export type ApiName =
   | 'wikipediaConflicts' 
   | 'aljazeera'
   | 'hrw'
-  | 'guardian'; // Added guardian
+  | 'guardian';
 
 export type ApiStatus = 'loading' | 'success' | 'error' | 'idle';
 
@@ -36,7 +38,7 @@ export interface AllApiStatuses {
   wikipediaConflicts: SourceStatus; 
   aljazeera: SourceStatus;
   hrw: SourceStatus;
-  guardian: SourceStatus; // Added guardian
+  guardian: SourceStatus;
 }
 
 // ACLED specific types
@@ -63,7 +65,7 @@ export interface AcledApiResponse {
   message?: string; 
   detail?: string;  
   status_code?: number; 
-  error?: AcledErrorDetail | string; 
+  error?: AcledErrorDetail | string | { message?: string; status?: number }; 
 }
 
 
@@ -85,7 +87,7 @@ export interface ReliefWebApiResponse {
 }
 
 // BBC News and other rss2json based feeds
-export interface BbcNewsItemRss { // Reused for AlJazeera, HRW, Guardian via rss2json
+export interface BbcNewsItemRss { 
   title: string;
   pubDate: string;
   link: string;
@@ -98,7 +100,7 @@ export interface BbcNewsItemRss { // Reused for AlJazeera, HRW, Guardian via rss
   categories: string[];
 }
 
-export interface BbcNewsRssResponse { // Reused for AlJazeera, HRW, Guardian via rss2json
+export interface BbcNewsRssResponse { 
   status: string;
   feed: {
     url: string;
@@ -118,18 +120,17 @@ export interface SummarizeNewsInputItem {
   link?: string;
 }
 
-
-// For Curated Conflict Data (replaces Wikipedia extraction)
+// For Curated Conflict Data from JSON file
 export type ConflictSeverityCategory = "Alta Gravidade" | "Média Gravidade" | "Baixa Gravidade";
 
 export interface CuratedConflictEntry {
   nome: string;
   imagem_url: string;
   inicio: string;
-  fatalidades_reportadas?: number; // Made optional to handle missing data
+  fatalidades_reportadas?: number;
   fatalidades_texto: string;
   territorio: string;
-  coordenadas: [number, number]; // Assuming [latitude, longitude]
+  coordenadas: [number, number];
   envolvidos: string[];
   wikipedia_link: string;
   status: string;
@@ -140,7 +141,7 @@ export interface CuratedConflictEntry {
   tendencia_recente: string;
   fonte_dados_especifica: string;
   regiao_geopolitica: string;
-  severityCategory?: ConflictSeverityCategory; 
+  severityCategory?: string; 
 }
 
 export type CuratedConflictData = {
@@ -148,3 +149,10 @@ export type CuratedConflictData = {
 } & {
   [key: string]: CuratedConflictEntry[] | undefined;
 };
+
+
+// For Cached/DB AI Summary
+export interface CachedAiSummary {
+  summary: SummarizeConflictNewsOutput;
+  lastGenerated: string; // ISO date string
+}
