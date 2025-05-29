@@ -1,8 +1,7 @@
 
 "use client";
 
-import type React from 'react';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import type { CuratedConflictEntry, CuratedConflictData, ConflictSeverityCategory } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +16,6 @@ import {
   UsersRound,
   Landmark,
   Globe,
-  Info,
   BarChart3,
   CalendarClock,
   LocateFixed,
@@ -26,9 +24,7 @@ import {
   Sigma,
   Skull,
   Network,
-  ChevronDown,
-  ChevronUp,
-  Eye, // Ícone para o tooltip
+  Eye,
 } from 'lucide-react';
 import {
   Accordion,
@@ -62,15 +58,9 @@ const severityColorClasses: Record<ConflictSeverityCategory, string> = {
   "Baixa Gravidade": "text-yellow-500",
 };
 
-const severityTranslations: Record<ConflictSeverityCategory, string> = {
-  "Alta Gravidade": "Alta Gravidade (10.000+ mortes/ano)",
-  "Média Gravidade": "Média Gravidade (1.000-9.999 mortes/ano)",
-  "Baixa Gravidade": "Baixa Gravidade (100-999 mortes/ano)",
-};
-
 const fallbackImageUrl = `https://placehold.co/300x200/eeeeee/cccccc?text=Imagem+Indispon%C3%ADvel`;
 
-const fieldDisplayConfig: Array<{ key: keyof CuratedConflictEntry; label: string; icon: React.ElementType, isList?: boolean }> = [
+const fieldDisplayConfig: Array<{ key: keyof CuratedConflictEntry; label: string; icon: React.ElementType }> = [
   { key: 'inicio', label: 'Início', icon: CalendarDays },
   { key: 'fatalidades_texto', label: 'Fatalidades', icon: Skull },
   { key: 'data_ultima_atualizacao_fatalidades', label: 'Últ. Info Fatalidades', icon: CalendarClock },
@@ -84,7 +74,6 @@ const fieldDisplayConfig: Array<{ key: keyof CuratedConflictEntry; label: string
   { key: 'regiao_geopolitica', label: 'Região Geopolítica', icon: Globe },
 ];
 
-
 export function WikipediaMacroPanel() {
   const data: CuratedConflictData = curatedConflictDataJson as CuratedConflictData;
 
@@ -92,7 +81,6 @@ export function WikipediaMacroPanel() {
     const conflicts: CuratedConflictEntry[] = [];
     (Object.keys(data) as ConflictSeverityCategory[]).forEach(severityKey => {
       data[severityKey].forEach(conflict => {
-        // Adiciona a categoria de severidade ao objeto do conflito
         conflicts.push({ ...conflict, severityCategory: severityKey });
       });
     });
@@ -103,13 +91,10 @@ export function WikipediaMacroPanel() {
 
   const totalFatalities = useMemo(() => {
     return allConflicts.reduce((sum, conflict) => {
-      const fatalitiesNum = typeof conflict.fatalidades_reportadas === 'string'
-        ? parseInt(conflict.fatalidades_reportadas.replace(/[,.+]/g, ''), 10)
-        : conflict.fatalidades_reportadas;
-      return sum + (isNaN(fatalitiesNum) ? 0 : fatalitiesNum);
+      const currentConflictFatalities = conflict.fatalidades_reportadas || 0; // Usa 0 se undefined
+      return sum + currentConflictFatalities;
     }, 0);
   }, [allConflicts]);
-
 
   const activeGeopoliticalRegions = useMemo(() => {
     const regions = new Set<string>();
@@ -122,27 +107,30 @@ export function WikipediaMacroPanel() {
   }, [allConflicts]);
 
   const involvedActorsInMultipleConflicts = useMemo(() => {
-    const actorCounts: Record<string, number> = {};
+    const actorCounts: Record<string, { count: number; conflicts: string[] }> = {};
     allConflicts.forEach(conflict => {
       conflict.envolvidos?.forEach(actor => {
-        actorCounts[actor] = (actorCounts[actor] || 0) + 1;
+        if (!actorCounts[actor]) {
+          actorCounts[actor] = { count: 0, conflicts: [] };
+        }
+        actorCounts[actor].count++;
+        actorCounts[actor].conflicts.push(conflict.nome);
       });
     });
     return Object.entries(actorCounts)
-      .filter(([_, count]) => count > 1)
-      .sort((a, b) => b[1] - a[1])
-      .map(([actor, count]) => `${actor} (${count}x)`);
+      .filter(([_, data]) => data.count > 1)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([actor, data]) => ({ actor, count: data.count, conflicts: data.conflicts }));
   }, [allConflicts]);
-
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
-    if (target.src !== fallbackImageUrl && !target.src.includes('data:image')) { // Prevent loop if fallback also fails or if it's already a data URI
+    if (target.src !== fallbackImageUrl) { // Avoid loop if fallback also fails
       target.src = fallbackImageUrl;
-      target.srcset = "";
+      target.srcset = ""; // Clear srcset if present
     }
   };
-  
+
   const conflictCategories = Object.keys(data) as ConflictSeverityCategory[];
 
   return (
@@ -173,41 +161,56 @@ export function WikipediaMacroPanel() {
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Globe className="w-7 h-7 text-accent mb-1" />
               <span className="font-semibold text-xl">{activeGeopoliticalRegions.length}</span>
-              <Tooltip>
+               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="text-muted-foreground text-xs text-center cursor-help underline decoration-dotted hover:text-accent">
                     Regiões Geopolíticas Ativas
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
-                  <p className="font-medium mb-1">Regiões Geopolíticas Envolvidas ({activeGeopoliticalRegions.length}):</p>
-                  <ul className="list-disc list-inside space-y-0.5">
-                    {activeGeopoliticalRegions.map(region => <li key={region}>{region}</li>)}
-                  </ul>
+                  {activeGeopoliticalRegions.length > 0 ? (
+                    <>
+                      <p className="font-medium mb-1">Regiões ({activeGeopoliticalRegions.length}):</p>
+                      <ul className="list-disc list-inside space-y-0.5 max-h-60 overflow-y-auto">
+                        {activeGeopoliticalRegions.map(region => <li key={region}>{region}</li>)}
+                      </ul>
+                    </>
+                  ) : (
+                    <p>Nenhuma região geopolítica primária identificada nos conflitos listados.</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
             </div>
 
             <div className="flex flex-col items-center p-3 bg-muted/50 rounded-md">
               <Network className="w-7 h-7 text-orange-500 mb-1" />
-               <span className="font-semibold text-xl">{involvedActorsInMultipleConflicts.length}</span>
-              {involvedActorsInMultipleConflicts.length > 0 ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                     <span className="text-muted-foreground text-xs text-center cursor-help underline decoration-dotted hover:text-orange-500">
-                       Atores em Múltiplos Conflitos
-                     </span>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
-                    <p className="font-medium mb-1">Atores em múltiplos conflitos ({involvedActorsInMultipleConflicts.length}):</p>
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {involvedActorsInMultipleConflicts.map(actor => <li key={actor}>{actor}</li>)}
-                    </ul>
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                <span className="text-muted-foreground text-xs text-center">Atores em Múltiplos Conflitos</span>
-              )}
+              <span className="font-semibold text-xl">{involvedActorsInMultipleConflicts.length}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-muted-foreground text-xs text-center cursor-help underline decoration-dotted hover:text-orange-500">
+                    Atores em Múltiplos Conflitos
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-md text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
+                  {involvedActorsInMultipleConflicts.length > 0 ? (
+                    <>
+                      <p className="font-medium mb-1">Atores ({involvedActorsInMultipleConflicts.length}):</p>
+                      <ul className="list-disc list-inside space-y-1 max-h-60 overflow-y-auto">
+                        {involvedActorsInMultipleConflicts.map(item => (
+                          <li key={item.actor}>
+                            {item.actor} ({item.count}x)
+                            <ul className="list-['-_'] list-inside ml-3 text-xs opacity-80">
+                              {item.conflicts.map(conflictName => <li key={conflictName}>{conflictName}</li>)}
+                            </ul>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p>Nenhum ator identificado como envolvido em múltiplos conflitos.</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -215,19 +218,23 @@ export function WikipediaMacroPanel() {
         <h3 className="text-xl font-semibold text-foreground mb-3">Visão Macro dos Conflitos</h3>
         <Accordion type="multiple" className="w-full">
           {conflictCategories.map((severityKey) => {
-            const conflictsInCategory = data[severityKey];
-            if (!conflictsInCategory || conflictsInCategory.length === 0) return null;
+            const conflictsInCategory = data[severityKey as ConflictSeverityCategory] || [];
+            if (conflictsInCategory.length === 0) return null;
 
-            const IconComponent = severityIconMap[severityKey];
-            const iconColorClass = severityColorClasses[severityKey];
-            const translatedSeverityTitle = severityTranslations[severityKey] || severityKey;
+            const IconComponent = severityIconMap[severityKey as ConflictSeverityCategory];
+            const iconColorClass = severityColorClasses[severityKey as ConflictSeverityCategory];
+            
+            let severityTitle = severityKey as string;
+            if (severityKey === "Alta Gravidade") severityTitle = "Alta Gravidade (10.000+ mortes/ano)";
+            else if (severityKey === "Média Gravidade") severityTitle = "Média Gravidade (1.000-9.999 mortes/ano)";
+            else if (severityKey === "Baixa Gravidade") severityTitle = "Baixa Gravidade (100-999 mortes/ano)";
 
             return (
               <AccordionItem value={severityKey} key={severityKey}>
                 <AccordionTrigger className="text-lg font-medium hover:no-underline">
                   <div className="flex items-center gap-2">
                     {IconComponent && <IconComponent className={`w-5 h-5 ${iconColorClass}`} />}
-                    {translatedSeverityTitle} ({conflictsInCategory.length})
+                    {severityTitle} ({conflictsInCategory.length})
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -235,7 +242,7 @@ export function WikipediaMacroPanel() {
                     {conflictsInCategory.map((conflict) => (
                       <div
                         key={conflict.nome}
-                        className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-lg transition-shadow max-w-[350px] w-full sm:w-auto flex flex-col" // Adicionado flex flex-col
+                        className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-lg transition-shadow w-full sm:w-auto max-w-[350px] flex flex-col"
                       >
                         <div className="relative w-full h-48 mb-3 rounded-md overflow-hidden bg-muted">
                           <Image
@@ -245,30 +252,20 @@ export function WikipediaMacroPanel() {
                             style={{ objectFit: 'cover' }}
                             className="bg-muted"
                             onError={handleImageError}
-                            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 350px"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 350px"
                             data-ai-hint="war impact armed conflict"
                           />
                         </div>
                         <h4 className="font-semibold text-base mb-1.5">{conflict.nome}</h4>
                         
                         {fieldDisplayConfig.map(fieldInfo => {
-                          let value = conflict[fieldInfo.key as keyof CuratedConflictEntry];
-                          // Tratar array 'atores_externos_envolvidos' como string unida por vírgulas
-                          if (fieldInfo.key === 'atores_externos_envolvidos' && Array.isArray(value)) {
-                            value = value.join(', ');
-                          }
-
-                          if (value === undefined || value === null || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && value.length === 0 && fieldInfo.key !== 'atores_externos_envolvidos') ) return null;
+                          const value = conflict[fieldInfo.key as keyof CuratedConflictEntry];
+                          if (value === undefined || value === null || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && value.length === 0)) return null;
                           
-                          let displayValue: React.ReactNode = String(value);
-                          // Não precisamos mais tratar 'envolvidos' aqui, pois será listado abaixo
-                          if (fieldInfo.key === 'envolvidos') return null;
-
-
                           return (
                             <p key={fieldInfo.key} className="text-xs text-muted-foreground mb-0.5 flex items-start gap-1.5">
                               <fieldInfo.icon className="w-3.5 h-3.5 mt-0.5 text-primary/80 shrink-0" />
-                              <span><strong>{fieldInfo.label}:</strong> {String(displayValue)}</span>
+                              <span><strong>{fieldInfo.label}:</strong> {String(value)}</span>
                             </p>
                           );
                         })}
@@ -290,7 +287,7 @@ export function WikipediaMacroPanel() {
                             href={conflict.wikipedia_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline flex items-center gap-1 mt-auto pt-2" // mt-auto para empurrar para baixo
+                            className="text-xs text-primary hover:underline flex items-center gap-1 mt-auto pt-2"
                           >
                             Ver detalhes na Wikipedia <ExternalLink className="w-3 h-3" />
                           </a>
@@ -303,9 +300,13 @@ export function WikipediaMacroPanel() {
             );
           })}
         </Accordion>
+
         <div className="mt-8 p-3 bg-muted/50 border border-border rounded-lg text-xs text-muted-foreground text-center italic">
           <p>
-            Dados apresentados são curados manualmente e baseados no arquivo <code>src/data/curated-conflict-data.json</code>.
+            Dados apresentados são curados manualmente e inspirados na página {" "}
+            <a href="https://en.wikipedia.org/wiki/List_of_ongoing_armed_conflicts" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
+              "List of ongoing armed conflicts"
+            </a> da Wikipedia (em inglês).
           </p>
           <p className="mt-1">
             Este painel é para fins informativos e educacionais. As informações podem não ser exaustivas ou em tempo real.
@@ -315,3 +316,5 @@ export function WikipediaMacroPanel() {
     </TooltipProvider>
   );
 }
+
+    
