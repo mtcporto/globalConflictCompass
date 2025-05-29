@@ -26,12 +26,11 @@
       "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/MAF_bombing_Kyauktaw_Township_2025-01-12.png/330px-MAF_bombing_Kyauktaw_Township_2025-01-12.png",
       "latitude": 22,
       "longitude": 96,
-      "startDate": "5 May 2021",
-      "territory": "Kayin State"
+      "startDate": "5 May 2021"
     },
     {
       "fatalitiesRaw": "10,000+",
-      "id": "ukraine-war-2022-02-24",
+      "id": "ukraine-war-2022-02-20",
       "locations": [
         "Ukraine",
         "Russia"
@@ -39,26 +38,23 @@
       "name": "Russo-Ukrainian War",
       "severity": "HIGH",
       "detailsLink": "https://en.wikipedia.org/wiki/Russo-Ukrainian_War",
-      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Kyiv_after_Russian_shelling%2C_2022-10-10_%28073%29.webp/330px-Kyiv_after_Russian_shelling%2C_2022-10-10_%28073%29.webp.png",
       "latitude": 48,
       "longitude": 32,
-      "startDate": "24 February 2022",
+      "startDate": "20 February 2014",
       "territory": "Donbas"
     },
     {
       "fatalitiesRaw": "10,000+",
-      "id": "war-in-gaza-2023-10-07",
+      "id": "yemeni-civil-war-2014-09-19",
       "locations": [
-        "Gaza Strip",
-        "Israel"
+        "Yemen"
       ],
-      "name": "War in Gaza",
+      "name": "Yemeni Civil War",
       "severity": "HIGH",
-      "detailsLink": "https://en.wikipedia.org/wiki/2023_Israel%E2%80%93Hamas_war",
-      "latitude": 31.4,
-      "longitude": 34.3,
-      "startDate": "7 October 2023",
-      "territory": "Gaza Strip"
+      "detailsLink": "https://en.wikipedia.org/wiki/Yemeni_Civil_War_(2014%E2%80%93present)",
+      "latitude": 15,
+      "longitude": 48,
+      "startDate": "19 September 2014"
     },
     {
       "fatalitiesRaw": "10,000+",
@@ -72,36 +68,36 @@
       "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Syrian_Army_tanks_1_%28Operation_Damascus_Steel%2C_March_2018%29.png/330px-Syrian_Army_tanks_1_%28Operation_Damascus_Steel%2C_March_2018%29.png",
       "latitude": 35,
       "longitude": 38,
-      "startDate": "15 March 2011",
-      "territory": "Idlib"
+      "startDate": "15 March 2011"
     },
     {
       "fatalitiesRaw": "1,000–9,999",
-      "id": "afghanistan-conflict-1978-12-27",
+      "id": "israeli-palestinian-conflict-2023-10-07",
       "locations": [
-        "Afghanistan"
+        "Israel",
+        "Palestine"
       ],
-      "name": "Afghanistan conflict",
+      "name": "Israeli–Palestinian conflict",
       "severity": "MEDIUM",
-      "detailsLink": "https://en.wikipedia.org/wiki/War_in_Afghanistan_(1978%E2%80%93present)",
-      "latitude": 33,
-      "longitude": 65,
-      "startDate": "27 December 1978",
-      "territory": "Kabul"
+      "detailsLink": "https://en.wikipedia.org/wiki/Israeli%E2%80%93Palestinian_conflict",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Fars_Photo_of_Destruction_in_Gaza_Strip_during_2023_War_01.jpg/330px-Fars_Photo_of_Destruction_in_Gaza_Strip_during_2023_War_01.jpg",
+      "latitude": 31.5,
+      "longitude": 34.75,
+      "startDate": "7 October 2023",
+      "territory": "Gaza Strip"
     },
     {
       "fatalitiesRaw": "1,000–9,999",
-      "id": "ethiopian-civil-conflict-2018-01-01",
+      "id": "ethiopian-civil-war-2020-11-03",
       "locations": [
         "Ethiopia"
       ],
       "name": "Ethiopian civil conflict",
       "severity": "MEDIUM",
-      "detailsLink": "https://en.wikipedia.org/wiki/Ethiopian_civil_conflict_(2018%E2%80%93present)",
-      "imageUrl": "https://www.aljazeera.com/wp-content/uploads/2021/04/2021-04-04T081954Z_1001484675_RC2WOM9EAL7W_RTRMADP_3_ETHIOPIA-CONFLICT.jpg?resize=770%2C513&quality=80",
+      "detailsLink": "https://en.wikipedia.org/wiki/Ethiopian_civil_conflict",
       "latitude": 8,
       "longitude": 38,
-      "startDate": "2018",
+      "startDate": "3 November 2020",
       "territory": "Tigray Region"
     },
     {
@@ -113,10 +109,52 @@
       "name": "Insurgency in South Kivu",
       "severity": "MEDIUM",
       "detailsLink": "https://en.wikipedia.org/wiki/Insurgency_in_South_Kivu",
-      "latitude": -2.5,
+      "latitude": -3,
       "longitude": 28.5,
       "startDate": "18 September 2015",
       "territory": "South Kivu"
+    },
+    {
+      "fatalitiesRaw": "1,000–9,999",
+      "id": "insurgency-in-cabo-delgado-2017-10-05",
+      "locations": [
+        "Mozambique"
+      ],
+      "name": "Insurgency in Cabo Delgado",
+      "severity": "MEDIUM",
+      "detailsLink": "https://en.wikipedia.org/wiki/Insurgency_in_Cabo_Delgado",
+      "latitude": -13,
+      "longitude": 40,
+      "startDate": "5 October 2017",
+      "territory": "Cabo Delgado"
+    },
+    {
+      "fatalitiesRaw": "1,000–9,999",
+      "id": "communal-conflicts-in-nigeria-2018-01-01",
+      "locations": [
+        "Nigeria"
+      ],
+      "name": "Communal conflicts in Nigeria",
+      "severity": "MEDIUM",
+      "detailsLink": "https://en.wikipedia.org/wiki/Communal_conflicts_in_Nigeria",
+      "latitude": 9,
+      "longitude": 8,
+      "startDate": "2018"
+    },
+    {
+      "fatalitiesRaw": "1,000–9,999",
+      "id": "sahel-insurgency-2018-01-01",
+      "locations": [
+        "Burkina Faso",
+        "Mali",
+        "Niger"
+      ],
+      "name": "Sahel insurgency",
+      "severity": "MEDIUM",
+      "detailsLink": "https://en.wikipedia.org/wiki/Sahel_insurgency",
+      "latitude": 15,
+      "longitude": 0,
+      "startDate": "2018"
     },
     {
       "fatalitiesRaw": "1,000–9,999",
@@ -129,197 +167,122 @@
       "name": "Kivu conflict",
       "severity": "MEDIUM",
       "detailsLink": "https://en.wikipedia.org/wiki/Kivu_conflict",
-      "latitude": -1.6667,
-      "longitude": 29.2333,
+      "latitude": -2,
+      "longitude": 29,
       "startDate": "2004",
       "territory": "North Kivu"
     },
     {
-      "fatalitiesRaw": "1,000–9,999",
-      "id": "insurgency-in-mozambique-2017-10-05",
-      "locations": [
-        "Mozambique"
-      ],
-      "name": "Insurgency in Mozambique",
-      "severity": "MEDIUM",
-      "detailsLink": "https://en.wikipedia.org/wiki/Insurgency_in_Mozambique",
-      "latitude": -18.25,
-      "longitude": 35,
-      "startDate": "5 October 2017",
-      "territory": "Cabo Delgado"
-    },
-    {
-      "fatalitiesRaw": "1,000–9,999",
-      "id": "sahel-conflict-2011-01-01",
-      "locations": [
-        "Mali",
-        "Burkina Faso",
-        "Niger"
-      ],
-      "name": "Sahel conflict",
-      "severity": "MEDIUM",
-      "detailsLink": "https://en.wikipedia.org/wiki/Sahel_conflict",
-      "latitude": 15,
-      "longitude": 0,
-      "startDate": "2011",
-      "territory": "Liptako"
-    },
-    {
-      "fatalitiesRaw": "1,000–9,999",
-      "id": "somali-civil-war-2009-01-25",
-      "locations": [
-        "Somalia"
-      ],
-      "name": "Somali Civil War",
-      "severity": "MEDIUM",
-      "detailsLink": "https://en.wikipedia.org/wiki/Somali_Civil_War",
-      "latitude": 5,
-      "longitude": 46,
-      "startDate": "25 January 2009",
-      "territory": "Lower Shebelle"
-    },
-    {
-      "fatalitiesRaw": "1,000–9,999",
-      "id": "yemen-civil-war-2014-08-14",
-      "locations": [
-        "Yemen"
-      ],
-      "name": "Yemeni Civil War",
-      "severity": "MEDIUM",
-      "detailsLink": "https://en.wikipedia.org/wiki/Yemeni_Civil_War_(2014%E2%80%93present)",
-      "latitude": 15,
-      "longitude": 48,
-      "startDate": "14 August 2014",
-      "territory": "Marib"
-    },
-    {
       "fatalitiesRaw": "100–999",
-      "id": "burundi-conflict-2015-04-26",
-      "locations": [
-        "Burundi"
-      ],
-      "name": "Burundi conflict",
-      "severity": "LOW",
-      "detailsLink": "https://en.wikipedia.org/wiki/2015_Burundi_unrest",
-      "latitude": -3.5,
-      "longitude": 30,
-      "startDate": "26 April 2015",
-      "territory": "Bujumbura"
-    },
-    {
-      "fatalitiesRaw": "100–999",
-      "id": "cameroonian-conflict-2017-09-05",
-      "locations": [
-        "Cameroon"
-      ],
-      "name": "Cameroonian conflict",
-      "severity": "LOW",
-      "detailsLink": "https://en.wikipedia.org/wiki/Anglophone_Crisis",
-      "latitude": 6,
-      "longitude": 12,
-      "startDate": "5 September 2017",
-      "territory": "Northwest Region"
-    },
-    {
-      "fatalitiesRaw": "100–999",
-      "id": "central-african-republic-civil-war-2012-12-10",
-      "locations": [
-        "Central African Republic"
-      ],
-      "name": "Central African Republic Civil War",
-      "severity": "LOW",
-      "detailsLink": "https://en.wikipedia.org/wiki/Central_African_Republic_Civil_War_(2012%E2%80%93present)",
-      "latitude": 7,
-      "longitude": 21,
-      "startDate": "10 December 2012",
-      "territory": "Bangui"
-    },
-    {
-      "fatalitiesRaw": "100–999",
-      "id": "chad-insurgency-2016-01-01",
-      "locations": [
-        "Chad"
-      ],
-      "name": "Chad insurgency",
-      "severity": "LOW",
-      "detailsLink": "https://en.wikipedia.org/wiki/Chad_insurgency_(2016%E2%80%93present)",
-      "latitude": 15,
-      "longitude": 19,
-      "startDate": "2016",
-      "territory": "Tibesti Mountains"
-    },
-    {
-      "fatalitiesRaw": "100–999",
-      "id": "conflict-in-colombia-1964-05-27",
-      "locations": [
-        "Colombia"
-      ],
-      "name": "Conflict in Colombia",
-      "severity": "LOW",
-      "detailsLink": "https://en.wikipedia.org/wiki/Colombian_conflict",
-      "latitude": 4,
-      "longitude": -73,
-      "startDate": "27 May 1964",
-      "territory": "Cauca"
-    },
-    {
-      "fatalitiesRaw": "100–999",
-      "id": "equatorial-guinea-insurgency-2022-11-27",
-      "locations": [
-        "Equatorial Guinea"
-      ],
-      "name": "Equatorial Guinea insurgency",
-      "severity": "LOW",
-      "detailsLink": "https://en.wikipedia.org/wiki/2022_Equatorial_Guinea_attack",
-      "latitude": 1.5,
-      "longitude": 10,
-      "startDate": "27 November 2022",
-      "territory": "Malabo"
-    },
-    {
-      "fatalitiesRaw": "100–999",
-      "id": "inter-communal-conflict-in-nigeria-2021-01-01",
-      "locations": [
-        "Nigeria"
-      ],
-      "name": "Inter-communal conflicts in Nigeria",
-      "severity": "LOW",
-      "detailsLink": "https://en.wikipedia.org/wiki/List_of_ethnic_violence_in_Nigeria",
-      "latitude": 9,
-      "longitude": 8,
-      "startDate": "2021",
-      "territory": "Jos"
-    },
-    {
-      "fatalitiesRaw": "100–999",
-      "id": "israel-lebanon-conflict-2023-04-06",
-      "locations": [
-        "Israel",
-        "Lebanon"
-      ],
-      "name": "Israel–Lebanon conflict",
-      "severity": "LOW",
-      "detailsLink": "https://en.wikipedia.org/wiki/2023_Israel%E2%80%93Lebanon_border_clash",
-      "latitude": 33,
-      "longitude": 35,
-      "startDate": "6 April 2023",
-      "territory": "Shebaa Farms"
-    },
-    {
-      "fatalitiesRaw": "100–999",
-      "id": "south-thailand-insurgency-2004-01-04",
+      "id": "insurgency-in-southern-thailand-2004-01-01",
       "locations": [
         "Thailand"
       ],
-      "name": "South Thailand insurgency",
+      "name": "Insurgency in Southern Thailand",
       "severity": "LOW",
       "detailsLink": "https://en.wikipedia.org/wiki/South_Thailand_insurgency",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/2_%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A7%E0%B8%B1%E0%B8%95%E0%B8%B4_%E0%B8%81%E0%B8%A3%E0%B8%A1%E0%B8%97%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%A3%E0%B8%B2%E0%B8%9A%E0%B8%97%E0%B8%B5%E0%B9%88_3-18.jpg/330px-2_%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A7%E0%B8%B1%E0%B8%95%E0%B8%B4_%E0%B8%81%E0%B8%A3%E0%B8%A1%E0%B8%97%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%A3%E0%B8%B2%E0%B8%9A%E0%B8%97%E0%B8%B5%E0%B9%88_3-18.jpg",
       "latitude": 6.5,
       "longitude": 101.75,
-      "startDate": "4 January 2004",
-      "territory": "Pattani"
+      "startDate": "2004",
+      "territory": "Southern Thailand"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "inter-communal-violence-in-south-sudan-2011-01-01",
+      "locations": [
+        "South Sudan"
+      ],
+      "name": "Inter-communal violence in South Sudan",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Inter-communal_violence_in_South_Sudan",
+      "latitude": 7.5,
+      "longitude": 30,
+      "startDate": "2011"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "sinai-insurgency-2011-08-01",
+      "locations": [
+        "Egypt"
+      ],
+      "name": "Sinai insurgency",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Sinai_insurgency",
+      "latitude": 30.5,
+      "longitude": 34,
+      "startDate": "August 2011",
+      "territory": "Sinai Peninsula"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "north-caucasus-insurgency-2009-06-01",
+      "locations": [
+        "Russia"
+      ],
+      "name": "North Caucasus insurgency",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/North_Caucasus_insurgency",
+      "latitude": 43,
+      "longitude": 45,
+      "startDate": "June 2009",
+      "territory": "North Caucasus"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "insurgency-in-diffa-2015-02-06",
+      "locations": [
+        "Niger"
+      ],
+      "name": "Insurgency in Diffa",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Insurgency_in_Diffa",
+      "latitude": 13.33,
+      "longitude": 12.61,
+      "startDate": "6 February 2015",
+      "territory": "Diffa"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "anglophone-crisis-2017-09-01",
+      "locations": [
+        "Cameroon"
+      ],
+      "name": "Anglophone Crisis",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Anglophone_Crisis",
+      "latitude": 5.5,
+      "longitude": 9.75,
+      "startDate": "September 2017",
+      "territory": "Northwest Region, Southwest Region"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "conflict-in-the-central-african-republic-2012-12-10",
+      "locations": [
+        "Central African Republic"
+      ],
+      "name": "Conflict in the Central African Republic",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Conflict_in_the_Central_African_Republic_(2012%E2%80%93present)",
+      "latitude": 6.5,
+      "longitude": 21,
+      "startDate": "10 December 2012"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "naxalite-maoist-insurgency-1967-05-18",
+      "locations": [
+        "India"
+      ],
+      "name": "Naxalite–Maoist insurgency",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Naxalite%E2%80%93Maoist_insurgency",
+      "latitude": 22,
+      "longitude": 82,
+      "startDate": "18 May 1967"
     }
   ],
-  "lastUpdated": "2025-05-29T01:48:41.184Z",
+  "lastUpdated": "2025-05-29T03:49:29.756Z",
   "sourcePage": "https://en.wikipedia.org/wiki/List_of_ongoing_armed_conflicts"
 }
