@@ -65,13 +65,45 @@ const nextConfig: NextConfig = {
         hostname: 'conteudo.imguol.com.br',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https', // Added for Guerra Civil da Somália
+        hostname: 'img.lemde.fr',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https', // Added for Conflitos na RDC
+        hostname: 'www.vaticannews.va',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https', // Added for Conflitos na Nigéria & Afeganistão
+        hostname: 'www.hrw.org',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https', // Added for Conflito na Colômbia
+        hostname: 'agenciabrasil.ebc.com.br',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https', // Added for Conflito na Colômbia (outro host)
+        hostname: 'imagens.ebc.com.br',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http', // Added for Guerra Civil no Iêmen (Washington Post usa http para o link fornecido)
+        hostname: 'img.washingtonpost.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
 };
 
 export default nextConfig;
-
-    
-
-    
