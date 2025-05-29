@@ -11,7 +11,16 @@ export interface NewsItem {
   location?: string; // For ACLED
 }
 
-export type ApiName = 'acled' | 'reliefweb' | 'bbc' | 'aiSummary' | 'wikipediaConflicts'; // wikipediaConflicts is now curated
+export type ApiName = 
+  | 'acled' 
+  | 'reliefweb' 
+  | 'bbc' 
+  | 'aiSummary' 
+  | 'wikipediaConflicts' // This now refers to the curated data
+  | 'aljazeera' // New
+  | 'reuters'   // New
+  | 'hrw';      // New
+
 export type ApiStatus = 'loading' | 'success' | 'error' | 'idle';
 
 export interface SourceStatus {
@@ -25,6 +34,9 @@ export interface AllApiStatuses {
   bbc: SourceStatus;
   aiSummary: SourceStatus;
   wikipediaConflicts: SourceStatus; // For the curated data panel
+  aljazeera: SourceStatus; // New
+  reuters: SourceStatus;   // New
+  hrw: SourceStatus;       // New
 }
 
 // ACLED specific types
@@ -35,7 +47,7 @@ export interface AcledEvent {
   location: string;
   notes: string;
   country: string;
-  fatalities?: number | string;
+  fatalities?: number | string; // Made flexible
 }
 
 export interface AcledErrorDetail {
@@ -44,14 +56,14 @@ export interface AcledErrorDetail {
 }
 
 export interface AcledApiResponse {
-  status?: number | boolean;
+  status?: number | boolean; // Can be a boolean (false for error) or HTTP status code
   success?: boolean;
   count?: number;
-  data?: AcledEvent[];
-  message?: string;
-  detail?: string;
-  status_code?: number;
-  error?: AcledErrorDetail | string; 
+  data?: AcledEvent[]; // Optional: not present in all error responses
+  message?: string; // General message
+  detail?: string;  // More specific detail
+  status_code?: number; // Sometimes ACLED uses this for HTTP status
+  error?: AcledErrorDetail | string; // Can be an object or a string
 }
 
 
@@ -60,7 +72,7 @@ export interface ReliefWebReportField {
   title: string;
   date?: { created: string };
   url?: string;
-  body?: string;
+  body?: string; // Sometimes it's body-html, but we process it as string
 }
 export interface ReliefWebReport {
   id: string;
@@ -72,8 +84,8 @@ export interface ReliefWebApiResponse {
   totalCount: number;
 }
 
-// BBC News (rss2json) specific types
-export interface BbcNewsItemRss {
+// BBC News and other rss2json based feeds
+export interface BbcNewsItemRss { // Reused for AlJazeera, Reuters, HRW via rss2json
   title: string;
   pubDate: string;
   link: string;
@@ -81,12 +93,12 @@ export interface BbcNewsItemRss {
   author: string;
   thumbnail: string;
   description: string;
-  content: string;
+  content: string; // Often contains more detailed HTML content
   enclosure: object;
   categories: string[];
 }
 
-export interface BbcNewsRssResponse {
+export interface BbcNewsRssResponse { // Reused for AlJazeera, Reuters, HRW via rss2json
   status: string;
   feed: {
     url: string;
@@ -99,12 +111,13 @@ export interface BbcNewsRssResponse {
   items: BbcNewsItemRss[];
 }
 
-// For AI Summary of BBC/ReliefWeb
+// For AI Summary input
 export interface SummarizeNewsInputItem {
   title: string;
   description: string;
   link?: string;
 }
+
 
 // For Curated Conflict Data (replaces Wikipedia extraction)
 export type ConflictSeverityCategory = "Alta Gravidade" | "Média Gravidade" | "Baixa Gravidade";
@@ -113,7 +126,7 @@ export interface CuratedConflictEntry {
   nome: string;
   imagem_url: string;
   inicio: string;
-  fatalidades_reportadas?: number; // Added as per JSON
+  fatalidades_reportadas?: number;
   fatalidades_texto: string;
   territorio: string;
   coordenadas: [number, number];
@@ -127,12 +140,11 @@ export interface CuratedConflictEntry {
   tendencia_recente: string;
   fonte_dados_especifica: string;
   regiao_geopolitica: string;
-  severityCategory?: ConflictSeverityCategory; // Added to carry severity info
+  severityCategory?: ConflictSeverityCategory; 
 }
 
 export interface CuratedConflictData {
   "Alta Gravidade": CuratedConflictEntry[];
   "Média Gravidade": CuratedConflictEntry[];
   "Baixa Gravidade": CuratedConflictEntry[];
-  // Add more keys if your JSON structure has them
 }

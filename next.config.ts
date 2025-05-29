@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'aljazeera.com', // Added for Al Jazeera without www
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'ichef.bbci.co.uk',
         port: '',
         pathname: '/**',
@@ -97,7 +103,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'http',
+        protocol: 'http', // Washington Post link was http
         hostname: 'img.washingtonpost.com',
         port: '',
         pathname: '/**',
@@ -149,11 +155,46 @@ const nextConfig: NextConfig = {
         hostname: 'img.jakpost.net',
         port: '',
         pathname: '/**',
+      },
+      // Reuters domains
+      {
+        protocol: 'https',
+        hostname: 's1.reutersmedia.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 's2.reutersmedia.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 's3.reutersmedia.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 's4.reutersmedia.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'static.reuters.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.reuters.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
 };
 
 export default nextConfig;
-
-    

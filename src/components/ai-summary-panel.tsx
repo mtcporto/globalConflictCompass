@@ -3,13 +3,19 @@
 
 import type React from 'react';
 import { useState, useCallback, useEffect } from 'react';
-import { getAiSummaryAction, fetchBbcNewsForAISummary, fetchReliefWebForAISummary } from '@/app/actions';
+import { 
+  getAiSummaryAction, 
+  fetchBbcNewsForAISummary, 
+  fetchReliefWebForAISummary,
+  fetchAlJazeeraForAISummary, // New
+  fetchReutersForAISummary,   // New
+  fetchHrwReportsForAISummary // New
+} from '@/app/actions';
 import type { SourceStatus, SummarizeNewsInputItem, BbcNewsItemRss, ReliefWebReport } from '@/lib/types';
 import type { SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
-// ScrollArea will be removed
 import { Wand2, Info } from 'lucide-react';
 
 interface AiSummaryPanelProps {
@@ -28,29 +34,43 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
     onStatusChange({ status: 'loading' });
 
     try {
-      const bbcItemsPromise = fetchBbcNewsForAISummary(5); 
-      const reliefWebItemsPromise = fetchReliefWebForAISummary(5);
+      const newsFetchPromises = [
+        fetchBbcNewsForAISummary(3), 
+        fetchReliefWebForAISummary(3),
+        fetchAlJazeeraForAISummary(3),
+        fetchReutersForAISummary(3),
+        fetchHrwReportsForAISummary(3)
+      ];
 
-      const [bbcData, reliefWebData] = await Promise.all([bbcItemsPromise, reliefWebItemsPromise]);
+      const results = await Promise.all(newsFetchPromises);
+      const [bbcData, reliefWebData, alJazeeraData, reutersData, hrwData] = results;
 
       const newsItemsToSummarize: SummarizeNewsInputItem[] = [];
 
-      bbcData.forEach((item: BbcNewsItemRss) => {
-        newsItemsToSummarize.push({
-          title: item.title,
-          description: item.description.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...',
-          link: item.link,
-        });
-      });
+      const processItems = (items: Array<BbcNewsItemRss | ReliefWebReport>, source: string) => {
+        items.forEach((item: any) => { // Using 'any' here for simplicity due to differing structures
+          let title: string;
+          let description: string;
+          let link: string | undefined;
 
-      reliefWebData.forEach((item: ReliefWebReport) => {
-        const description = item.fields.body?.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...' || 'Sem descrição detalhada.';
-        newsItemsToSummarize.push({
-          title: item.fields.title,
-          description: description,
-          link: item.fields.url,
+          if (source === 'ReliefWeb') {
+            title = item.fields.title;
+            description = item.fields.body?.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...' || 'Sem descrição detalhada.';
+            link = item.fields.url;
+          } else { // Assuming BbcNewsItemRss structure for BBC, AlJazeera, Reuters, HRW
+            title = item.title;
+            description = (item.content || item.description || "").replace(/<[^>]*>?/gm, '').substring(0, 350) + '...';
+            link = item.link;
+          }
+          newsItemsToSummarize.push({ title, description, link });
         });
-      });
+      };
+
+      processItems(bbcData, 'BBC');
+      processItems(reliefWebData, 'ReliefWeb');
+      processItems(alJazeeraData, 'AlJazeera');
+      processItems(reutersData, 'Reuters');
+      processItems(hrwData, 'HRW');
       
       if (newsItemsToSummarize.length === 0) {
         setError("Nenhuma notícia encontrada para gerar o resumo. Tente atualizar as outras fontes primeiro ou verifique a conexão.");
@@ -79,6 +99,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
   }, [onStatusChange]);
   
   useEffect(() => {
+    // Set initial status to idle if not loading, no summary, and no error
     if (!isLoading && !summary && !error) {
       onStatusChange({ status: 'idle' });
     }
@@ -95,7 +116,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-start gap-2">
         <Info className="w-4 h-4 mt-0.5 shrink-0" />
         <span>
-          Este resumo é gerado por IA com base nas notícias mais recentes da BBC e ReliefWeb (até 5 de cada). 
+          Este resumo é gerado por IA com base nas notícias mais recentes de fontes como BBC, ReliefWeb, Al Jazeera, Reuters e Human Rights Watch (até 3 de cada). 
           Pode não refletir todos os conflitos ativos listados em outras seções.
         </span>
       </div>
@@ -104,7 +125,6 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       {error && <ErrorDisplay message={error} />}
       
       {summary && !isLoading && (
-        // Removed ScrollArea component
         <div className="flex-grow"> 
           <div className="p-1 md:p-3 bg-card rounded-lg shadow-md space-y-6 text-sm">
             
@@ -131,13 +151,13 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
                 </ul>
               </div>
             )}
-            {summary.impactoHumanitario && summary.impactoHumanitario !== "Não mencionado explicitamente" && summary.impactoHumanitario !== "Não mencionado explicitamente nas notícias fornecidas" && (
+            {summary.impactoHumanitario && summary.impactoHumanitario !== "Não mencionado explicitamente nas notícias fornecidas" && (
               <div>
                 <h4 className="font-semibold text-base mb-1 text-accent">Impacto Humanitário:</h4>
                 <p className="whitespace-pre-wrap text-foreground/90">{summary.impactoHumanitario}</p>
               </div>
             )}
-             {summary.causasFatoresMencionados && summary.causasFatoresMencionados !== "Não mencionado explicitamente" && summary.causasFatoresMencionados !== "Não mencionado explicitamente nas notícias fornecidas" && (
+             {summary.causasFatoresMencionados && summary.causasFatoresMencionados !== "Não mencionado explicitamente nas notícias fornecidas" && (
               <div>
                 <h4 className="font-semibold text-base mb-1 text-accent">Causas/Fatores Mencionados:</h4>
                 <p className="whitespace-pre-wrap text-foreground/90">{summary.causasFatoresMencionados}</p>
@@ -151,7 +171,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       )}
       {!summary && !isLoading && !error && (
          <p className="text-sm text-muted-foreground text-center flex-grow flex items-center justify-center">
-           Clique no botão acima para gerar um resumo das notícias da BBC e ReliefWeb.
+           Clique no botão acima para gerar um resumo das notícias (BBC, ReliefWeb, Al Jazeera, Reuters, HRW).
          </p>
       )}
     </div>

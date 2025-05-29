@@ -9,22 +9,29 @@ import { DataCard } from './data-card';
 import { AcledPanel } from './acled-panel';
 import { ReliefWebPanel } from './reliefweb-panel';
 import { BbcNewsPanel } from './bbc-news-panel';
+import { AlJazeeraNewsPanel } from './aljazeera-news-panel'; // New
+import { ReutersNewsPanel } from './reuters-news-panel';   // New
+import { HrwReportsPanel } from './hrw-reports-panel';     // New
 import { AiSummaryPanel } from './ai-summary-panel';
-import { WikipediaMacroPanel } from './wikipedia-macro-panel';
-import { BarChartBig, Globe, HelpingHand, Newspaper, Sparkles, AlertTriangle, CheckCircle2, Loader2, BookOpen } from 'lucide-react';
+import { WikipediaMacroPanel } from './wikipedia-macro-panel'; // This now uses curated data
+import { BarChartBig, Globe, HelpingHand, Newspaper, Sparkles, AlertTriangle, CheckCircle2, Loader2, BookOpen, Landmark } from 'lucide-react'; // Added Landmark for HRW
 
 const initialApiStatuses: AllApiStatuses = {
   acled: { status: 'loading' },
   reliefweb: { status: 'loading' },
   bbc: { status: 'loading' },
+  aljazeera: { status: 'loading' }, // New
+  reuters: { status: 'loading' },   // New
+  hrw: { status: 'loading' },       // New
   aiSummary: { status: 'idle' },
-  wikipediaConflicts: { status: 'loading' },
+  wikipediaConflicts: { status: 'success' }, // Since it's local JSON, assume success
 };
 
 export default function ConflictDashboard() {
   const [apiStatuses, setApiStatuses] = useState<AllApiStatuses>(initialApiStatuses);
   const [fetchTriggers, setFetchTriggers] = useState<Record<ApiName, number>>({
-    acled: 0, reliefweb: 0, bbc: 0, aiSummary: 0, wikipediaConflicts: 0,
+    acled: 0, reliefweb: 0, bbc: 0, aljazeera: 0, reuters: 0, hrw: 0, // Added new sources
+    aiSummary: 0, wikipediaConflicts: 0,
   });
 
   const handleAcledStatusChange = useCallback((status: SourceStatus) => {
@@ -36,12 +43,19 @@ export default function ConflictDashboard() {
   const handleBbcStatusChange = useCallback((status: SourceStatus) => {
     setApiStatuses(prev => ({ ...prev, bbc: status }));
   }, []);
+  const handleAlJazeeraStatusChange = useCallback((status: SourceStatus) => { // New
+    setApiStatuses(prev => ({ ...prev, aljazeera: status }));
+  }, []);
+  const handleReutersStatusChange = useCallback((status: SourceStatus) => { // New
+    setApiStatuses(prev => ({ ...prev, reuters: status }));
+  }, []);
+  const handleHrwStatusChange = useCallback((status: SourceStatus) => { // New
+    setApiStatuses(prev => ({ ...prev, hrw: status }));
+  }, []);
   const handleAiSummaryStatusChange = useCallback((status: SourceStatus) => {
     setApiStatuses(prev => ({ ...prev, aiSummary: status }));
   }, []);
-  const handleWikipediaConflictsStatusChange = useCallback((status: SourceStatus) => {
-    setApiStatuses(prev => ({ ...prev, wikipediaConflicts: status }));
-  }, []);
+  // No status change handler for wikipediaConflicts as it's local data now
 
   const handleRefresh = (source: ApiName) => {
     setFetchTriggers(prev => ({ ...prev, [source]: prev[source] + 1 }));
@@ -81,19 +95,14 @@ export default function ConflictDashboard() {
         <p className="text-muted-foreground mt-2">Monitor de Conflitos Armados Globais</p>
       </header>
       
-      {/* Wikipedia Macro Panel - Main View */}
       <div className="mb-8">
         <DataCard
             title="Visão Macro dos Conflitos"
             icon={BookOpen}
-            // isLoading={apiStatuses.wikipediaConflicts.status === 'loading'} // Loading is handled internally now
             className="lg:col-span-3" 
-            // onRefresh={() => handleRefresh('wikipediaConflicts')} // Refresh is handled internally now
-            disableMaxHeight={true}
+            disableMaxHeight={true} // Allows this card to expand fully
           >
-            <WikipediaMacroPanel 
-              // onStatusChange={handleWikipediaConflictsStatusChange} // Status is handled internally now
-            />
+            <WikipediaMacroPanel />
           </DataCard>
       </div>
 
@@ -104,7 +113,6 @@ export default function ConflictDashboard() {
           icon={BarChartBig} 
           onRefresh={() => handleRefresh('acled')}
           isLoading={apiStatuses.acled.status === 'loading'}
-          className="lg:col-span-1"
         >
           <AcledPanel 
             onStatusChange={handleAcledStatusChange}
@@ -117,7 +125,6 @@ export default function ConflictDashboard() {
           icon={HelpingHand}
           onRefresh={() => handleRefresh('reliefweb')}
           isLoading={apiStatuses.reliefweb.status === 'loading'}
-          className="lg:col-span-1"
         >
           <ReliefWebPanel 
             onStatusChange={handleReliefWebStatusChange}
@@ -130,25 +137,60 @@ export default function ConflictDashboard() {
           icon={Newspaper}
           onRefresh={() => handleRefresh('bbc')}
           isLoading={apiStatuses.bbc.status === 'loading'}
-          className="lg:col-span-1"
         >
           <BbcNewsPanel 
             onStatusChange={handleBbcStatusChange}
             triggerFetch={fetchTriggers.bbc}
           />
         </DataCard>
+
+        <DataCard 
+          title="Al Jazeera" 
+          icon={Newspaper} // Using Newspaper icon for consistency
+          onRefresh={() => handleRefresh('aljazeera')}
+          isLoading={apiStatuses.aljazeera.status === 'loading'}
+        >
+          <AlJazeeraNewsPanel 
+            onStatusChange={handleAlJazeeraStatusChange}
+            triggerFetch={fetchTriggers.aljazeera}
+          />
+        </DataCard>
+
+        <DataCard 
+          title="Reuters" 
+          icon={Newspaper} // Using Newspaper icon
+          onRefresh={() => handleRefresh('reuters')}
+          isLoading={apiStatuses.reuters.status === 'loading'}
+        >
+          <ReutersNewsPanel 
+            onStatusChange={handleReutersStatusChange}
+            triggerFetch={fetchTriggers.reuters}
+          />
+        </DataCard>
+
+        <DataCard 
+          title="Human Rights Watch" 
+          icon={Landmark} // Using Landmark icon, or could be HelpingHand too
+          onRefresh={() => handleRefresh('hrw')}
+          isLoading={apiStatuses.hrw.status === 'loading'}
+        >
+          <HrwReportsPanel 
+            onStatusChange={handleHrwStatusChange}
+            triggerFetch={fetchTriggers.hrw}
+          />
+        </DataCard>
         
-        {/* Status bar moved here */}
-        <div className={`status-bar p-3 rounded-md text-sm flex items-center justify-center gap-2 ${overallStatus.color} border border-current/30 shadow-sm md:col-span-3 lg:col-span-3`}>
+        {/* Status bar moved here, spanning full width of this grid section */}
+        <div className={`status-bar p-3 rounded-md text-sm flex items-center justify-center gap-2 ${overallStatus.color} border border-current/30 shadow-sm md:col-span-2 lg:col-span-3`}>
           {overallStatus.icon}
           <span>{overallStatus.text}</span>
         </div>
 
         <DataCard 
-          title="Resumo por IA (BBC/ReliefWeb)" 
+          title="Resumo por IA (BBC, Al Jazeera, Reuters, HRW, ReliefWeb)" 
           icon={Sparkles}
-          className="md:col-span-3 lg:col-span-3" // AI Summary card spans full width
-          disableMaxHeight={true} // Allow AI summary to expand
+          className="md:col-span-2 lg:col-span-3" 
+          disableMaxHeight={true}
         >
           <AiSummaryPanel onStatusChange={handleAiSummaryStatusChange} />
         </DataCard>
