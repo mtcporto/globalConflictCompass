@@ -131,3 +131,24 @@ export async function fetchHrwReportsForAISummary(limit: number = 5): Promise<Bb
     return [];
   }
 }
+
+// Helper function to fetch minimal data for AI summary from The Guardian
+export async function fetchGuardianNewsForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> {
+  const GUARDIAN_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.theguardian.com%2Fworld%2Frss';
+  const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'rebel', 'insurgent', 'crisis', 'humanitarian', 'refugees', 'displaced'];
+  try {
+    const response = await fetch(GUARDIAN_NEWS_API_URL);
+    if (!response.ok) return [];
+    const apiResponse = await response.json();
+    if (apiResponse.status !== 'ok' || !apiResponse.items) return [];
+    
+    return apiResponse.items.filter((item: BbcNewsItemRss) => {
+        const titleLower = item.title.toLowerCase();
+        const descriptionLower = (item.description || item.content || "").toLowerCase();
+        return CONFLICT_KEYWORDS.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword));
+      }).slice(0, limit);
+  } catch (error) {
+    console.error("Error fetching The Guardian for AI:", error);
+    return [];
+  }
+}

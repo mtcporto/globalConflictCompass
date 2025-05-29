@@ -3,7 +3,7 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  reactStrictMode: false, // Desabilita o Strict Mode
+  reactStrictMode: false, 
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'aljazeera.com', // Added for Al Jazeera without www
+        hostname: 'aljazeera.com', 
         port: '',
         pathname: '/**',
       },
@@ -56,7 +56,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'i.guim.co.uk',
+        hostname: 'i.guim.co.uk', // For The Guardian
         port: '',
         pathname: '/**',
       },
@@ -103,7 +103,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'http', // Washington Post link was http
+        protocol: 'http', 
         hostname: 'img.washingtonpost.com',
         port: '',
         pathname: '/**',

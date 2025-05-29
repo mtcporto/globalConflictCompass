@@ -8,7 +8,8 @@ import {
   fetchBbcNewsForAISummary, 
   fetchReliefWebForAISummary,
   fetchAlJazeeraForAISummary,
-  fetchHrwReportsForAISummary
+  fetchHrwReportsForAISummary,
+  fetchGuardianNewsForAISummary // Added
 } from '@/app/actions';
 import type { SourceStatus, SummarizeNewsInputItem, BbcNewsItemRss, ReliefWebReport } from '@/lib/types';
 import type { SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
@@ -34,14 +35,15 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
 
     try {
       const newsFetchPromises = [
-        fetchBbcNewsForAISummary(3), 
-        fetchReliefWebForAISummary(3),
-        fetchAlJazeeraForAISummary(3),
-        fetchHrwReportsForAISummary(3)
+        fetchBbcNewsForAISummary(5), 
+        fetchReliefWebForAISummary(5),
+        fetchAlJazeeraForAISummary(5),
+        fetchHrwReportsForAISummary(5),
+        fetchGuardianNewsForAISummary(5) // Added
       ];
 
       const results = await Promise.all(newsFetchPromises);
-      const [bbcData, reliefWebData, alJazeeraData, hrwData] = results;
+      const [bbcData, reliefWebData, alJazeeraData, hrwData, guardianData] = results; // Added guardianData
 
       const newsItemsToSummarize: SummarizeNewsInputItem[] = [];
 
@@ -68,6 +70,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       processItems(reliefWebData, 'ReliefWeb');
       processItems(alJazeeraData, 'AlJazeera');
       processItems(hrwData, 'HRW');
+      processItems(guardianData, 'The Guardian'); // Added
       
       if (newsItemsToSummarize.length === 0) {
         setError("Nenhuma notícia encontrada para gerar o resumo. Tente atualizar as outras fontes primeiro ou verifique a conexão.");
@@ -112,7 +115,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-start gap-2">
         <Info className="w-4 h-4 mt-0.5 shrink-0" />
         <span>
-          Este resumo é gerado por IA com base nas notícias mais recentes de fontes como BBC, ReliefWeb, Al Jazeera e Human Rights Watch (até 3 de cada). 
+          Este resumo é gerado por IA com base nas notícias mais recentes de fontes como BBC, ReliefWeb, Al Jazeera, Human Rights Watch e The Guardian (até 5 de cada). 
           Pode não refletir todos os conflitos ativos listados em outras seções.
         </span>
       </div>
@@ -167,7 +170,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       )}
       {!summary && !isLoading && !error && (
          <p className="text-sm text-muted-foreground text-center flex-grow flex items-center justify-center">
-           Clique no botão acima para gerar um resumo das notícias (BBC, ReliefWeb, Al Jazeera, HRW).
+           Clique no botão acima para gerar um resumo das notícias (BBC, ReliefWeb, Al Jazeera, HRW, The Guardian).
          </p>
       )}
     </div>

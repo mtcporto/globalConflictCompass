@@ -11,6 +11,7 @@ import { ReliefWebPanel } from './reliefweb-panel';
 import { BbcNewsPanel } from './bbc-news-panel';
 import { AlJazeeraNewsPanel } from './aljazeera-news-panel';
 import { HrwReportsPanel } from './hrw-reports-panel';
+import { GuardianNewsPanel } from './guardian-news-panel'; // Added
 import { AiSummaryPanel } from './ai-summary-panel';
 import { WikipediaMacroPanel } from './wikipedia-macro-panel';
 import { BarChartBig, Globe, HelpingHand, Newspaper, Sparkles, AlertTriangle, CheckCircle2, Loader2, BookOpen, Landmark } from 'lucide-react';
@@ -21,14 +22,15 @@ const initialApiStatuses: AllApiStatuses = {
   bbc: { status: 'loading' },
   aljazeera: { status: 'loading' },
   hrw: { status: 'loading' },
+  guardian: { status: 'loading' }, // Added
   aiSummary: { status: 'idle' },
-  wikipediaConflicts: { status: 'success' }, // Since it's local JSON, assume success
+  wikipediaConflicts: { status: 'success' }, 
 };
 
 export default function ConflictDashboard() {
   const [apiStatuses, setApiStatuses] = useState<AllApiStatuses>(initialApiStatuses);
   const [fetchTriggers, setFetchTriggers] = useState<Record<ApiName, number>>({
-    acled: 0, reliefweb: 0, bbc: 0, aljazeera: 0, hrw: 0,
+    acled: 0, reliefweb: 0, bbc: 0, aljazeera: 0, hrw: 0, guardian: 0, // Added guardian
     aiSummary: 0, wikipediaConflicts: 0,
   });
 
@@ -46,6 +48,9 @@ export default function ConflictDashboard() {
   }, []);
   const handleHrwStatusChange = useCallback((status: SourceStatus) => {
     setApiStatuses(prev => ({ ...prev, hrw: status }));
+  }, []);
+  const handleGuardianStatusChange = useCallback((status: SourceStatus) => { // Added
+    setApiStatuses(prev => ({ ...prev, guardian: status }));
   }, []);
   const handleAiSummaryStatusChange = useCallback((status: SourceStatus) => {
     setApiStatuses(prev => ({ ...prev, aiSummary: status }));
@@ -149,6 +154,19 @@ export default function ConflictDashboard() {
             triggerFetch={fetchTriggers.aljazeera}
           />
         </DataCard>
+        
+        <DataCard 
+          title="The Guardian" 
+          icon={Newspaper}
+          onRefresh={() => handleRefresh('guardian')}
+          isLoading={apiStatuses.guardian.status === 'loading'}
+        >
+          <GuardianNewsPanel 
+            onStatusChange={handleGuardianStatusChange}
+            triggerFetch={fetchTriggers.guardian}
+          />
+        </DataCard>
+
 
         <DataCard 
           title="Human Rights Watch" 
@@ -162,14 +180,14 @@ export default function ConflictDashboard() {
           />
         </DataCard>
         
-        {/* Status bar moved here, spanning full width of this grid section */}
+        
         <div className={`status-bar p-3 rounded-md text-sm flex items-center justify-center gap-2 ${overallStatus.color} border border-current/30 shadow-sm md:col-span-2 lg:col-span-3`}>
           {overallStatus.icon}
           <span>{overallStatus.text}</span>
         </div>
 
         <DataCard 
-          title="Resumo por IA (BBC, Al Jazeera, HRW, ReliefWeb)" 
+          title="Resumo por IA (BBC, Al Jazeera, HRW, ReliefWeb, The Guardian)" 
           icon={Sparkles}
           className="md:col-span-2 lg:col-span-3" 
           disableMaxHeight={true}

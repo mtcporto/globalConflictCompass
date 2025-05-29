@@ -16,9 +16,10 @@ export type ApiName =
   | 'reliefweb' 
   | 'bbc' 
   | 'aiSummary' 
-  | 'wikipediaConflicts' // This now refers to the curated data
+  | 'wikipediaConflicts' 
   | 'aljazeera'
-  | 'hrw';
+  | 'hrw'
+  | 'guardian'; // Added guardian
 
 export type ApiStatus = 'loading' | 'success' | 'error' | 'idle';
 
@@ -32,9 +33,10 @@ export interface AllApiStatuses {
   reliefweb: SourceStatus;
   bbc: SourceStatus;
   aiSummary: SourceStatus;
-  wikipediaConflicts: SourceStatus; // For the curated data panel
+  wikipediaConflicts: SourceStatus; 
   aljazeera: SourceStatus;
   hrw: SourceStatus;
+  guardian: SourceStatus; // Added guardian
 }
 
 // ACLED specific types
@@ -45,7 +47,7 @@ export interface AcledEvent {
   location: string;
   notes: string;
   country: string;
-  fatalities?: number | string; // Made flexible
+  fatalities?: number | string; 
 }
 
 export interface AcledErrorDetail {
@@ -54,14 +56,14 @@ export interface AcledErrorDetail {
 }
 
 export interface AcledApiResponse {
-  status?: number | boolean; // Can be a boolean (false for error) or HTTP status code
+  status?: number | boolean; 
   success?: boolean;
   count?: number;
-  data?: AcledEvent[]; // Optional: not present in all error responses
-  message?: string; // General message
-  detail?: string;  // More specific detail
-  status_code?: number; // Sometimes ACLED uses this for HTTP status
-  error?: AcledErrorDetail | string; // Can be an object or a string
+  data?: AcledEvent[]; 
+  message?: string; 
+  detail?: string;  
+  status_code?: number; 
+  error?: AcledErrorDetail | string; 
 }
 
 
@@ -70,7 +72,7 @@ export interface ReliefWebReportField {
   title: string;
   date?: { created: string };
   url?: string;
-  body?: string; // Sometimes it's body-html, but we process it as string
+  body?: string; 
 }
 export interface ReliefWebReport {
   id: string;
@@ -83,7 +85,7 @@ export interface ReliefWebApiResponse {
 }
 
 // BBC News and other rss2json based feeds
-export interface BbcNewsItemRss { // Reused for AlJazeera, HRW via rss2json
+export interface BbcNewsItemRss { // Reused for AlJazeera, HRW, Guardian via rss2json
   title: string;
   pubDate: string;
   link: string;
@@ -91,12 +93,12 @@ export interface BbcNewsItemRss { // Reused for AlJazeera, HRW via rss2json
   author: string;
   thumbnail: string;
   description: string;
-  content: string; // Often contains more detailed HTML content
+  content: string; 
   enclosure: object;
   categories: string[];
 }
 
-export interface BbcNewsRssResponse { // Reused for AlJazeera, HRW via rss2json
+export interface BbcNewsRssResponse { // Reused for AlJazeera, HRW, Guardian via rss2json
   status: string;
   feed: {
     url: string;
@@ -124,10 +126,10 @@ export interface CuratedConflictEntry {
   nome: string;
   imagem_url: string;
   inicio: string;
-  fatalidades_reportadas?: number;
+  fatalidades_reportadas?: number; // Made optional to handle missing data
   fatalidades_texto: string;
   territorio: string;
-  coordenadas: [number, number];
+  coordenadas: [number, number]; // Assuming [latitude, longitude]
   envolvidos: string[];
   wikipedia_link: string;
   status: string;
@@ -144,6 +146,5 @@ export interface CuratedConflictEntry {
 export type CuratedConflictData = {
   [key in ConflictSeverityCategory]?: CuratedConflictEntry[];
 } & {
-  // Allowing other keys if necessary, though we primarily use the three above
   [key: string]: CuratedConflictEntry[] | undefined;
 };
