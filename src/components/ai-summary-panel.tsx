@@ -9,7 +9,7 @@ import type { SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// ScrollArea will be removed
 import { Wand2, Info } from 'lucide-react';
 
 interface AiSummaryPanelProps {
@@ -28,8 +28,8 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
     onStatusChange({ status: 'loading' });
 
     try {
-      const bbcItemsPromise = fetchBbcNewsForAISummary(5); // Fetch 5 items
-      const reliefWebItemsPromise = fetchReliefWebForAISummary(5); // Fetch 5 items
+      const bbcItemsPromise = fetchBbcNewsForAISummary(5); 
+      const reliefWebItemsPromise = fetchReliefWebForAISummary(5);
 
       const [bbcData, reliefWebData] = await Promise.all([bbcItemsPromise, reliefWebItemsPromise]);
 
@@ -96,7 +96,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
         <Info className="w-4 h-4 mt-0.5 shrink-0" />
         <span>
           Este resumo é gerado por IA com base nas notícias mais recentes da BBC e ReliefWeb (até 5 de cada). 
-          Pode não refletir todos os conflitos ativos listados em outras seções, como a da Wikipedia.
+          Pode não refletir todos os conflitos ativos listados em outras seções.
         </span>
       </div>
 
@@ -104,7 +104,8 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       {error && <ErrorDisplay message={error} />}
       
       {summary && !isLoading && (
-        <ScrollArea className="flex-grow">
+        // Removed ScrollArea component
+        <div className="flex-grow"> 
           <div className="p-1 md:p-3 bg-card rounded-lg shadow-md space-y-6 text-sm">
             
             {summary.resumoGeral && (
@@ -146,7 +147,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
                 <p className="text-muted-foreground">Não foi possível extrair informações detalhadas das notícias fornecidas para esta análise.</p>
             )}
           </div>
-        </ScrollArea>
+        </div>
       )}
       {!summary && !isLoading && !error && (
          <p className="text-sm text-muted-foreground text-center flex-grow flex items-center justify-center">

@@ -84,15 +84,15 @@ export default function ConflictDashboard() {
       {/* Wikipedia Macro Panel - Main View */}
       <div className="mb-8">
         <DataCard
-            title="Visão Macro dos Conflitos (Wikipedia)"
+            title="Visão Macro dos Conflitos"
             icon={BookOpen}
-            isLoading={apiStatuses.wikipediaConflicts.status === 'loading'}
+            // isLoading={apiStatuses.wikipediaConflicts.status === 'loading'} // Loading is handled internally now
             className="lg:col-span-3" 
-            onRefresh={() => handleRefresh('wikipediaConflicts')}
+            // onRefresh={() => handleRefresh('wikipediaConflicts')} // Refresh is handled internally now
             disableMaxHeight={true}
           >
             <WikipediaMacroPanel 
-              onStatusChange={handleWikipediaConflictsStatusChange}
+              // onStatusChange={handleWikipediaConflictsStatusChange} // Status is handled internally now
             />
           </DataCard>
       </div>
@@ -148,6 +148,7 @@ export default function ConflictDashboard() {
           title="Resumo por IA (BBC/ReliefWeb)" 
           icon={Sparkles}
           className="md:col-span-3 lg:col-span-3" // AI Summary card spans full width
+          disableMaxHeight={true} // Allow AI summary to expand
         >
           <AiSummaryPanel onStatusChange={handleAiSummaryStatusChange} />
         </DataCard>
