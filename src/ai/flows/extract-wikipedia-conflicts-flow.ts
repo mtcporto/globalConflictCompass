@@ -30,16 +30,16 @@ const WikipediaConflictSchema = z.object({
   locations: z.array(z.string()).describe("List of primary countries or major regions involved in the conflict. Prioritize state actors or well-defined geographical regions if combatants list is too granular or includes many non-state actors."),
   startDate: z.string().optional().describe("The start date of the conflict, if available (e.g., '23 February 2022')."),
   territory: z.string().optional().describe("Specific territory or sub-region where the conflict is primarily occurring (e.g., 'Nagorno-Karabakh', 'Tigray Region', 'Gaza Strip'), if distinct from general locations. This is for a more precise geographical focus within the broader conflict."),
-  detailsLink: z.string().url().optional().describe("A direct link to a more detailed Wikipedia page or section for this specific conflict, if identifiable from the list item."),
-  imageUrl: z.string().url().optional().describe("URL da imagem principal ou mais representativa do conflito, extraída da página de detalhes do conflito na Wikipedia (se disponível e identificável)."),
+  detailsLink: z.string().optional().describe("A direct link to a more detailed Wikipedia page or section for this specific conflict, if identifiable from the list item."),
+  imageUrl: z.string().optional().describe("This field will be populated by manual override data. The AI should not attempt to extract an image URL."), // Modified description
   latitude: z.number().nullable().optional().describe("Approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
   longitude: z.number().nullable().optional().describe("Approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
 });
 
 const ExtractWikipediaConflictsOutputSchema = z.object({
   conflicts: z.array(WikipediaConflictSchema).describe("An array of extracted ongoing armed conflicts."),
-  sourcePage: z.string().url().describe("The URL of the Wikipedia page from which data was extracted."),
-  lastUpdated: z.string().datetime().describe("ISO date string indicating when the data was processed by this flow."),
+  sourcePage: z.string().describe("The URL of the Wikipedia page from which data was extracted."),
+  lastUpdated: z.string().describe("ISO date string indicating when the data was processed by this flow."),
 });
 export type ExtractWikipediaConflictsOutput = z.infer<typeof ExtractWikipediaConflictsOutputSchema>;
 
@@ -78,18 +78,13 @@ const extractConflictsPrompt = ai.definePrompt({
     6.  **startDate**: The start date of the conflict as listed.
     7.  **territory**: If a specific sub-region or territory is highlighted as the main locus of conflict (e.g., "Nagorno-Karabakh", "Tigray Region", "Gaza Strip") within a broader conflict involving larger countries, note it in the 'territory' field. This field is for a more precise geographical focus *within* the general 'locations'. If not applicable or not distinct, it can be omitted.
     8.  **detailsLink**: If the conflict name in the list is a hyperlink to a more detailed page about that specific conflict, provide that URL.
-    9.  **imageUrl**: After identifying the 'detailsLink', simulate accessing that detailed Wikipedia page. Your goal is to find a compelling and representative image of the conflict.
-        *   Look for an image in the main infobox first.
-        *   If no clear image is in the infobox, look for the most prominent or highest-quality image in the body of the article that visually represents the conflict.
-        *   The extracted URL MUST be a *direct link* to an image file (e.g., ending in .jpg, .png, .svg, .webp). These are often hosted on 'upload.wikimedia.org'.
-        *   CRITICAL: Do NOT return URLs to Wikipedia 'File:' pages (e.g., 'https://en.wikipedia.org/wiki/File:Example.jpg'). You must provide the URL of the image file itself (e.g., 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Example.jpg').
-        *   If, after careful consideration, no suitable direct image file URL can be reliably extracted, then omit this field. Do not guess or provide low-quality/irrelevant image URLs.
+    9.  **imageUrl**: DO NOT ATTEMPT TO EXTRACT AN IMAGE URL. This field will be handled separately.
     10. **latitude**: Provide an approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
     11. **longitude**: Provide an approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
 
     Ensure that prominent, long-running conflicts that are widely known to be ongoing (e.g., Russo-Ukrainian War, Syrian Civil War, Israeli-Palestinian conflict) are included in your extraction if they appear in the specified fatality tables on the Wikipedia page you are simulating access to.
 
-    Adhere strictly to the output JSON schema. Ensure all fields are correctly populated according to their descriptions. Latitude and longitude must be numbers or null. ImageUrl should be a valid URL string or omitted.
+    Adhere strictly to the output JSON schema. Ensure all fields are correctly populated according to their descriptions. Latitude and longitude must be numbers or null.
     The 'conflicts' array should only contain entries from the specified fatality tables for ongoing conflicts.
     Set 'sourcePage' to "${WIKIPEDIA_CONFLICTS_PAGE_URL}".
     The 'lastUpdated' field in the output will be set by the system; do not attempt to generate it.
@@ -120,8 +115,6 @@ const extractWikipediaConflictsFlow = ai.defineFlow(
 
     if (!output) {
       console.error('Wikipedia conflict extraction flow returned undefined/null output.');
-      // Return a structured error-like response or throw, depending on desired handling
-      // For now, returning a minimal valid structure to avoid breaking consumers expecting the schema.
       return {
         conflicts: [],
         sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL,
@@ -129,16 +122,11 @@ const extractWikipediaConflictsFlow = ai.defineFlow(
       };
     }
     
-    // Ensure lastUpdated is always set by the server/flow, not by the LLM
     return {
         ...output,
-        conflicts: output.conflicts || [], // Ensure conflicts is always an array
-        sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL, // Ensure sourcePage is correctly set
-        lastUpdated: currentTime, // Always use the current time for lastUpdated
+        conflicts: output.conflicts || [], 
+        sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL, 
+        lastUpdated: currentTime, 
     };
   }
 );
-
-    
-
-    

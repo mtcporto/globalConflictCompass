@@ -24,15 +24,20 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      // Add other image hostnames if needed, e.g., from news sources
-      // {
-      //   protocol: 'https',
-      //   hostname: 'api.acleddata.com', // Example, if ACLED served images directly
-      // },
+      {
+        protocol: 'https',
+        hostname: 'www.aljazeera.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ichef.bbci.co.uk',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
 
 export default nextConfig;
-
-    

@@ -3,13 +3,17 @@
 
 import { summarizeConflictNews, type SummarizeConflictNewsInput, type SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
 import { extractWikipediaConflicts, type ExtractWikipediaConflictsOutput } from '@/ai/flows/extract-wikipedia-conflicts-flow';
-import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, WikipediaConflictsData } from '@/lib/types';
+import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, WikipediaConflictsData, WikipediaConflict } from '@/lib/types';
 import fs from 'fs/promises';
 import path from 'path';
+import manualConflictData from '@/data/manual-conflict-data.json'; // Import manual overrides
 
 const CACHE_DIR_PATH = path.join(process.cwd(), '.cache');
 const WIKIPEDIA_CACHE_FILE_PATH = path.join(CACHE_DIR_PATH, 'wikipedia-conflicts.json');
 const CACHE_MAX_AGE_HOURS = 24; // Cache data for 24 hours
+
+// Create a map for quick lookup of manual overrides
+const manualOverridesMap = new Map(manualConflictData.map(item => [item.id, item]));
 
 async function ensureCacheDirExists() {
   try {
@@ -25,7 +29,6 @@ async function readWikipediaCache(): Promise<WikipediaConflictsData | null> {
     const fileContent = await fs.readFile(WIKIPEDIA_CACHE_FILE_PATH, 'utf-8');
     const cachedData = JSON.parse(fileContent) as WikipediaConflictsData;
 
-    // Check cache age
     const cacheAgeHours = (new Date().getTime() - new Date(cachedData.lastUpdated).getTime()) / (1000 * 60 * 60);
     if (cacheAgeHours < CACHE_MAX_AGE_HOURS) {
       console.log('Serving Wikipedia conflicts data from cache.');
@@ -85,9 +88,27 @@ export async function getWikipediaConflictsAction(options: { forceRefresh?: bool
 
   console.log(forceRefresh ? 'Forcing refresh of Wikipedia conflicts data.' : 'Fetching fresh Wikipedia conflicts data.');
   try {
-    const result: ExtractWikipediaConflictsOutput = await extractWikipediaConflicts({});
-    // The Genkit flow output (ExtractWikipediaConflictsOutput) matches WikipediaConflictsData structure
-    const dataToCache = result as WikipediaConflictsData;
+    const aiResult: ExtractWikipediaConflictsOutput = await extractWikipediaConflicts({});
+    
+    // Apply manual overrides
+    const processedConflicts = aiResult.conflicts.map(conflict => {
+      const override = manualOverridesMap.get(conflict.id);
+      if (override) {
+        return {
+          ...conflict,
+          imageUrl: override.imageUrl || conflict.imageUrl, // Use override if present
+          detailsLink: override.detailsLinkOverride || conflict.detailsLink, // Use override if present
+        };
+      }
+      return conflict;
+    });
+
+    const dataToCache: WikipediaConflictsData = {
+      ...aiResult,
+      conflicts: processedConflicts,
+      lastUpdated: new Date().toISOString(), // Ensure lastUpdated is always fresh after AI call + processing
+    };
+    
     await writeWikipediaCache(dataToCache);
     return { data: dataToCache };
   } catch (error) {
@@ -102,7 +123,6 @@ export async function getWikipediaConflictsAction(options: { forceRefresh?: bool
     } else {
       console.error('Error calling Wikipedia conflicts flow (non-Error object):', error);
     }
-    // If fetching fresh data fails, try to return stale cache as a fallback if not forcing refresh
     if (!forceRefresh) {
         const staleCache = await fs.readFile(WIKIPEDIA_CACHE_FILE_PATH, 'utf-8').then(JSON.parse).catch(() => null);
         if (staleCache) {

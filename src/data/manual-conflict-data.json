@@ -1,0 +1,40 @@
+[
+  {
+    "id": "ukraine-war-2022-02-24",
+    "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Kyiv_after_Russian_shelling%2C_2022-10-10_%28073%29.webp/330px-Kyiv_after_Russian_shelling%2C_2022-10-10_%28073%29.webp.png"
+  },
+  {
+    "id": "war-in-sudan-2023-04-15",
+    "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Screengrab_of_refugee_camp_from_Number_of_Refugees_Who_Fled_Sudan_for_Chad_Double_in_Week.jpg/330px-Screengrab_of_refugee_camp_from_Number_of_Refugees_Who_Fled_Sudan_for_Chad_Double_in_Week.jpg"
+  },
+  {
+    "id": "israeli-palestinian-conflict-2023-10-07",
+    "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Fars_Photo_of_Destruction_in_Gaza_Strip_during_2023_War_01.jpg/330px-Fars_Photo_of_Destruction_in_Gaza_Strip_during_2023_War_01.jpg"
+  },
+  {
+    "id": "syrian-civil-war-2011-03-15",
+    "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Syrian_Army_tanks_1_%28Operation_Damascus_Steel%2C_March_2018%29.png/330px-Syrian_Army_tanks_1_%28Operation_Damascus_Steel%2C_March_2018%29.png"
+  },
+  {
+    "id": "ethiopian-civil-war-2020-11-03",
+    "imageUrl": "https://www.aljazeera.com/wp-content/uploads/2021/04/2021-04-04T081954Z_1001484675_RC2WOM9EAL7W_RTRMADP_3_ETHIOPIA-CONFLICT.jpg?resize=770%2C513&quality=80",
+    "detailsLinkOverride": "https://en.wikipedia.org/wiki/Ethiopian_civil_conflict_(2018%E2%80%93present)"
+  },
+  {
+    "id": "myanmar-civil-war-2021-05-05",
+    "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/MAF_bombing_Kyauktaw_Township_2025-01-12.png/330px-MAF_bombing_Kyauktaw_Township_2025-01-12.png"
+  },
+  {
+    "id": "sahel-insurgency-2017-10-01",
+    "imageUrl": "https://ichef.bbci.co.uk/news/800/cpsprodpb/15C5A/production/_131287198_nigo.jpg.webp",
+    "detailsLinkOverride": "https://en.wikipedia.org/wiki/War_in_the_Sahel"
+  },
+  {
+    "id": "insurgency-in-southern-thailand-2004-01-04",
+    "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/2_%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A7%E0%B8%B1%E0%B8%95%E0%B8%B4_%E0%B8%81%E0%B8%A3%E0%B8%A1%E0%B8%97%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%A3%E0%B8%B2%E0%B8%9A%E0%B8%97%E0%B8%B5%E0%B9%88_3-18.jpg/330px-2_%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%A7%E0%B8%B1%E0%B8%95%E0%B8%B4_%E0%B8%81%E0%B8%A3%E0%B8%A1%E0%B8%97%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%A3%E0%B8%B2%E0%B8%9A%E0%B8%97%E0%B8%B5%E0%B9%88_3-18.jpg"
+  },
+  {
+    "id": "kashmir-conflict-1989-01-01",
+    "imageUrl": "https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/0A0E/production/_90347520_gettyimages-545768674.jpg.webp"
+  }
+]
