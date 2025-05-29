@@ -119,7 +119,7 @@
   "Média Gravidade": [
     {
       "nome": "Guerra do Narcotráfico no México",
-      "imagem_url": "https://placehold.co/600x400/FF1493/FFFFFF?text=Narcotráfico+México",
+      "imagem_url": "https://upload.wikimedia.org/wikipedia/commons/6/69/Detenciones_Michoac%C3%A1n.jpg",
       "inicio": "2006",
       "fatalidades_reportadas": 8260,
       "fatalidades_texto": "8,260",
@@ -138,7 +138,7 @@
     },
     {
       "nome": "Guerra Civil na Síria",
-      "imagem_url": "https://placehold.co/600x400/00CED1/FFFFFF?text=Guerra+Civil+Síria",
+      "imagem_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Destroyed_neighborhood_in_Raqqa.png/330px-Destroyed_neighborhood_in_Raqqa.png",
       "inicio": "2011",
       "fatalidades_reportadas": 6887,
       "fatalidades_texto": "6,887",
@@ -157,7 +157,7 @@
     },
     {
       "nome": "Guerra Civil da Somália",
-      "imagem_url": "https://placehold.co/600x400/FF8C00/FFFFFF?text=Guerra+Civil+Somália",
+      "imagem_url": "https://img.lemde.fr/2025/02/11/0/0/5739/3826/556/0/75/0/aefe4c9_ftp-import-images-1-ugu1mazohojr-f2089346f3b9480bae752415dfdbf679-0-f0559503bc534c8eba5204e45cc33b0e.jpg",
       "inicio": "1991",
       "fatalidades_reportadas": 6206,
       "fatalidades_texto": "6,206",
@@ -176,7 +176,7 @@
     },
     {
       "nome": "Crise no Haiti",
-      "imagem_url": "https://placehold.co/600x400/7FFF00/000000?text=Crise+no+Haiti",
+      "imagem_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/2019_Haitian_protests_tire_fire.png/330px-2019_Haitian_protests_tire_fire.png",
       "inicio": "2018",
       "fatalidades_reportadas": 5601,
       "fatalidades_texto": "5,601",
@@ -195,7 +195,7 @@
     },
     {
       "nome": "Conflitos na RDC",
-      "imagem_url": "https://placehold.co/600x400/6495ED/FFFFFF?text=Conflitos+RDC",
+      "imagem_url": "https://www.vaticannews.va/content/dam/vaticannews/agenzie/images/afp/2024/02/15/08/1707983565985.jpg",
       "inicio": "2004",
       "fatalidades_reportadas": 4471,
       "fatalidades_texto": "4,471",
@@ -214,7 +214,7 @@
     },
     {
       "nome": "Conflitos na Nigéria",
-      "imagem_url": "https://placehold.co/600x400/DC143C/FFFFFF?text=Conflitos+Nigéria",
+      "imagem_url": "https://www.hrw.org/sites/default/files/styles/16x9_xlarge/public/multimedia_images_2019/201901wr_nigeria_human_rights.jpg",
       "inicio": "1998",
       "fatalidades_reportadas": 3374,
       "fatalidades_texto": "3,374",
@@ -233,7 +233,7 @@
     },
     {
       "nome": "Conflito no Afeganistão",
-      "imagem_url": "https://placehold.co/600x400/00FFFF/000000?text=Conflito+Afeganistão",
+      "imagem_url": "https://www.hrw.org/sites/default/files/styles/16x9_xlarge/public/media_2025/01/202412asia_afghanistan_wr.jpg",
       "inicio": "1978",
       "fatalidades_reportadas": 3208,
       "fatalidades_texto": "3,208",
@@ -252,7 +252,7 @@
     },
     {
       "nome": "Conflito na Colômbia",
-      "imagem_url": "https://placehold.co/600x400/B8860B/FFFFFF?text=Conflito+Colômbia",
+      "imagem_url": "https://agenciabrasil.ebc.com.br/sites/default/files/thumbnails/image/2025/02/27/2025-02-05t045335z_126456893_rc2uncawl1k0_rtrmadp_3_colombia-conflict.jpg",
       "inicio": "1964",
       "fatalidades_reportadas": 2273,
       "fatalidades_texto": "2,273",
@@ -271,7 +271,7 @@
     },
      {
       "nome": "Conflitos nos Camarões",
-      "imagem_url": "https://placehold.co/600x400/A9A9A9/FFFFFF?text=Conflitos+Camarões",
+      "imagem_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Internally_displaced_people_from_the_Anglophone_crisis_in_Douala.png/330px-Internally_displaced_people_from_the_Anglophone_crisis_in_Douala.png",
       "inicio": "2014",
       "fatalidades_reportadas": 2228,
       "fatalidades_texto": "2,228",
@@ -290,7 +290,7 @@
     },
     {
       "nome": "Guerra Civil no Iêmen",
-      "imagem_url": "https://placehold.co/600x400/E9967A/000000?text=Guerra+Civil+Iêmen",
+      "imagem_url": "http://img.washingtonpost.com/rf/image_908w/2010-2019/WashingtonPost/2015/06/15/Foreign/Images/2015-06-15T105827Z_01_KHA01_RTRIDSP_3_YEMEN-SECURITY.jpg",
       "inicio": "2014",
       "fatalidades_reportadas": 1826,
       "fatalidades_texto": "1,826",
@@ -520,5 +520,3 @@
     }
   ]
 }
-
-    
