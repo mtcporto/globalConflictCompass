@@ -2,9 +2,8 @@
 'use server';
 
 import { summarizeConflictNews, type SummarizeConflictNewsInput, type SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
-// Wikipedia extraction via AI is replaced by local JSON
-import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, CuratedConflictData, CuratedConflictEntry } from '@/lib/types';
-import curatedConflictData from '@/data/curated-conflict-data.json'; // Import curated data directly
+import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, CuratedConflictData } from '@/lib/types';
+import curatedConflictDataJson from '@/data/curated-conflict-data.json';
 
 
 export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInputItem[]): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string }> {
@@ -23,7 +22,7 @@ export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInpu
     let detailedErrorMessage = 'Falha ao gerar resumo de IA.';
     if (error instanceof Error) {
       detailedErrorMessage = `Falha ao gerar resumo de IA: ${error.message}`;
-      if ((error as any).cause) { // Genkit errors often have a 'cause'
+      if ((error as any).cause) { 
         detailedErrorMessage += ` Causa: ${JSON.stringify((error as any).cause)}`;
       }
       console.error('Error calling AI summary flow. Message:', error.message, 'Stack:', error.stack, 'Details:', (error as any).details || 'N/A', 'Cause:', (error as any).cause || 'N/A');
@@ -34,14 +33,9 @@ export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInpu
   }
 }
 
-// This function now just reads the local curated JSON file.
-// The 'forceRefresh' and caching logic related to AI extraction is no longer needed here.
 export async function getWikipediaConflictsAction(): Promise<{ data?: CuratedConflictData; error?: string }> {
   try {
-    // The imported curatedConflictData is already the parsed JSON object
-    // We might want to add a 'lastUpdated' field here manually if needed elsewhere,
-    // but for now, it's static data.
-    return { data: curatedConflictData as CuratedConflictData };
+    return { data: curatedConflictDataJson as CuratedConflictData };
   } catch (error) {
     let detailedErrorMessage = 'Falha ao carregar dados de conflitos curados.';
     if (error instanceof Error) {
@@ -113,7 +107,8 @@ export async function fetchAlJazeeraForAISummary(limit: number = 5): Promise<Bbc
 
 // Helper function to fetch minimal data for AI summary from Reuters
 export async function fetchReutersForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> {
-  const REUTERS_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.reuters.com%2Freuters%2FworldNews';
+  // Changed from worldNews to topNews
+  const REUTERS_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.reuters.com%2Freuters%2FtopNews';
   const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'attack', 'rebel', 'insurgent', 'crisis'];
   try {
     const response = await fetch(REUTERS_NEWS_API_URL);

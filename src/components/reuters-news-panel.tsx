@@ -14,7 +14,8 @@ interface ReutersNewsPanelProps {
   triggerFetch?: number;
 }
 
-const REUTERS_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.reuters.com%2Freuters%2FworldNews';
+// Changed from worldNews to topNews
+const REUTERS_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.reuters.com%2Freuters%2FtopNews';
 const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'rebel', 'insurgent', 'crisis', 'attack'];
 
 export function ReutersNewsPanel({ onStatusChange, triggerFetch }: ReutersNewsPanelProps) {
