@@ -59,11 +59,19 @@ const nextConfig: NextConfig = {
         hostname: 'dl6pgk4f88hky.cloudfront.net',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'conteudo.imguol.com.br',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
 };
 
 export default nextConfig;
+
+    
 
     
