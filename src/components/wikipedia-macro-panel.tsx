@@ -13,27 +13,20 @@ import {
   Users,
   AlertOctagon,
   ShieldAlert,
-  TrendingUp,
+  Activity,
+  UsersRound,
+  Landmark,
   Globe,
   Info,
   BarChart3,
-  Activity,
-  UsersRound,
-  MessageSquareWarning,
-  TrendingDown,
-  LocateFixed,
-  Map as MapIcon,
   CalendarClock,
-  Landmark,
-  Scale,
-  Route,
-  AlertTriangle,
+  LocateFixed,
+  TrendingUp,
   Handshake,
-  HelpCircle,
   Sigma,
   Skull,
   Network,
-  Eye, // Using Eye for a generic "view more" or "details" hint in tooltip
+  Eye,
 } from 'lucide-react';
 import {
   Accordion,
@@ -41,15 +34,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import dynamic from 'next/dynamic';
-import curatedConflictDataJson from '@/data/curated-conflict-data.json';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
+import dynamic from 'next/dynamic';
+import curatedConflictDataJson from '@/data/curated-conflict-data.json';
 
 const MapDisplay = dynamic(() => import('./map-display'), {
   ssr: false,
@@ -59,7 +51,7 @@ const MapDisplay = dynamic(() => import('./map-display'), {
 const severityIconMap: Record<ConflictSeverityCategory, React.ElementType> = {
   "Alta Gravidade": AlertOctagon,
   "Média Gravidade": ShieldAlert,
-  "Baixa Gravidade": TrendingUp,
+  "Baixa Gravidade": Activity, // Mantido Activity para Baixa Gravidade
 };
 
 const severityColorClasses: Record<ConflictSeverityCategory, string> = {
@@ -79,11 +71,10 @@ const fieldDisplayConfig: Array<{ key: keyof CuratedConflictEntry; label: string
   { key: 'tipo_conflito', label: 'Tipo', icon: BarChart3 },
   { key: 'impacto_humanitario', label: 'Impacto Humanitário', icon: UsersRound },
   { key: 'atores_externos_envolvidos', label: 'Atores Externos', icon: Handshake },
-  { key: 'tendencia_recente', label: 'Tendência Recente', icon: TrendingUp }, // Changed icon for variety
+  { key: 'tendencia_recente', label: 'Tendência Recente', icon: TrendingUp },
   { key: 'fonte_dados_especifica', label: 'Fontes Adicionais', icon: Landmark },
   { key: 'regiao_geopolitica', label: 'Região Geopolítica', icon: Globe },
 ];
-
 
 export function WikipediaMacroPanel() {
   const data: CuratedConflictData = curatedConflictDataJson as CuratedConflictData;
@@ -138,7 +129,6 @@ export function WikipediaMacroPanel() {
       .map(([actor, count]) => `${actor} (${count}x)`);
   }, [allConflicts]);
 
-
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
     if (target.src !== fallbackImageUrl) {
@@ -149,16 +139,15 @@ export function WikipediaMacroPanel() {
   const conflictCategories = Object.keys(data) as ConflictSeverityCategory[];
 
   return (
-    <TooltipProvider> {/* Provider for tooltips */}
+    <TooltipProvider>
       <div className="flex flex-col">
         <div className="flex justify-between items-center mb-1 flex-wrap gap-2">
           <h3 className="text-xl font-semibold text-foreground">Mapa Global de Conflitos</h3>
         </div>
-
         <div className="mb-6 h-[700px] w-full">
           <MapDisplay conflicts={allConflicts} />
         </div>
-        
+
         <div className="mb-8 p-4 border bg-card rounded-lg shadow-sm">
           <h3 className="text-lg font-semibold text-foreground mb-4 text-center">Panorama Numérico dos Conflitos Atuais</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
@@ -179,11 +168,11 @@ export function WikipediaMacroPanel() {
               {activeGeopoliticalRegions.length > 0 && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="text-xs text-muted-foreground mt-1 text-center opacity-80 cursor-help flex items-center gap-1">
-                      ({activeGeopoliticalRegions.slice(0,2).join(', ')}{activeGeopoliticalRegions.length > 2 ? ', ...' : ''}) <Eye className="w-3 h-3 opacity-70" />
+                    <div className="text-xs text-muted-foreground mt-1 text-center opacity-80 cursor-help">
+                      ({activeGeopoliticalRegions.slice(0, 2).join(', ')}{activeGeopoliticalRegions.length > 2 ? ', ...' : ''}) <Eye className="w-3 h-3 opacity-70 inline-block ml-1" />
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs">
+                  <TooltipContent className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
                     <p className="font-medium mb-1">Regiões Ativas:</p>
                     <ul className="list-disc list-inside space-y-0.5">
                       {activeGeopoliticalRegions.map(region => <li key={region}>{region}</li>)}
@@ -199,11 +188,11 @@ export function WikipediaMacroPanel() {
               {involvedActorsInMultipleConflicts.length > 0 && (
                  <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="text-xs text-muted-foreground mt-1 text-center opacity-80 cursor-help flex items-center gap-1">
-                      ({involvedActorsInMultipleConflicts.slice(0,1).join(', ')}{involvedActorsInMultipleConflicts.length > 1 ? ', ...' : ''}) <Eye className="w-3 h-3 opacity-70" />
+                    <div className="text-xs text-muted-foreground mt-1 text-center opacity-80 cursor-help">
+                      ({involvedActorsInMultipleConflicts.slice(0,1).join(', ')}{involvedActorsInMultipleConflicts.length > 1 ? ', ...' : ''}) <Eye className="w-3 h-3 opacity-70 inline-block ml-1" />
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs">
+                  <TooltipContent className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border">
                     <p className="font-medium mb-1">Atores em múltiplos conflitos:</p>
                     <ul className="list-disc list-inside space-y-0.5">
                       {involvedActorsInMultipleConflicts.map(actor => <li key={actor}>{actor}</li>)}
@@ -247,7 +236,7 @@ export function WikipediaMacroPanel() {
                             style={{ objectFit: 'cover' }}
                             className="bg-muted"
                             onError={handleImageError}
-                            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw" // Basic example, adjust as needed
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             data-ai-hint="war impact armed conflict"
                           />
                         </div>
@@ -255,21 +244,17 @@ export function WikipediaMacroPanel() {
 
                         {fieldDisplayConfig.map(fieldInfo => {
                           let value = conflict[fieldInfo.key as keyof CuratedConflictEntry];
-                          
                           if (value === undefined || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && value.length === 0) ) return null;
                           
                           let displayValue: React.ReactNode = String(value);
-                          if (fieldInfo.key === 'atores_externos_envolvidos' && typeof value === 'string') {
-                            // Simple split for "atores_externos_envolvidos" if it's a comma-separated string
-                             displayValue = value.split(',').map(s => s.trim()).join('; ');
-                          } else if (Array.isArray(value)) {
+                          if (Array.isArray(value)) {
                             displayValue = value.join('; ');
                           }
 
                           return (
                             <p key={fieldInfo.key} className="text-xs text-muted-foreground mb-0.5 flex items-start gap-1.5">
                               <fieldInfo.icon className="w-3.5 h-3.5 mt-0.5 text-primary/80 shrink-0" />
-                              <span><strong>{fieldInfo.label}:</strong> {displayValue}</span>
+                              <span><strong>{fieldInfo.label}:</strong> {String(displayValue)}</span>
                             </p>
                           );
                         })}
@@ -317,3 +302,4 @@ export function WikipediaMacroPanel() {
   );
 }
 
+    
