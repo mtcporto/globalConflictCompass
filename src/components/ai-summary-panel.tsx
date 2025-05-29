@@ -7,9 +7,8 @@ import {
   getAiSummaryAction, 
   fetchBbcNewsForAISummary, 
   fetchReliefWebForAISummary,
-  fetchAlJazeeraForAISummary, // New
-  fetchReutersForAISummary,   // New
-  fetchHrwReportsForAISummary // New
+  fetchAlJazeeraForAISummary,
+  fetchHrwReportsForAISummary
 } from '@/app/actions';
 import type { SourceStatus, SummarizeNewsInputItem, BbcNewsItemRss, ReliefWebReport } from '@/lib/types';
 import type { SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
@@ -38,17 +37,16 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
         fetchBbcNewsForAISummary(3), 
         fetchReliefWebForAISummary(3),
         fetchAlJazeeraForAISummary(3),
-        fetchReutersForAISummary(3),
         fetchHrwReportsForAISummary(3)
       ];
 
       const results = await Promise.all(newsFetchPromises);
-      const [bbcData, reliefWebData, alJazeeraData, reutersData, hrwData] = results;
+      const [bbcData, reliefWebData, alJazeeraData, hrwData] = results;
 
       const newsItemsToSummarize: SummarizeNewsInputItem[] = [];
 
       const processItems = (items: Array<BbcNewsItemRss | ReliefWebReport>, source: string) => {
-        items.forEach((item: any) => { // Using 'any' here for simplicity due to differing structures
+        items.forEach((item: any) => { 
           let title: string;
           let description: string;
           let link: string | undefined;
@@ -57,7 +55,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
             title = item.fields.title;
             description = item.fields.body?.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...' || 'Sem descrição detalhada.';
             link = item.fields.url;
-          } else { // Assuming BbcNewsItemRss structure for BBC, AlJazeera, Reuters, HRW
+          } else { 
             title = item.title;
             description = (item.content || item.description || "").replace(/<[^>]*>?/gm, '').substring(0, 350) + '...';
             link = item.link;
@@ -69,7 +67,6 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       processItems(bbcData, 'BBC');
       processItems(reliefWebData, 'ReliefWeb');
       processItems(alJazeeraData, 'AlJazeera');
-      processItems(reutersData, 'Reuters');
       processItems(hrwData, 'HRW');
       
       if (newsItemsToSummarize.length === 0) {
@@ -99,7 +96,6 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
   }, [onStatusChange]);
   
   useEffect(() => {
-    // Set initial status to idle if not loading, no summary, and no error
     if (!isLoading && !summary && !error) {
       onStatusChange({ status: 'idle' });
     }
@@ -116,7 +112,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-start gap-2">
         <Info className="w-4 h-4 mt-0.5 shrink-0" />
         <span>
-          Este resumo é gerado por IA com base nas notícias mais recentes de fontes como BBC, ReliefWeb, Al Jazeera, Reuters e Human Rights Watch (até 3 de cada). 
+          Este resumo é gerado por IA com base nas notícias mais recentes de fontes como BBC, ReliefWeb, Al Jazeera e Human Rights Watch (até 3 de cada). 
           Pode não refletir todos os conflitos ativos listados em outras seções.
         </span>
       </div>
@@ -171,7 +167,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       )}
       {!summary && !isLoading && !error && (
          <p className="text-sm text-muted-foreground text-center flex-grow flex items-center justify-center">
-           Clique no botão acima para gerar um resumo das notícias (BBC, ReliefWeb, Al Jazeera, Reuters, HRW).
+           Clique no botão acima para gerar um resumo das notícias (BBC, ReliefWeb, Al Jazeera, HRW).
          </p>
       )}
     </div>

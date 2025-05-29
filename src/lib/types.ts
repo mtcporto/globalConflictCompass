@@ -17,9 +17,8 @@ export type ApiName =
   | 'bbc' 
   | 'aiSummary' 
   | 'wikipediaConflicts' // This now refers to the curated data
-  | 'aljazeera' // New
-  | 'reuters'   // New
-  | 'hrw';      // New
+  | 'aljazeera'
+  | 'hrw';
 
 export type ApiStatus = 'loading' | 'success' | 'error' | 'idle';
 
@@ -34,9 +33,8 @@ export interface AllApiStatuses {
   bbc: SourceStatus;
   aiSummary: SourceStatus;
   wikipediaConflicts: SourceStatus; // For the curated data panel
-  aljazeera: SourceStatus; // New
-  reuters: SourceStatus;   // New
-  hrw: SourceStatus;       // New
+  aljazeera: SourceStatus;
+  hrw: SourceStatus;
 }
 
 // ACLED specific types
@@ -85,7 +83,7 @@ export interface ReliefWebApiResponse {
 }
 
 // BBC News and other rss2json based feeds
-export interface BbcNewsItemRss { // Reused for AlJazeera, Reuters, HRW via rss2json
+export interface BbcNewsItemRss { // Reused for AlJazeera, HRW via rss2json
   title: string;
   pubDate: string;
   link: string;
@@ -98,7 +96,7 @@ export interface BbcNewsItemRss { // Reused for AlJazeera, Reuters, HRW via rss2
   categories: string[];
 }
 
-export interface BbcNewsRssResponse { // Reused for AlJazeera, Reuters, HRW via rss2json
+export interface BbcNewsRssResponse { // Reused for AlJazeera, HRW via rss2json
   status: string;
   feed: {
     url: string;
@@ -143,8 +141,9 @@ export interface CuratedConflictEntry {
   severityCategory?: ConflictSeverityCategory; 
 }
 
-export interface CuratedConflictData {
-  "Alta Gravidade": CuratedConflictEntry[];
-  "Média Gravidade": CuratedConflictEntry[];
-  "Baixa Gravidade": CuratedConflictEntry[];
-}
+export type CuratedConflictData = {
+  [key in ConflictSeverityCategory]?: CuratedConflictEntry[];
+} & {
+  // Allowing other keys if necessary, though we primarily use the three above
+  [key: string]: CuratedConflictEntry[] | undefined;
+};

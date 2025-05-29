@@ -155,43 +155,6 @@ const nextConfig: NextConfig = {
         hostname: 'img.jakpost.net',
         port: '',
         pathname: '/**',
-      },
-      // Reuters domains
-      {
-        protocol: 'https',
-        hostname: 's1.reutersmedia.net',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 's2.reutersmedia.net',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 's3.reutersmedia.net',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 's4.reutersmedia.net',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'static.reuters.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.reuters.com',
-        port: '',
-        pathname: '/**',
       }
     ],
   },

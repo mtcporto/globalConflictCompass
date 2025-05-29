@@ -35,9 +35,6 @@ export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInpu
 
 export async function getCuratedConflictsAction(): Promise<{ data?: CuratedConflictData; error?: string }> {
   try {
-    // Simulating a delay as if fetching from a DB or slow API
-    // await new Promise(resolve => setTimeout(resolve, 1500)); 
-    
     const data: CuratedConflictData = curatedConflictDataJson as CuratedConflictData;
     if (!data) {
       return { error: 'Falha ao carregar dados de conflitos curados: arquivo não encontrado ou vazio.' };
@@ -109,28 +106,6 @@ export async function fetchAlJazeeraForAISummary(limit: number = 5): Promise<Bbc
       }).slice(0, limit);
   } catch (error) {
     console.error("Error fetching Al Jazeera for AI:", error);
-    return [];
-  }
-}
-
-// Helper function to fetch minimal data for AI summary from Reuters
-export async function fetchReutersForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> {
-  // Changed from topNews back to worldNews
-  const REUTERS_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http%3A%2F%2Ffeeds.reuters.com%2FReuters%2FworldNews';
-  const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'attack', 'rebel', 'insurgent', 'crisis'];
-  try {
-    const response = await fetch(REUTERS_NEWS_API_URL);
-    if (!response.ok) return [];
-    const apiResponse = await response.json();
-    if (apiResponse.status !== 'ok' || !apiResponse.items) return [];
-    
-    return apiResponse.items.filter((item: BbcNewsItemRss) => {
-        const titleLower = item.title.toLowerCase();
-        const contentLower = item.content ? item.content.toLowerCase() : (item.description ? item.description.toLowerCase() : "");
-        return CONFLICT_KEYWORDS.some(keyword => titleLower.includes(keyword) || contentLower.includes(keyword));
-      }).slice(0, limit);
-  } catch (error) {
-    console.error("Error fetching Reuters for AI:", error);
     return [];
   }
 }
