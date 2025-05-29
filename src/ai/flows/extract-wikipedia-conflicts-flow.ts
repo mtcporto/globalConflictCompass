@@ -31,7 +31,7 @@ const WikipediaConflictSchema = z.object({
   startDate: z.string().optional().describe("The start date of the conflict, if available (e.g., '23 February 2022')."),
   territory: z.string().optional().describe("Specific territory or sub-region where the conflict is primarily occurring (e.g., 'Nagorno-Karabakh', 'Tigray Region', 'Gaza Strip'), if distinct from general locations. This is for a more precise geographical focus within the broader conflict."),
   detailsLink: z.string().optional().describe("A direct link to a more detailed Wikipedia page or section for this specific conflict, if identifiable from the list item."),
-  imageUrl: z.string().optional().describe("This field will be populated by manual override data. The AI should not attempt to extract an image URL."), // Modified description
+  imageUrl: z.string().optional().describe("This field will be populated by manual override data. The AI should not attempt to extract an image URL."),
   latitude: z.number().nullable().optional().describe("Approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
   longitude: z.number().nullable().optional().describe("Approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
 });
@@ -57,12 +57,13 @@ const extractConflictsPrompt = ai.definePrompt({
   output: { schema: ExtractWikipediaConflictsOutputSchema },
   prompt: `
     You are an expert data extraction AI. Your task is to process the content of the Wikipedia page "List of ongoing armed conflicts" (typically found at ${WIKIPEDIA_CONFLICTS_PAGE_URL}).
-    When you simulate accessing this Wikipedia page, consider its content to be current as of today's real-world date. Focus on extracting conflicts that are listed as *ongoing now*.
+    When you simulate accessing this Wikipedia page, consider its content to be current as of today's real-world date, using your most current information to represent the page's state.
 
-    Focus ONLY on the conflicts listed within the following tables on the "List of ongoing armed conflicts" page, which categorize conflicts by fatality counts:
+    Your primary goal is to extract information about ongoing armed conflicts. Focus EXCLUSIVELY and EXHAUSTIVELY on the conflicts listed within the following tables on the "List of ongoing armed conflicts" page, which categorize conflicts by fatality counts:
     1.  "10,000 or more deaths in current or past year"
     2.  "1,000–9,999 deaths in current or past year"
     3.  "100–999 deaths in current or past year"
+    You MUST extract every single conflict entry present within these three tables. Do not omit any entry from these tables if it appears there.
     Do NOT include conflicts listed as historical or ended, even if they appear elsewhere on the page. Only extract from these specific active conflict tables.
 
     For each conflict listed in these specific tables, extract the following information:
@@ -78,7 +79,7 @@ const extractConflictsPrompt = ai.definePrompt({
     6.  **startDate**: The start date of the conflict as listed.
     7.  **territory**: If a specific sub-region or territory is highlighted as the main locus of conflict (e.g., "Nagorno-Karabakh", "Tigray Region", "Gaza Strip") within a broader conflict involving larger countries, note it in the 'territory' field. This field is for a more precise geographical focus *within* the general 'locations'. If not applicable or not distinct, it can be omitted.
     8.  **detailsLink**: If the conflict name in the list is a hyperlink to a more detailed page about that specific conflict, provide that URL.
-    9.  **imageUrl**: DO NOT ATTEMPT TO EXTRACT AN IMAGE URL. This field will be handled separately.
+    9.  **imageUrl**: DO NOT ATTEMPT TO EXTRACT AN IMAGE URL. This field will be handled separately by manual override data.
     10. **latitude**: Provide an approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
     11. **longitude**: Provide an approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
 
@@ -89,10 +90,10 @@ const extractConflictsPrompt = ai.definePrompt({
     Set 'sourcePage' to "${WIKIPEDIA_CONFLICTS_PAGE_URL}".
     The 'lastUpdated' field in the output will be set by the system; do not attempt to generate it.
 
-    Simulate accessing and parsing the content of the Wikipedia page.
+    Simulate accessing and parsing the content of the Wikipedia page "List of ongoing armed conflicts".
   `,
   config: {
-    temperature: 0.1, // Lower temperature for more factual extraction
+    temperature: 0.0, // Set temperature to 0.0 for most deterministic output
      safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
       { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
@@ -115,6 +116,7 @@ const extractWikipediaConflictsFlow = ai.defineFlow(
 
     if (!output) {
       console.error('Wikipedia conflict extraction flow returned undefined/null output.');
+      // Return a structured error or a default empty state that matches the schema
       return {
         conflicts: [],
         sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL,
@@ -122,11 +124,14 @@ const extractWikipediaConflictsFlow = ai.defineFlow(
       };
     }
     
+    // Ensure the output conforms, especially if AI might omit 'conflicts'
     return {
         ...output,
-        conflicts: output.conflicts || [], 
-        sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL, 
-        lastUpdated: currentTime, 
+        conflicts: output.conflicts || [], // Ensure conflicts is always an array
+        sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL, // Ensure sourcePage is always set
+        lastUpdated: currentTime, // Override lastUpdated with the current processing time
     };
   }
 );
+
+    
