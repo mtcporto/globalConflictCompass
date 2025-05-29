@@ -10,9 +10,10 @@
       "name": "Russo-Ukrainian War",
       "severity": "HIGH",
       "detailsLink": "https://en.wikipedia.org/wiki/Russo-Ukrainian_War",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Kyiv_after_Russian_shelling%2C_2022-10-10_%28073%29.webp/330px-Kyiv_after_Russian_shelling%2C_2022-10-10_%28073%29.webp.png",
       "latitude": 48.3794,
       "longitude": 31.1656,
-      "startDate": "20 February 2014 (initial stage)",
+      "startDate": "24 February 2022",
       "territory": "Ukraine"
     },
     {
@@ -24,10 +25,11 @@
       "name": "War in Sudan",
       "severity": "HIGH",
       "detailsLink": "https://en.wikipedia.org/wiki/2023_Sudan_conflict",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Screengrab_of_refugee_camp_from_Number_of_Refugees_Who_Fled_Sudan_for_Chad_Double_in_Week.jpg/330px-Screengrab_of_refugee_camp_from_Number_of_Refugees_Who_Fled_Sudan_for_Chad_Double_in_Week.jpg",
       "latitude": 15.5,
       "longitude": 32.5,
       "startDate": "15 April 2023",
-      "territory": "Sudan"
+      "territory": "Khartoum"
     },
     {
       "fatalitiesRaw": "10,000+",
@@ -39,96 +41,180 @@
       "name": "Israeli–Palestinian conflict",
       "severity": "HIGH",
       "detailsLink": "https://en.wikipedia.org/wiki/Israeli%E2%80%93Palestinian_conflict",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Fars_Photo_of_Destruction_in_Gaza_Strip_during_2023_War_01.jpg/330px-Fars_Photo_of_Destruction_in_Gaza_Strip_during_2023_War_01.jpg",
       "latitude": 31.9522,
       "longitude": 35.2332,
       "startDate": "7 October 2023",
       "territory": "Gaza Strip"
     },
     {
-      "fatalitiesRaw": "10,000+",
-      "id": "syrian-civil-war-2011-03-15",
-      "locations": [
-        "Syria"
-      ],
-      "name": "Syrian Civil War",
-      "severity": "HIGH",
-      "detailsLink": "https://en.wikipedia.org/wiki/Syrian_civil_war",
-      "latitude": 34.8021,
-      "longitude": 38.9968,
-      "startDate": "15 March 2011",
-      "territory": "Syria"
-    },
-    {
-      "fatalitiesRaw": "1,000+",
-      "id": "ethiopian-civil-war-2020-11-03",
+      "fatalitiesRaw": "1,000–9,999",
+      "id": "ethiopian-civil-conflict-2018-01-01",
       "locations": [
         "Ethiopia"
       ],
       "name": "Ethiopian civil conflict",
       "severity": "MEDIUM",
       "detailsLink": "https://en.wikipedia.org/wiki/Ethiopian_civil_conflict",
+      "imageUrl": "string",
       "latitude": 9.145,
       "longitude": 40.4897,
-      "startDate": "3 November 2020",
+      "startDate": "2018",
       "territory": "Tigray Region"
     },
     {
-      "fatalitiesRaw": "1,000+",
+      "fatalitiesRaw": "1,000–9,999",
       "id": "myanmar-civil-war-2021-05-05",
       "locations": [
         "Myanmar"
       ],
       "name": "Myanmar civil war",
       "severity": "MEDIUM",
-      "detailsLink": "https://en.wikipedia.org/wiki/Myanmar_civil_war",
+      "detailsLink": "https://en.wikipedia.org/wiki/Myanmar_civil_war_(2021%E2%80%93present)",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/MAF_bombing_Kyauktaw_Township_2025-01-12.png/330px-MAF_bombing_Kyauktaw_Township_2025-01-12.png",
       "latitude": 21.9139,
       "longitude": 95.9562,
-      "startDate": "5 May 2021"
+      "startDate": "5 May 2021",
+      "territory": "Shan State"
     },
     {
-      "fatalitiesRaw": "1,000+",
-      "id": "sahel-insurgency-2017-10-01",
+      "fatalitiesRaw": "1,000–9,999",
+      "id": "insurgency-in-niger-2021-03-03",
+      "locations": [
+        "Niger"
+      ],
+      "name": "Insurgency in Niger",
+      "severity": "MEDIUM",
+      "detailsLink": "https://en.wikipedia.org/wiki/Insurgency_in_Niger",
+      "imageUrl": "string",
+      "latitude": 17.6078,
+      "longitude": 8.0817,
+      "startDate": "3 March 2021",
+      "territory": "Tillabéri and Tahoua Regions"
+    },
+    {
+      "fatalitiesRaw": "1,000–9,999",
+      "id": "sahel-conflict-2017-01-01",
       "locations": [
         "Burkina Faso",
         "Mali",
         "Niger"
       ],
-      "name": "Sahel insurgency",
+      "name": "Sahel conflict",
       "severity": "MEDIUM",
-      "detailsLink": "https://en.wikipedia.org/wiki/Sahel_insurgency",
+      "detailsLink": "https://en.wikipedia.org/wiki/Sahel_conflict",
+      "imageUrl": "string",
       "latitude": 15,
-      "longitude": -2,
-      "startDate": "October 2017"
+      "longitude": 0,
+      "startDate": "2017",
+      "territory": "Liptako"
     },
     {
-      "fatalitiesRaw": "100+",
-      "id": "insurgency-in-southern-thailand-2004-01-04",
+      "fatalitiesRaw": "1,000–9,999",
+      "id": "kivu-conflict-2015-01-01",
+      "locations": [
+        "Democratic Republic of the Congo"
+      ],
+      "name": "Kivu conflict",
+      "severity": "MEDIUM",
+      "detailsLink": "https://en.wikipedia.org/wiki/Kivu_conflict",
+      "imageUrl": "string",
+      "latitude": -1.6333,
+      "longitude": 29.2333,
+      "startDate": "2015",
+      "territory": "North Kivu and South Kivu"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "insurgency-in-southern-thailand-2004-01-01",
       "locations": [
         "Thailand"
       ],
       "name": "Insurgency in Southern Thailand",
       "severity": "LOW",
       "detailsLink": "https://en.wikipedia.org/wiki/South_Thailand_insurgency",
+      "imageUrl": "string",
       "latitude": 6.5,
       "longitude": 101.75,
-      "startDate": "4 January 2004",
+      "startDate": "2004",
       "territory": "Southern Thailand"
     },
     {
-      "fatalitiesRaw": "100+",
-      "id": "kashmir-conflict-1989-01-01",
+      "fatalitiesRaw": "100–999",
+      "id": "conflict-in-the-sinaloa-cartel-2010-01-01",
       "locations": [
-        "India",
-        "Pakistan"
+        "Mexico"
       ],
-      "name": "Kashmir conflict",
+      "name": "Conflict in the Sinaloa Cartel",
       "severity": "LOW",
-      "detailsLink": "https://en.wikipedia.org/wiki/Kashmir_conflict",
-      "latitude": 34.3,
-      "longitude": 74.6,
-      "startDate": "1989"
+      "detailsLink": "https://en.wikipedia.org/wiki/Sinaloa_Cartel",
+      "imageUrl": "string",
+      "latitude": 23,
+      "longitude": -106,
+      "startDate": "2010",
+      "territory": "Sinaloa"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "inter-communal-violence-in-nigeria-2010-01-01",
+      "locations": [
+        "Nigeria"
+      ],
+      "name": "Inter-communal violence in Nigeria",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Communal_conflicts_in_Nigeria",
+      "imageUrl": "string",
+      "latitude": 9.082,
+      "longitude": 8.6753,
+      "startDate": "2010",
+      "territory": "Nigeria"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "mozambique-insurgency-2017-10-05",
+      "locations": [
+        "Mozambique"
+      ],
+      "name": "Mozambique insurgency",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Insurgency_in_Cabo_Delgado",
+      "imageUrl": "string",
+      "latitude": -13,
+      "longitude": 40,
+      "startDate": "5 October 2017",
+      "territory": "Cabo Delgado"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "anglo-cameroon-conflict-2017-09-07",
+      "locations": [
+        "Cameroon"
+      ],
+      "name": "Anglophone Crisis",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Anglophone_Crisis",
+      "imageUrl": "string",
+      "latitude": 5.9667,
+      "longitude": 10.25,
+      "startDate": "7 September 2017",
+      "territory": "Northwest and Southwest Regions"
+    },
+    {
+      "fatalitiesRaw": "100–999",
+      "id": "conflict-in-rojava-2011-01-01",
+      "locations": [
+        "Syria"
+      ],
+      "name": "Conflict in Rojava",
+      "severity": "LOW",
+      "detailsLink": "https://en.wikipedia.org/wiki/Rojava_conflict",
+      "imageUrl": "string",
+      "latitude": 36.8667,
+      "longitude": 39.2,
+      "startDate": "2011",
+      "territory": "Rojava"
     }
   ],
-  "lastUpdated": "2025-05-28T12:53:40.868Z",
+  "lastUpdated": "2025-05-29T01:26:44.274Z",
   "sourcePage": "https://en.wikipedia.org/wiki/List_of_ongoing_armed_conflicts"
 }

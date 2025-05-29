@@ -57,6 +57,7 @@ export async function getAiSummaryAction(newsItemsToSummarize: SummarizeNewsInpu
     return { error: 'Nenhum item de notícia fornecido para resumo.' };
   }
 
+  // The argument newsItemsToSummarize is now directly the array.
   const input: SummarizeConflictNewsInput = {
     newsItems: newsItemsToSummarize,
   };
@@ -90,17 +91,25 @@ export async function getWikipediaConflictsAction(options: { forceRefresh?: bool
   try {
     const aiResult: ExtractWikipediaConflictsOutput = await extractWikipediaConflicts({});
     
-    // Apply manual overrides
-    const processedConflicts = aiResult.conflicts.map(conflict => {
-      const override = manualOverridesMap.get(conflict.id);
+    // Apply manual overrides and clean up imageUrl
+    const processedConflicts = aiResult.conflicts.map(aiConflict => {
+      // Clean the imageUrl from AI before considering overrides
+      let currentImageUrl = (typeof aiConflict.imageUrl === 'string' && (aiConflict.imageUrl.startsWith('http://') || aiConflict.imageUrl.startsWith('https://')))
+                              ? aiConflict.imageUrl
+                              : undefined;
+      let currentDetailsLink = aiConflict.detailsLink;
+
+      const override = manualOverridesMap.get(aiConflict.id);
       if (override) {
-        return {
-          ...conflict,
-          imageUrl: override.imageUrl || conflict.imageUrl, // Use override if present
-          detailsLink: override.detailsLinkOverride || conflict.detailsLink, // Use override if present
-        };
+        currentImageUrl = override.imageUrl || currentImageUrl; // Prioritize override's imageUrl
+        currentDetailsLink = override.detailsLinkOverride || currentDetailsLink; // Prioritize override's detailsLink
       }
-      return conflict;
+
+      return {
+        ...aiConflict,
+        imageUrl: currentImageUrl, // This will be either a valid URL or undefined
+        detailsLink: currentDetailsLink,
+      };
     });
 
     const dataToCache: WikipediaConflictsData = {
