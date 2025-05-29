@@ -1,20 +1,23 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { CuratedConflictEntry, ConflictSeverityCategory } from '@/lib/types';
 
-// Patch Leaflet's default icon path (ensure this runs only once per page load)
-if (typeof window !== 'undefined' && !(window as any)._leafletIconPatched) {
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default,
-    iconUrl: require('leaflet/dist/images/marker-icon.png').default,
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
-  });
-  (window as any)._leafletIconPatched = true;
+// Patch Leaflet's default icon path
+if (typeof window !== 'undefined') {
+  // Ensure the patch runs only once, even with HMR
+  if (!(L.Icon.Default.prototype as any)._iconUrlsPatched) {
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default,
+      iconUrl: require('leaflet/dist/images/marker-icon.png').default,
+      shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
+    });
+    (L.Icon.Default.prototype as any)._iconUrlsPatched = true;
+  }
 }
 
 interface MapDisplayProps {
@@ -22,30 +25,28 @@ interface MapDisplayProps {
 }
 
 const leafletSeverityColorMap: Record<ConflictSeverityCategory, string> = {
-  "Alta Gravidade": '#E53E3E', // Red-600 (Tailwind name)
-  "Média Gravidade": '#DD6B20', // Orange-600 (Tailwind name)
-  "Baixa Gravidade": '#D69E2E', // Yellow-600 (Tailwind name)
+  "Alta Gravidade": '#EF4444', // red-500
+  "Média Gravidade": '#F97316', // orange-500
+  "Baixa Gravidade": '#EAB308', // yellow-500
 };
 
 const defaultCountryStyle = {
-  fillColor: "hsl(var(--muted))", // Using themed muted color
+  fillColor: "hsl(var(--muted))",
   weight: 0.5,
   opacity: 1,
-  color: "hsl(var(--border))", // Using themed border color
+  color: "hsl(var(--border))",
   fillOpacity: 0.3
 };
 
-// Define os limites do mapa mundial para evitar repetição e pan excessivo
 const WorldMapBounds = L.latLngBounds(
-  L.latLng(-85.05112878, -180), // Limite sul-oeste
-  L.latLng(85.05112878, 180)    // Limite norte-leste
+  L.latLng(-60, -180), // Adjusted south latitude to prevent too much Antarctic view
+  L.latLng(85, 180)     // North latitude
 );
-
 
 const LegendControl = ({ severityMap }: { severityMap: Record<ConflictSeverityCategory, string> }) => {
   const map = useMap();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!map) return;
 
     const legend = new (L.Control as any)({ position: "bottomright" });
@@ -73,13 +74,11 @@ const LegendControl = ({ severityMap }: { severityMap: Record<ConflictSeverityCa
   return null;
 };
 
-
 function MapDisplay({ conflicts }: MapDisplayProps) {
-  const [countriesGeoJson, setCountriesGeoJson] = React.useState<any>(null);
-  const [loadingGeoJson, setLoadingGeoJson] = React.useState(true);
-  const mapRef = React.useRef<L.Map | null>(null);
+  const [countriesGeoJson, setCountriesGeoJson] = useState<any>(null);
+  const [loadingGeoJson, setLoadingGeoJson] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setLoadingGeoJson(true);
     fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json")
       .then(res => res.json())
@@ -93,44 +92,43 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
       });
   }, []);
 
-  const validConflicts = React.useMemo(() => 
+  const validConflicts = useMemo(() =>
     conflicts.filter(
       (conflict) => conflict.coordenadas && typeof conflict.coordenadas[0] === 'number' && typeof conflict.coordenadas[1] === 'number'
     ), [conflicts]);
 
-  const getCountryStyle = React.useCallback((feature: any) => {
+  const getCountryStyle = useCallback((feature: any) => {
     const countryName = feature.properties.name;
-    const involvedConflicts = conflicts.filter(c => 
-      c.envolvidos && Array.isArray(c.envolvidos) && c.envolvidos.some(loc => 
-        loc.toLowerCase() === countryName.toLowerCase() || 
-        loc.toLowerCase().includes(countryName.toLowerCase()) || 
+    const involvedConflicts = conflicts.filter(c =>
+      c.envolvidos && Array.isArray(c.envolvidos) && c.envolvidos.some(loc =>
+        loc.toLowerCase() === countryName.toLowerCase() ||
+        loc.toLowerCase().includes(countryName.toLowerCase()) ||
         countryName.toLowerCase().includes(loc.toLowerCase())
       )
     );
 
     if (involvedConflicts.length > 0) {
-      let highestSeverityCategory: ConflictSeverityCategory = "Baixa Gravidade"; 
-      
+      let highestSeverityCategory: ConflictSeverityCategory = "Baixa Gravidade";
       if (involvedConflicts.some(c => c.severityCategory === 'Alta Gravidade')) highestSeverityCategory = 'Alta Gravidade';
       else if (involvedConflicts.some(c => c.severityCategory === 'Média Gravidade')) highestSeverityCategory = 'Média Gravidade';
-      
+
       return {
         fillColor: leafletSeverityColorMap[highestSeverityCategory] || defaultCountryStyle.fillColor,
         weight: 1,
         opacity: 1,
-        color: 'hsl(var(--foreground) / 0.7)', 
+        color: 'hsl(var(--foreground) / 0.7)',
         fillOpacity: 0.4
       };
     }
     return defaultCountryStyle;
   }, [conflicts]);
 
-  const onEachCountryFeature = React.useCallback((feature: any, layer: L.Layer) => {
+  const onEachCountryFeature = useCallback((feature: any, layer: L.Layer) => {
     const countryName = feature.properties.name;
-    const relatedConflicts = conflicts.filter(c => 
-      c.envolvidos && Array.isArray(c.envolvidos) && c.envolvidos.some(loc => 
-        loc.toLowerCase() === countryName.toLowerCase() || 
-        loc.toLowerCase().includes(countryName.toLowerCase()) || 
+    const relatedConflicts = conflicts.filter(c =>
+      c.envolvidos && Array.isArray(c.envolvidos) && c.envolvidos.some(loc =>
+        loc.toLowerCase() === countryName.toLowerCase() ||
+        loc.toLowerCase().includes(countryName.toLowerCase()) ||
         countryName.toLowerCase().includes(loc.toLowerCase())
       )
     );
@@ -147,33 +145,31 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
       layer.bindPopup(popupContent);
     }
   }, [conflicts]);
-  
-  const mapCenter: L.LatLngTuple = [20, 0]; // Initial center of the map
+
+  const mapCenter: L.LatLngTuple = [20, 0];
   const initialMapZoom = 2;
-  const minMapZoom = 2; // Prevents zooming out too far
-  const maxMapZoom = 6; // Prevents zooming in too close
+  const minMapZoom = 2;
+  const maxMapZoom = 6;
 
   if (loadingGeoJson) {
     return (
-      <div className="h-[600px] md:h-[700px] w-full rounded-lg overflow-hidden shadow-md relative bg-muted/30 flex items-center justify-center">
+      <div className="h-[700px] md:h-[700px] w-full rounded-lg overflow-hidden shadow-md relative bg-muted/30 flex items-center justify-center">
         <p className="text-muted-foreground">Carregando dados do mapa geográfico...</p>
       </div>
     );
   }
 
   return (
-    <div className="h-[600px] md:h-[700px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
+    <div className="h-[700px] md:h-[700px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict hotspots" : "world map illustration"}>
       <MapContainer
         center={mapCenter}
         zoom={initialMapZoom}
         minZoom={minMapZoom}
         maxZoom={maxMapZoom}
-        maxBounds={WorldMapBounds} // Restringe a área de pan
-        maxBoundsViscosity={1.0} // Torna os maxBounds "duros"
+        maxBounds={WorldMapBounds}
+        maxBoundsViscosity={1.0}
         style={{ height: '100%', width: '100%' }}
-        scrollWheelZoom={true} // Permite zoom com a roda do mouse
-        // dragging={true} // Padrão é true, permite arrastar dentro dos bounds
-        whenCreated={instance => { mapRef.current = instance; }}
+        scrollWheelZoom={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -182,7 +178,7 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
 
         {countriesGeoJson && (
           <GeoJSON
-            key={JSON.stringify(conflicts.map(c => ({ nome: c.nome, envolvidos: c.envolvidos, severityCategory: c.severityCategory})))} 
+            key={JSON.stringify(conflicts.map(c => ({ nome: c.nome, envolvidos: c.envolvidos, severityCategory: c.severityCategory})))}
             data={countriesGeoJson}
             style={getCountryStyle}
             onEachFeature={onEachCountryFeature}
@@ -192,16 +188,16 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
         {validConflicts.map((conflict) => {
           const severityCat = conflict.severityCategory || "Baixa Gravidade";
           const color = leafletSeverityColorMap[severityCat] || '#A0AEC0'; // Gray-500
-          let radius = 4; // Base radius
+          let radius = 4;
           if (severityCat === "Alta Gravidade") radius = 7;
           else if (severityCat === "Média Gravidade") radius = 5.5;
 
           return (
             <CircleMarker
-              key={conflict.nome + (conflict.territorio || '')} 
+              key={conflict.nome + (conflict.territorio || '')}
               center={[conflict.coordenadas[0], conflict.coordenadas[1]]}
               radius={radius}
-              pathOptions={{ 
+              pathOptions={{
                 color: color,
                 fillColor: color,
                 fillOpacity: 0.6,
@@ -210,20 +206,20 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
             >
               <Popup>
                 <div className="text-sm max-w-xs">
-                  <h4 class="font-semibold text-base mb-1">${conflict.nome}</h4>
-                  <p><span class="font-medium">Gravidade:</span> ${severityCat}</p>
-                  <p><span class="font-medium">Fatalidades:</span> ${conflict.fatalidades_texto}</p>
-                  {conflict.territorio && <p><span class="font-medium">Território Específico:</span> ${conflict.territorio}</p>}
+                  <h4 className="font-semibold text-base mb-1">{conflict.nome}</h4>
+                  <p><span className="font-medium">Gravidade:</span> {severityCat}</p>
+                  <p><span className="font-medium">Fatalidades:</span> {conflict.fatalidades_texto}</p>
+                  {conflict.territorio && <p><span className="font-medium">Território Específico:</span> {conflict.territorio}</p>}
                   {conflict.envolvidos && conflict.envolvidos.length > 0 && (
-                    <p><span class="font-medium">Envolvidos (Países/Grupos):</span> ${conflict.envolvidos.join(', ')}</p>
+                    <p><span className="font-medium">Envolvidos (Países/Grupos):</span> {conflict.envolvidos.join(', ')}</p>
                   )}
-                  {conflict.inicio && <p><span class="font-medium">Início:</span> ${conflict.inicio}</p>}
+                  {conflict.inicio && <p><span className="font-medium">Início:</span> {conflict.inicio}</p>}
                   {conflict.wikipedia_link && (
                     <a
                       href={conflict.wikipedia_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-primary hover:text-primary/80 hover:underline mt-1.5 block"
+                      className="text-primary hover:text-primary/80 hover:underline mt-1.5 block"
                     >
                       Detalhes na Wikipedia →
                     </a>
@@ -235,7 +231,7 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
         })}
         <LegendControl severityMap={leafletSeverityColorMap} />
       </MapContainer>
-      
+
       {validConflicts.length === 0 && countriesGeoJson && !loadingGeoJson && (
          <div className="absolute inset-0 flex items-center justify-center bg-black/10 pointer-events-none z-[1000]">
             <div className="text-slate-700 bg-slate-100/90 p-3 rounded-md shadow-lg text-center">
@@ -249,5 +245,3 @@ function MapDisplay({ conflicts }: MapDisplayProps) {
 }
 
 export default React.memo(MapDisplay);
-
-    
