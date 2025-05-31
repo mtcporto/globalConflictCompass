@@ -4,10 +4,7 @@
 import { summarizeConflictNews, type SummarizeConflictNewsInput, type SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
 import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, CuratedConflictData, CachedAiSummary } from '@/lib/types';
 import curatedConflictDataJson from '@/data/curated-conflict-data.json';
-import fs from 'fs/promises';
-import path from 'path';
-import { addAiSummary, getLatestAiSummary } from '@/lib/db';
-
+import { addAiSummaryToFirestore, getLatestAiSummaryFromFirestore } from '@/lib/firestore-db'; // Alterado para Firestore
 
 export async function getAiSummaryAction(
   newsItemsToSummarize: SummarizeNewsInputItem[],
@@ -16,40 +13,50 @@ export async function getAiSummaryAction(
   
   if (!forceRefresh) {
     try {
-      const cachedData = getLatestAiSummary();
-      if (cachedData) {
-        // Simple cache validation: if we have a summary, use it.
-        // More advanced: check if cachedData.lastGenerated is within a certain timeframe (e.g., 24 hours)
-        // For now, if it exists, we use it unless forceRefresh is true.
-        console.log("AI Summary: Found in DB, using latest entry.");
-        return { 
-          summary: cachedData.summary, 
-          lastGenerated: cachedData.lastGenerated,
-          dataSource: 'db' 
-        };
+      const cachedData = await getLatestAiSummaryFromFirestore();
+      if (cachedData && cachedData.lastGenerated) {
+        const lastGeneratedDate = new Date(cachedData.lastGenerated); // lastGenerated é ISO string
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+        if (lastGeneratedDate > twentyFourHoursAgo) {
+          console.log("AI Summary: Found recent in Firestore, using it.");
+          return { 
+            summary: cachedData.summary, 
+            lastGenerated: cachedData.lastGenerated,
+            dataSource: 'db' 
+          };
+        }
+        console.log("AI Summary: Firestore cache is older than 24 hours.");
+      } else {
+        console.log("AI Summary: Not found in Firestore or missing timestamp.");
       }
-      console.log("AI Summary: Not found in DB or too old, will generate new one.");
     } catch (dbError) {
-      console.error("AI Summary: Error reading from DB, will generate new one.", dbError);
-      // Proceed to generate new summary if DB read fails
+      console.error("AI Summary: Error reading from Firestore, will generate new one.", dbError);
+      // Prossegue para gerar novo resumo se a leitura do Firestore falhar
     }
   }
 
-  // If forceRefresh is true, or if no valid cache from DB
+  // Se forceRefresh for true, ou se não houver cache válido do Firestore
   console.log(`AI Summary: Generating new summary (forceRefresh: ${forceRefresh}).`);
   if (!newsItemsToSummarize || newsItemsToSummarize.length === 0) {
-    return { error: 'Nenhum item de notícia fornecido para resumo.' };
+    // Isso só deve ser um erro se NENHUM item de notícia for fornecido para uma nova geração.
+    // Se tínhamos um cache antigo, mas newsItemsToSummarize está vazio agora, ainda podemos tentar gerar (o que provavelmente falhará sem itens).
+    // Mas se forceRefresh=false e newsItemsToSummarize está vazio, e o cache falhou, então é um problema.
+    // No entanto, newsItemsToSummarize é sempre fornecido pelo painel.
+    // A verificação principal de "sem itens" está no painel antes de chamar esta action para `forceRefresh:true`.
+    console.warn("AI Summary: newsItemsToSummarize is empty. This might lead to a poor summary if AI generation is triggered.");
+    // Não retornamos erro aqui, permitimos que a IA tente, pode haver um resumo antigo que passou da validade.
   }
 
   const input: SummarizeConflictNewsInput = {
-    newsItems: newsItemsToSummarize,
+    newsItems: newsItemsToSummarize.length > 0 ? newsItemsToSummarize : [{title: "Sem notícias recentes", description: "Não foram encontradas notícias recentes das fontes configuradas para gerar um novo resumo."}],
   };
 
   try {
     const result = await summarizeConflictNews(input);
-    addAiSummary(result); // Save to DB
+    await addAiSummaryToFirestore(result); // Salva no Firestore
     const now = new Date().toISOString();
-    console.log("AI Summary: New summary generated and saved to DB.");
+    console.log("AI Summary: New summary generated and saved to Firestore.");
     return { 
       summary: result,
       lastGenerated: now,
