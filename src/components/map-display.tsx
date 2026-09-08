@@ -91,11 +91,21 @@ function MapDisplayComponent({ conflicts, selectedConflictId, onSelectConflict }
   const [loadingGeoJson, setLoadingGeoJson] = useState(true);
 
   useEffect(() => {
+    const cachedGeoJson = window.sessionStorage.getItem('global-conflict-compass:world-geojson');
+    if (cachedGeoJson) {
+      try {
+        setCountriesGeoJson(JSON.parse(cachedGeoJson));
+        setLoadingGeoJson(false);
+      } catch {
+        window.sessionStorage.removeItem('global-conflict-compass:world-geojson');
+      }
+    }
     setLoadingGeoJson(true);
     fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json")
       .then(res => res.json())
       .then(data => {
         setCountriesGeoJson(data);
+        window.sessionStorage.setItem('global-conflict-compass:world-geojson', JSON.stringify(data));
         setLoadingGeoJson(false);
       })
       .catch(error => {
@@ -165,16 +175,8 @@ function MapDisplayComponent({ conflicts, selectedConflictId, onSelectConflict }
   const minMapZoom = 2; // Prevents zooming out too much
   const maxZoom = 6; // Prevents zooming in too much // DEFINED HERE
 
-  if (loadingGeoJson) {
-    return (
-      <div className="h-[700px] w-full rounded-lg overflow-hidden shadow-md relative bg-gray-800 flex items-center justify-center">
-        <p className="text-gray-400">Carregando dados do mapa geográfico...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-[700px] w-full rounded-lg overflow-hidden shadow-md relative" data-ai-hint={validConflicts.length > 0 ? "world map conflict dark" : "dark world map illustration"}>
+    <div className="relative h-[560px] w-full overflow-hidden rounded-xl shadow-md sm:h-[700px]" data-ai-hint={validConflicts.length > 0 ? "world map conflict dark" : "dark world map illustration"}>
       <MapContainer
         center={mapCenter}
         zoom={initialMapZoom}
@@ -259,6 +261,11 @@ function MapDisplayComponent({ conflicts, selectedConflictId, onSelectConflict }
               <p className="text-xs opacity-90 mt-0.5">Os países envolvidos podem estar destacados.</p>
             </div>
           </div>
+      )}
+      {loadingGeoJson && !countriesGeoJson && (
+        <div className="pointer-events-none absolute left-1/2 top-4 z-[1000] -translate-x-1/2 rounded-md bg-slate-800/90 px-3 py-2 text-xs text-slate-200 shadow-lg">
+          Carregando limites dos países…
+        </div>
       )}
     </div>
   );

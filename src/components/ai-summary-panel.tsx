@@ -86,7 +86,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
           <section><h3 className="mb-3 font-semibold">Atores e fatores</h3><div className="space-y-3 leading-6 text-foreground/85"><TextList items={summary.atoresEnvolvidos} />{summary.causasFatoresMencionados && <p>{summary.causasFatoresMencionados}</p>}</div></section>
         </div>
         {summary.oQueAcompanhar?.length ? <section className="border-t pt-5"><h3 className="mb-3 font-semibold">O que acompanhar</h3><TextList items={summary.oQueAcompanhar} /></section> : null}
-        {summary.fontes?.length ? <section className="border-t pt-5"><h3 className="mb-3 font-semibold">Fontes usadas</h3><ul className="space-y-2 text-sm">{summary.fontes.map((source, index) => <li key={`${source.link || source.title}-${index}`}><a className="inline-flex items-center gap-1 text-primary hover:underline" href={source.link} target="_blank" rel="noreferrer">{source.source}: {source.title}<ExternalLink className="h-3 w-3" /></a></li>)}</ul></section> : null}
+        {summary.fontes?.length ? <section className="border-t pt-5"><h3 className="mb-3 font-semibold">Fontes usadas</h3><ul className="space-y-2 text-sm">{summary.fontes.map((source, index) => <li key={`${source.link || source.title}-${index}`}>{source.link ? <a className="inline-flex items-center gap-1 font-medium text-sky-700 hover:text-sky-950 hover:underline" href={source.link} target="_blank" rel="noreferrer">{source.source}: {source.title}<ExternalLink className="h-3 w-3" /></a> : <span>{source.source}: {source.title}</span>}</li>)}</ul></section> : null}
       </article>}
     </div>
   );

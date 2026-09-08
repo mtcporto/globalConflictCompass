@@ -77,13 +77,6 @@ function fingerprint(items: SummarizeNewsInputItem[]) {
 export async function getAiSummaryAction(
   forceRefresh = false,
 ): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string; lastGenerated?: string; dataSource?: 'db' | 'ai'; sourceCount?: number }> {
-  if (!forceRefresh) {
-    const cached = await getLatestAiSummaryFromTurso(undefined, 2);
-    if (cached && Date.now() - new Date(cached.lastGenerated).getTime() < SUMMARY_TTL_MS) {
-      return { summary: cached.summary, lastGenerated: cached.lastGenerated, dataSource: 'db' };
-    }
-  }
-
   const snapshot = await getConflictSnapshot();
   if (!snapshot) return { error: 'O panorama de conflitos ainda não está disponível para contextualizar o resumo.' };
   const conflicts = snapshot?.data.conflicts.map(conflict => ({ id: conflict.id, name: conflict.name, locations: conflict.locations })) || [];
@@ -93,11 +86,19 @@ export async function getAiSummaryAction(
     return { error: 'Nenhuma notícia relevante foi encontrada nas fontes configuradas.' };
   }
 
+  const inputHash = fingerprint(newsItems);
+  if (!forceRefresh) {
+    const cached = await getLatestAiSummaryFromTurso(inputHash, 2);
+    if (cached && Date.now() - new Date(cached.lastGenerated).getTime() < SUMMARY_TTL_MS) {
+      return { summary: cached.summary, lastGenerated: cached.lastGenerated, dataSource: 'db', sourceCount: newsItems.length };
+    }
+  }
+
   try {
     const input: SummarizeConflictNewsInput = { conflicts, newsItems };
     const result = await summarizeConflictNews(input);
     const generatedAt = new Date().toISOString();
-    await addAiSummaryToTurso(result, fingerprint(newsItems));
+    await addAiSummaryToTurso(result, inputHash);
     return { summary: result, lastGenerated: generatedAt, dataSource: 'ai', sourceCount: newsItems.length };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido ao gerar o resumo.';

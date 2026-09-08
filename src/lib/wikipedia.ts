@@ -29,7 +29,7 @@ export async function getWikipediaSummaries(links: WikipediaConflictLink[]): Pro
 export async function getTranslatedWikipediaSummaries(conflictId: string, summaries: WikipediaPageSummary[]) {
   const input = summaries.map(summary => ({ title: summary.title, extract: summary.extract, link: summary.contentUrls?.desktop?.page || '' })).filter(page => page.link);
   if (input.length === 0) return [];
-  const sourceHash = createHash('sha256').update(JSON.stringify(input)).digest('hex');
+  const sourceHash = createHash('sha256').update(`translation-v2:${JSON.stringify(input)}`).digest('hex');
   if (turso) {
     await ensureTursoSchema();
     const result = await turso.execute({ sql: 'SELECT context_data FROM wikipedia_contexts WHERE conflict_id = ? AND source_hash = ? LIMIT 1', args: [conflictId, sourceHash] });

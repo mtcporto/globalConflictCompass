@@ -18,7 +18,32 @@ function parseJson(content: string) {
   const start = clean.indexOf('{');
   const end = clean.lastIndexOf('}');
   if (start < 0 || end <= start) throw new Error('O GPT não retornou uma tradução estruturada.');
-  return OutputSchema.parse(JSON.parse(clean.slice(start, end + 1)));
+  const value = clean.slice(start, end + 1);
+  let sanitized = '';
+  let insideString = false;
+  let escaped = false;
+  for (const character of value) {
+    if (insideString) {
+      if (escaped) {
+        sanitized += character;
+        escaped = false;
+      } else if (character === '\\') {
+        sanitized += character;
+        escaped = true;
+      } else if (character === '"') {
+        sanitized += character;
+        insideString = false;
+      } else if (character === '\n') sanitized += '\\n';
+      else if (character === '\r') sanitized += '\\r';
+      else if (character === '\t') sanitized += '\\t';
+      else if (character.charCodeAt(0) < 0x20) sanitized += ' ';
+      else sanitized += character;
+    } else {
+      sanitized += character;
+      if (character === '"') insideString = true;
+    }
+  }
+  return OutputSchema.parse(JSON.parse(sanitized));
 }
 
 export async function translateWikipediaContext(input: TranslateWikipediaContextInput): Promise<TranslateWikipediaContextOutput> {

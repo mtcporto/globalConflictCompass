@@ -149,7 +149,7 @@ async function summarizeConflictNewsFlow(input: SummarizeConflictNewsInput): Pro
     temperature: 0,
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: JSON.stringify(input.newsItems) },
+      { role: 'user', content: JSON.stringify({ conflitos: input.conflicts, noticias: input.newsItems }) },
     ],
     response_format: { type: 'json_object' },
   });
