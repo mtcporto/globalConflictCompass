@@ -7,7 +7,7 @@ export interface WikipediaPageSummary {
 }
 
 export async function getWikipediaSummaries(links: WikipediaConflictLink[]): Promise<WikipediaPageSummary[]> {
-  const selected = links.slice(0, 8);
+  const selected = [...new Map(links.map(link => [link.url, link])).values()].slice(0, 8);
   const results = await Promise.all(selected.map(async link => {
     const title = link.url.split('/wiki/')[1];
     if (!title) return null;
