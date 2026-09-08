@@ -1,3 +1,6 @@
+import { createHash } from 'crypto';
+import { translateWikipediaContext } from '@/ai/flows/translate-wikipedia-context';
+import { ensureTursoSchema, turso } from './turso';
 import type { WikipediaConflictLink } from '@/lib/types';
 
 export interface WikipediaPageSummary {
@@ -21,4 +24,21 @@ export async function getWikipediaSummaries(links: WikipediaConflictLink[]): Pro
     }
   }));
   return results.filter((item): item is WikipediaPageSummary => item !== null && Boolean(item.extract));
+}
+
+export async function getTranslatedWikipediaSummaries(conflictId: string, summaries: WikipediaPageSummary[]) {
+  const input = summaries.map(summary => ({ title: summary.title, extract: summary.extract, link: summary.contentUrls?.desktop?.page || '' })).filter(page => page.link);
+  if (input.length === 0) return [];
+  const sourceHash = createHash('sha256').update(JSON.stringify(input)).digest('hex');
+  if (turso) {
+    await ensureTursoSchema();
+    const result = await turso.execute({ sql: 'SELECT context_data FROM wikipedia_contexts WHERE conflict_id = ? AND source_hash = ? LIMIT 1', args: [conflictId, sourceHash] });
+    const row = result.rows[0] as { context_data?: string } | undefined;
+    if (row?.context_data) return JSON.parse(row.context_data) as Array<{ title: string; translatedExtract: string; link: string }>;
+  }
+  const translated = await translateWikipediaContext({ pages: input });
+  if (turso) {
+    await turso.execute({ sql: 'INSERT INTO wikipedia_contexts (conflict_id, source_hash, context_data, generated_at) VALUES (?, ?, ?, ?) ON CONFLICT(conflict_id) DO UPDATE SET source_hash = excluded.source_hash, context_data = excluded.context_data, generated_at = excluded.generated_at', args: [conflictId, sourceHash, JSON.stringify(translated.pages), new Date().toISOString()] });
+  }
+  return translated.pages;
 }

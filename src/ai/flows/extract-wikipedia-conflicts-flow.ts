@@ -46,7 +46,9 @@ function extractRows(html: string) {
         const url = absoluteWikipediaUrl(anchor.getAttribute('href') || '');
         return title && url ? { title, url, depth } : null;
       }).filter((link): link is WikipediaConflictLink => link !== null);
-      return { tableIndex, rowIndex, text: (row.textContent || '').replace(/\s+/g, ' ').trim(), links };
+      const locationCell = cells[3] || null;
+      const sourceLocations = locationCell ? [...locationCell.querySelectorAll('a[href]')].map(anchor => (anchor.textContent || '').replace(/\s+/g, ' ').trim()).filter(Boolean) : [];
+      return { tableIndex, rowIndex, text: (row.textContent || '').replace(/\s+/g, ' ').trim(), links, sourceLocations };
     }));
 }
 
@@ -78,12 +80,15 @@ export async function extractWikipediaConflicts(): Promise<WikipediaConflictsDat
     const match = rows.find(row => row.links.some(link => normalize(link.title) === normalize(conflict.name)))
       || rows.find(row => row.links.some(link => normalize(link.title).includes(normalize(conflict.name)) || normalize(conflict.name).includes(normalize(link.title))));
     const wikipediaLinks = match?.links;
+    const locations = conflict.locations?.some(location => !['africa', 'asia', 'europe', 'north america', 'south america', 'global', 'world'].includes(location.trim().toLowerCase()))
+      ? conflict.locations
+      : (match?.sourceLocations?.length ? match.sourceLocations : conflict.locations);
     return {
       ...conflict,
       id: conflict.id || `${conflict.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${index}`,
       severity: conflict.severity || 'UNKNOWN',
       fatalitiesRaw: conflict.fatalitiesRaw || 'Não informado pela fonte',
-      locations: conflict.locations || [],
+      locations: locations || [],
       detailsLink: wikipediaLinks?.[0]?.url || conflict.detailsLink,
       wikipediaLinks,
     };

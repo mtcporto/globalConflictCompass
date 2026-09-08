@@ -30,5 +30,11 @@ export async function ensureTursoSchema() {
     snapshot_data TEXT NOT NULL,
     generated_at TEXT NOT NULL
   )`);
+  await turso.execute(`CREATE TABLE IF NOT EXISTS wikipedia_contexts (
+    conflict_id TEXT PRIMARY KEY,
+    source_hash TEXT NOT NULL,
+    context_data TEXT NOT NULL,
+    generated_at TEXT NOT NULL
+  )`);
   return true;
 }

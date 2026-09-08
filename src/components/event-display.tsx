@@ -22,7 +22,7 @@ export function EventDisplay({ item }: EventDisplayProps) {
           href={item.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-primary hover:underline flex items-center gap-1"
+          className="text-xs font-medium text-sky-700 hover:text-sky-950 hover:underline flex items-center gap-1"
         >
           Read more <ExternalLink className="w-3 h-3" />
         </a>
