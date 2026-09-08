@@ -7,8 +7,8 @@
 
 'use server';
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import OpenAI from 'openai';
+import {z} from 'zod';
 
 const SummarizeConflictNewsInputSchema = z.object({
   newsItems: z.array(
@@ -36,22 +36,9 @@ export async function summarizeConflictNews(input: SummarizeConflictNewsInput): 
   return summarizeConflictNewsFlow(input);
 }
 
-const summarizeConflictNewsPrompt = ai.definePrompt({
-  name: 'summarizeConflictNewsPrompt',
-  input: {schema: SummarizeConflictNewsInputSchema},
-  output: {schema: SummarizeConflictNewsOutputSchema},
-  prompt: `Você é um analista de inteligência especializado em conflitos globais. Sua tarefa é analisar os seguintes itens de notícia e fornecer um resumo estruturado em português brasileiro (pt-BR). Concentre-se em extrair informações factuais apresentadas nos textos.
+const systemPrompt = `Você é um analista de conflitos globais. Responda em português brasileiro e use somente os fatos presentes nas notícias fornecidas. Não invente números, causas, atores ou acontecimentos. Quando uma informação não estiver presente, use uma lista vazia ou a frase padrão indicada pelo schema.
 
-Itens de Notícia:
-{{#each newsItems}}
-- Título: {{this.title}}
-  Descrição: {{this.description}}
-  {{#if this.link}}
-  Link: {{this.link}}
-  {{/if}}
-{{/each}}
-
-Com base APENAS nos itens de notícia fornecidos, preencha os seguintes campos:
+Com base apenas nas notícias fornecidas:
 
 1.  **Eventos Chave** (campo: \`eventosChave\`): Liste os eventos ou desenvolvimentos mais importantes e recentes mencionados.
     - Se houver dados, retorne um array de strings (ex: \`["Evento 1", "Evento 2"]\`).
@@ -80,31 +67,42 @@ Instruções CRÍTICAS para o formato da resposta:
 - Para campos de string opcionais (\`impactoHumanitario\`, \`causasFatoresMencionados\`): se nenhuma informação for encontrada, siga as instruções detalhadas acima (omitir o campo ou retornar a string padrão, quando aplicável).
 - O campo \`resumoGeral\` é obrigatório e deve sempre ser uma string.
 
-Mantenha o resultado conciso e focado nos fatos dos artigos.
-`,
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-    ],
-  },
+Mantenha o resultado conciso e focado nos fatos.`;
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || 'not-needed',
+  ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {}),
 });
 
-const summarizeConflictNewsFlow = ai.defineFlow(
-  {
-    name: 'summarizeConflictNewsFlow',
-    inputSchema: SummarizeConflictNewsInputSchema,
-    outputSchema: SummarizeConflictNewsOutputSchema,
-  },
-  async input => {
-    const {output} = await summarizeConflictNewsPrompt(input);
-    if (!output) {
-      console.error('AI summary flow returned undefined/null output. Input:', JSON.stringify(input).substring(0, 500));
-      throw new Error('O fluxo de resumo de IA retornou uma saída inesperada (undefined/null).');
-    }
-    return output;
+function parseJsonResponse(content: string) {
+  const cleaned = content
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1));
+    throw new Error('O GPT retornou conteúdo que não é JSON válido.');
   }
-);
+}
 
+async function summarizeConflictNewsFlow(input: SummarizeConflictNewsInput): Promise<SummarizeConflictNewsOutput> {
+  const completion = await openai.chat.completions.create({
+    model: process.env.OPENAI_MODEL || 'gpt-4o',
+    temperature: 0,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: JSON.stringify(input.newsItems) },
+    ],
+    response_format: { type: 'json_object' },
+  });
+
+  const message = completion.choices[0]?.message;
+  if (message?.refusal) throw new Error(`O GPT recusou o resumo: ${message.refusal}`);
+  if (!message?.content) throw new Error('O GPT não retornou um resumo estruturado.');
+  return SummarizeConflictNewsOutputSchema.parse(parseJsonResponse(message.content));
+}

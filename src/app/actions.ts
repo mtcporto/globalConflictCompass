@@ -2,31 +2,33 @@
 'use server';
 
 import { summarizeConflictNews, type SummarizeConflictNewsInput, type SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
-import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem, CuratedConflictData, CachedAiSummary } from '@/lib/types';
-import curatedConflictDataJson from '@/data/curated-conflict-data.json';
-import { addAiSummaryToFirestore, getLatestAiSummaryFromFirestore } from '@/lib/firestore-db'; // Alterado para Firestore
+import type { BbcNewsItemRss, ReliefWebReport, SummarizeNewsInputItem } from '@/lib/types';
+import { addAiSummaryToTurso, getLatestAiSummaryFromTurso } from '@/lib/firestore-db';
+import { createHash } from 'crypto';
+import { fetchRssFeed } from '@/lib/rss';
 
 export async function getAiSummaryAction(
   newsItemsToSummarize: SummarizeNewsInputItem[],
   forceRefresh: boolean = false
 ): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string; lastGenerated?: string; dataSource?: 'db' | 'ai' }> {
+  const inputHash = createHash('sha256').update(JSON.stringify(newsItemsToSummarize)).digest('hex');
   
   if (!forceRefresh) {
     try {
-      const cachedData = await getLatestAiSummaryFromFirestore();
+      const cachedData = await getLatestAiSummaryFromTurso(inputHash);
       if (cachedData && cachedData.lastGenerated) {
         const lastGeneratedDate = new Date(cachedData.lastGenerated); // lastGenerated é ISO string
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
         if (lastGeneratedDate > twentyFourHoursAgo) {
-          console.log("AI Summary: Found recent in Firestore, using it.");
+          console.log("AI Summary: resumo encontrado no Turso.");
           return { 
             summary: cachedData.summary, 
             lastGenerated: cachedData.lastGenerated,
             dataSource: 'db' 
           };
         }
-        console.log("AI Summary: Firestore cache is older than 24 hours.");
+        console.log("AI Summary: cache do Turso tem mais de 24 horas.");
       } else {
         console.log("AI Summary: Not found in Firestore or missing timestamp.");
       }
@@ -54,7 +56,7 @@ export async function getAiSummaryAction(
 
   try {
     const result = await summarizeConflictNews(input);
-    await addAiSummaryToFirestore(result); // Salva no Firestore
+    await addAiSummaryToTurso(result, inputHash);
     const now = new Date().toISOString();
     console.log("AI Summary: New summary generated and saved to Firestore.");
     return { 
@@ -78,38 +80,11 @@ export async function getAiSummaryAction(
 }
 
 
-export async function getCuratedConflictsAction(): Promise<{ data?: CuratedConflictData; error?: string }> {
-  try {
-    // For curated data, we directly import/read the JSON. No server-side caching file like .cache needed.
-    const data: CuratedConflictData = curatedConflictDataJson as CuratedConflictData; 
-    if (!data) {
-      // This case should ideally not happen if the JSON file is part of the deployment
-      return { error: 'Falha ao carregar dados de conflitos curados: arquivo não encontrado ou vazio.' };
-    }
-    return { data };
-
-  } catch (error) {
-    let detailedErrorMessage = 'Falha ao carregar dados de conflitos curados.';
-    if (error instanceof Error) {
-      detailedErrorMessage = `Falha ao carregar dados de conflitos curados: ${error.message}`;
-      console.error('Error loading curated conflict data. Message:', error.message, 'Stack:', error.stack);
-    } else {
-      console.error('Error loading curated conflict data (non-Error object):', error);
-    }
-    return { error: detailedErrorMessage };
-  }
-}
-
-
 // Helper function to fetch minimal data for AI summary from BBC
 export async function fetchBbcNewsForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> {
-  const BBC_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http://feeds.bbci.co.uk/news/world/rss.xml';
   const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'attack', 'rebel', 'insurgent'];
   try {
-    const response = await fetch(BBC_NEWS_API_URL);
-    if (!response.ok) return [];
-    const apiResponse = await response.json();
-    if (apiResponse.status !== 'ok' || !apiResponse.items) return [];
+    const apiResponse = await fetchRssFeed('bbc');
     
     return apiResponse.items.filter((item: BbcNewsItemRss) => {
         const titleLower = item.title.toLowerCase();
@@ -124,7 +99,7 @@ export async function fetchBbcNewsForAISummary(limit: number = 5): Promise<BbcNe
 
 // Helper function to fetch minimal data for AI summary from ReliefWeb
 export async function fetchReliefWebForAISummary(limit: number = 5): Promise<ReliefWebReport[]> {
-  const RELIEFWEB_API_URL = `https://api.reliefweb.int/v1/reports?appname=globalconflictcompass&query[value]=conflict&limit=${limit}&preset=latest&fields[include][]=title&fields[include][]=date.created&fields[include][]=url&fields[include][]=body-html&profile=list`;
+  const RELIEFWEB_API_URL = `https://api.reliefweb.int/v2/reports?appname=globalconflictcompass&query[value]=conflict&limit=${limit}&preset=latest&fields[include][]=title&fields[include][]=date.created&fields[include][]=url&fields[include][]=body-html&profile=list`;
   try {
     const response = await fetch(RELIEFWEB_API_URL);
     if (!response.ok) return [];
@@ -138,13 +113,9 @@ export async function fetchReliefWebForAISummary(limit: number = 5): Promise<Rel
 
 // Helper function to fetch minimal data for AI summary from Al Jazeera
 export async function fetchAlJazeeraForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> {
-  const ALJAZEERA_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.aljazeera.com%2Fxml%2Frss%2Fall.xml';
   const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'attack', 'rebel', 'insurgent', 'crisis', 'humanitarian'];
   try {
-    const response = await fetch(ALJAZEERA_NEWS_API_URL);
-    if (!response.ok) return [];
-    const apiResponse = await response.json();
-    if (apiResponse.status !== 'ok' || !apiResponse.items) return [];
+    const apiResponse = await fetchRssFeed('aljazeera');
     
     return apiResponse.items.filter((item: BbcNewsItemRss) => {
         const titleLower = item.title.toLowerCase();
@@ -159,13 +130,9 @@ export async function fetchAlJazeeraForAISummary(limit: number = 5): Promise<Bbc
 
 // Helper function to fetch minimal data for AI summary from Human Rights Watch
 export async function fetchHrwReportsForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> {
-  const HRW_REPORTS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.hrw.org%2Frss%2Fnews';
   const RELEVANT_KEYWORDS = ['war', 'conflict', 'crisis', 'humanitarian', 'rights', 'refugees', 'displacement', 'atrocities', 'civilians', 'accountability', 'ukraine', 'gaza', 'syria', 'yemen', 'sudan', 'myanmar', 'ethiopia'];
   try {
-    const response = await fetch(HRW_REPORTS_API_URL);
-    if (!response.ok) return [];
-    const apiResponse = await response.json();
-    if (apiResponse.status !== 'ok' || !apiResponse.items) return [];
+    const apiResponse = await fetchRssFeed('hrw');
     
     return apiResponse.items.filter((item: BbcNewsItemRss) => {
         const titleLower = item.title.toLowerCase();
@@ -181,13 +148,9 @@ export async function fetchHrwReportsForAISummary(limit: number = 5): Promise<Bb
 
 // Helper function to fetch minimal data for AI summary from The Guardian
 export async function fetchGuardianNewsForAISummary(limit: number = 5): Promise<BbcNewsItemRss[]> {
-  const GUARDIAN_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.theguardian.com%2Fworld%2Frss';
   const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'rebel', 'insurgent', 'crisis', 'humanitarian', 'refugees', 'displaced'];
   try {
-    const response = await fetch(GUARDIAN_NEWS_API_URL);
-    if (!response.ok) return [];
-    const apiResponse = await response.json();
-    if (apiResponse.status !== 'ok' || !apiResponse.items) return [];
+    const apiResponse = await fetchRssFeed('guardian');
     
     return apiResponse.items.filter((item: BbcNewsItemRss) => {
         const titleLower = item.title.toLowerCase();

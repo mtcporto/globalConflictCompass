@@ -13,7 +13,7 @@ interface ReliefWebPanelProps {
   triggerFetch?: number;
 }
 
-const RELIEFWEB_API_URL = 'https://api.reliefweb.int/v1/reports?appname=globalconflictcompass&query[value]=conflict&limit=10&preset=latest&fields[include][]=title&fields[include][]=date.created&fields[include][]=url&fields[include][]=body-html&profile=list';
+const RELIEFWEB_API_URL = 'https://api.reliefweb.int/v2/reports?appname=globalconflictcompass&query[value]=conflict&limit=10&preset=latest&fields[include][]=title&fields[include][]=date.created&fields[include][]=url&fields[include][]=body-html&profile=list';
 
 export function ReliefWebPanel({ onStatusChange, triggerFetch }: ReliefWebPanelProps) {
   const [data, setData] = useState<NewsItem[]>([]);

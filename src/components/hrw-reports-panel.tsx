@@ -14,7 +14,7 @@ interface HrwReportsPanelProps {
   triggerFetch?: number;
 }
 
-const HRW_REPORTS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.hrw.org%2Frss%2Fnews';
+const HRW_REPORTS_API_URL = '/api/rss?source=hrw';
 // Keywords to filter HRW reports relevant to conflicts and humanitarian crises
 const RELEVANT_KEYWORDS = ['war', 'conflict', 'crisis', 'humanitarian', 'rights', 'refugees', 'displacement', 'atrocities', 'civilians', 'accountability', 'ukraine', 'gaza', 'syria', 'yemen', 'sudan', 'myanmar', 'ethiopia'];
 
@@ -36,8 +36,8 @@ export function HrwReportsPanel({ onStatusChange, triggerFetch }: HrwReportsPane
 
       if (apiResponse.status !== 'ok' || !apiResponse.items || apiResponse.items.length === 0) {
         setData([]);
-        onStatusChange({ status: 'success', message: 'Nenhum relatório da HRW encontrado ou erro na API rss2json.' });
-        setError('Nenhum relatório da HRW encontrado ou erro na API rss2json.');
+        onStatusChange({ status: 'success', message: 'Nenhum relatório da HRW encontrado.' });
+        setError('Nenhum relatório da HRW encontrado.');
         return;
       }
       

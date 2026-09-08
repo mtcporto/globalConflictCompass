@@ -14,8 +14,6 @@ interface AcledPanelProps {
   triggerFetch?: number; // To allow parent to trigger refresh
 }
 
-const ACLED_API_KEY = 'Hr3EHefA5L0Pd5HTj8x-';
-const ACLED_USER_EMAIL = 'mtcporto@gmail.com';
 
 function getAcledDateRange(days: number = 30) {
   const endDate = new Date();
@@ -36,10 +34,8 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
     onStatusChange({ status: 'loading' }); // Initial status
 
     try {
-      const baseUrl = 'https://api.acleddata.com/acled/read';
+      const baseUrl = '/api/acled';
       const params = new URLSearchParams({
-        key: ACLED_API_KEY,
-        email: ACLED_USER_EMAIL,
         limit: '10',
         event_date: getAcledDateRange(),
         country: 'Ukraine',
@@ -49,11 +45,8 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
       });
       const requestUrl = `${baseUrl}?${params.toString()}`;
 
-      console.log('ACLED Request URL:', requestUrl);
-
       const response = await fetch(requestUrl);
       const responseText = await response.text();
-      console.log('ACLED API Raw Response Text:', responseText);
 
 
       if (!response.ok) {
@@ -83,7 +76,6 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
         throw new Error(`Erro ao processar resposta da API ACLED. Resposta não é JSON válido. Conteúdo: ${responseText.substring(0,150)}`);
       }
 
-      console.log('ACLED API Raw Parsed Response:', apiResponse);
 
       // Check for ACLED API-specific errors reported in the JSON body
       if (apiResponse.success === false ||
@@ -170,4 +162,3 @@ export function AcledPanel({ onStatusChange, triggerFetch }: AcledPanelProps) {
     </ScrollArea>
   );
 }
-

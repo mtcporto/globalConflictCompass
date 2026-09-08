@@ -13,6 +13,26 @@ export interface NewsItem {
   location?: string; // For ACLED
 }
 
+export type WikipediaConflictSeverity = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
+export interface WikipediaConflict {
+  id: string;
+  name: string;
+  severity: WikipediaConflictSeverity;
+  fatalitiesRaw: string;
+  locations: string[];
+  startDate?: string;
+  territory?: string;
+  detailsLink?: string;
+  imageUrl?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+export interface WikipediaConflictsData {
+  conflicts: WikipediaConflict[];
+  sourcePage: string;
+  lastUpdated: string;
+}
+
 export type ApiName = 
   | 'acled' 
   | 'reliefweb' 

@@ -14,7 +14,7 @@ interface AlJazeeraNewsPanelProps {
   triggerFetch?: number;
 }
 
-const ALJAZEERA_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.aljazeera.com%2Fxml%2Frss%2Fall.xml';
+const ALJAZEERA_NEWS_API_URL = '/api/rss?source=aljazeera';
 // Keywords can be adjusted or removed for broader coverage
 const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'rebel', 'insurgent', 'crisis', 'humanitarian'];
 
@@ -36,8 +36,8 @@ export function AlJazeeraNewsPanel({ onStatusChange, triggerFetch }: AlJazeeraNe
 
       if (apiResponse.status !== 'ok' || !apiResponse.items || apiResponse.items.length === 0) {
         setData([]);
-        onStatusChange({ status: 'success', message: 'Nenhuma notícia da Al Jazeera encontrada ou erro na API rss2json.' });
-        setError('Nenhuma notícia da Al Jazeera encontrada ou erro na API rss2json.');
+        onStatusChange({ status: 'success', message: 'Nenhuma notícia da Al Jazeera encontrada.' });
+        setError('Nenhuma notícia da Al Jazeera encontrada.');
         return;
       }
       

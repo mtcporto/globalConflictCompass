@@ -1,137 +1,67 @@
-
 'use server';
-/**
- * @fileOverview Extracts ongoing armed conflicts from the Wikipedia page
- * "List of ongoing armed conflicts".
- *
- * - extractWikipediaConflicts - A function that fetches and parses the Wikipedia page.
- * - ExtractWikipediaConflictsInput - The input type (currently none, URL is hardcoded).
- * - ExtractWikipediaConflictsOutput - The return type, a structured list of conflicts.
- */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import type { WikipediaConflictsData } from '@/lib/types'; // WikipediaConflictSeverity will be inferred by Zod
+import { z } from 'zod';
+import { openai, OPENAI_MODEL } from '@/ai/openai';
+import type { WikipediaConflictsData } from '@/lib/types';
 
-const WIKIPEDIA_CONFLICTS_PAGE_URL = "https://en.wikipedia.org/wiki/List_of_ongoing_armed_conflicts";
+const SOURCE_URL = 'https://en.wikipedia.org/wiki/List_of_ongoing_armed_conflicts';
 
-// Define Zod Schemas for Input and Output
-
-// No specific input needed for now as the URL is constant
-const ExtractWikipediaConflictsInputSchema = z.object({}).optional();
-export type ExtractWikipediaConflictsInput = z.infer<typeof ExtractWikipediaConflictsInputSchema>;
-
-
-const WikipediaConflictSchema = z.object({
-  id: z.string().describe("A unique identifier for the conflict (e.g., generated from name and start date)."),
-  name: z.string().describe("The common name of the conflict."),
-  severity: z.enum(['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN']).describe("Severity based on fatality categories: HIGH (10,000+), MEDIUM (1,000-9,999), LOW (100-999), UNKNOWN if not categorizable."),
-  fatalitiesRaw: z.string().describe("The raw fatality figure or range as stated on Wikipedia (e.g., '10,000+', '1,000–9,999 casualties')."),
-  locations: z.array(z.string()).describe("List of primary countries or major regions involved in the conflict. Prioritize state actors or well-defined geographical regions if combatants list is too granular or includes many non-state actors."),
-  startDate: z.string().optional().describe("The start date of the conflict, if available (e.g., '23 February 2022')."),
-  territory: z.string().optional().describe("Specific territory or sub-region where the conflict is primarily occurring (e.g., 'Nagorno-Karabakh', 'Tigray Region', 'Gaza Strip'), if distinct from general locations. This is for a more precise geographical focus within the broader conflict."),
-  detailsLink: z.string().optional().describe("A direct link to a more detailed Wikipedia page or section for this specific conflict, if identifiable from the list item."),
-  imageUrl: z.string().optional().describe("This field will be populated by manual override data. The AI should not attempt to extract an image URL."),
-  latitude: z.number().nullable().optional().describe("Approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
-  longitude: z.number().nullable().optional().describe("Approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as in 'territory'), use that region's approximate center. Return null if highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable."),
+const ConflictSchema = z.object({
+  id: z.string().optional(), name: z.string(),
+  severity: z.enum(['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN']).optional(),
+  fatalitiesRaw: z.string().optional(), locations: z.array(z.string()).optional(),
+  startDate: z.string().optional(), territory: z.string().optional(),
+  detailsLink: z.string().optional(), imageUrl: z.string().optional(),
+  latitude: z.number().nullable().optional(), longitude: z.number().nullable().optional(),
 });
 
-const ExtractWikipediaConflictsOutputSchema = z.object({
-  conflicts: z.array(WikipediaConflictSchema).describe("An array of extracted ongoing armed conflicts."),
-  sourcePage: z.string().describe("The URL of the Wikipedia page from which data was extracted."),
-  lastUpdated: z.string().describe("ISO date string indicating when the data was processed by this flow."),
-});
-export type ExtractWikipediaConflictsOutput = z.infer<typeof ExtractWikipediaConflictsOutputSchema>;
+const OutputSchema = z.object({ conflicts: z.array(ConflictSchema) });
 
+export type ExtractWikipediaConflictsOutput = z.infer<typeof OutputSchema>;
+export type ExtractWikipediaConflictsInput = Record<string, never>;
 
-// The main exported function that calls the Genkit flow
-export async function extractWikipediaConflicts(input?: ExtractWikipediaConflictsInput): Promise<WikipediaConflictsData> {
-  // The output of the flow already matches WikipediaConflictsData due to schema alignment
-  return extractWikipediaConflictsFlow(input || {});
-}
+export async function extractWikipediaConflicts(): Promise<WikipediaConflictsData> {
+  const response = await fetch(SOURCE_URL, { next: { revalidate: 21600 } });
+  if (!response.ok) throw new Error(`Wikipedia respondeu ${response.status}.`);
+  const html = await response.text();
+  const tables = [...html.matchAll(/<table[\s\S]*?<\/table>/gi)]
+    .map(match => match[0])
+    .filter(table => /10,000|1,000|100[–-]999/.test(table));
+  const text = tables.map((table, index) => `TABLE ${index + 1}. CATEGORY: ${index === 0 ? 'HIGH (10,000 OR MORE DEATHS)' : index === 1 ? 'MEDIUM (1,000 TO 9,999 DEATHS)' : 'LOW (100 TO 999 DEATHS)'}\n${table}`).join('\n')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .slice(0, 120000);
+  if (!text.trim()) throw new Error('A página da Wikipedia não retornou as tabelas de conflitos esperadas.');
 
-// Define the Genkit Prompt
-const extractConflictsPrompt = ai.definePrompt({
-  name: 'extractWikipediaConflictsPrompt',
-  input: { schema: ExtractWikipediaConflictsInputSchema },
-  output: { schema: ExtractWikipediaConflictsOutputSchema },
-  prompt: `
-    You are an expert data extraction AI. Your task is to process the content of the Wikipedia page "List of ongoing armed conflicts" (typically found at ${WIKIPEDIA_CONFLICTS_PAGE_URL}).
-    When you simulate accessing this Wikipedia page, consider its content to be current as of today's real-world date, using your most current information to represent the page's state.
-
-    Your primary goal is to extract information about ongoing armed conflicts. Focus EXCLUSIVELY and EXHAUSTIVELY on the conflicts listed within the following tables on the "List of ongoing armed conflicts" page, which categorize conflicts by fatality counts:
-    1.  "10,000 or more deaths in current or past year"
-    2.  "1,000–9,999 deaths in current or past year"
-    3.  "100–999 deaths in current or past year"
-    You MUST extract every single conflict entry present within these three tables. Do not omit any entry from these tables if it appears there.
-    Do NOT include conflicts listed as historical or ended, even if they appear elsewhere on the page. Only extract from these specific active conflict tables.
-
-    For each conflict listed in these specific tables, extract the following information:
-    1.  **id**: Generate a unique ID. You can use the conflict name and start date, slugified (e.g., 'ukraine-war-2022-02-23').
-    2.  **name**: The name of the conflict.
-    3.  **fatalitiesRaw**: The fatality count or range as listed (e.g., "10,000+", "1,500–2,000 killed").
-    4.  **severity**: Categorize the severity based on the table it's in:
-        *   "10,000 or more deaths...": Assign 'HIGH'.
-        *   "1,000–9,999 deaths...": Assign 'MEDIUM'.
-        *   "100–999 deaths...": Assign 'LOW'.
-        *   If a conflict cannot be clearly categorized, use 'UNKNOWN'.
-    5.  **locations**: A list of primary countries and/or major regions involved. Extract this from the 'Location' or 'Combatants' columns. Prioritize state actors or well-defined geographical regions if the combatants list is too granular or includes many non-state actors (e.g., for "Russo-Ukrainian War", locations should be ["Ukraine", "Russia"]).
-    6.  **startDate**: The start date of the conflict as listed.
-    7.  **territory**: If a specific sub-region or territory is highlighted as the main locus of conflict (e.g., "Nagorno-Karabakh", "Tigray Region", "Gaza Strip") within a broader conflict involving larger countries, note it in the 'territory' field. This field is for a more precise geographical focus *within* the general 'locations'. If not applicable or not distinct, it can be omitted.
-    8.  **detailsLink**: If the conflict name in the list is a hyperlink to a more detailed page about that specific conflict, provide that URL.
-    9.  **imageUrl**: DO NOT ATTEMPT TO EXTRACT AN IMAGE URL. This field will be handled separately by manual override data.
-    10. **latitude**: Provide an approximate latitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
-    11. **longitude**: Provide an approximate longitude for the primary or most representative geographic center of the conflict. If it's a country-wide conflict, use the country's approximate center. If focused on a specific region (as identified in the 'territory' field or implied by the conflict name), use that region's approximate center. If highly ambiguous, too broad (e.g., 'Global'), or not reasonably determinable, set to null.
-
-    Ensure that prominent, long-running conflicts that are widely known to be ongoing (e.g., Russo-Ukrainian War, Syrian Civil War, Israeli-Palestinian conflict) are included in your extraction if they appear in the specified fatality tables on the Wikipedia page you are simulating access to.
-
-    Adhere strictly to the output JSON schema. Ensure all fields are correctly populated according to their descriptions. Latitude and longitude must be numbers or null.
-    The 'conflicts' array should only contain entries from the specified fatality tables for ongoing conflicts.
-    Set 'sourcePage' to "${WIKIPEDIA_CONFLICTS_PAGE_URL}".
-    The 'lastUpdated' field in the output will be set by the system; do not attempt to generate it.
-
-    Simulate accessing and parsing the content of the Wikipedia page "List of ongoing armed conflicts".
-  `,
-  config: {
-    temperature: 0.0, // Set temperature to 0.0 for most deterministic output
-     safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+  const completion = await openai.chat.completions.create({
+    model: OPENAI_MODEL,
+    temperature: 0,
+    messages: [
+      { role: 'system', content: 'Retorne somente JSON válido, sem Markdown, no formato {"conflicts":[{"name":"...","severity":"HIGH","fatalitiesRaw":"...","locations":[]}]}. Extraia todos os conflitos armados ativos das tabelas e classifique cada conflito pela categoria TABLE em que ele aparece: HIGH, MEDIUM ou LOW. Preserve os números da fonte e não invente dados.' },
+      { role: 'user', content: `Fonte: ${SOURCE_URL}\nConteúdo extraído:\n${text}` },
     ],
-  }
-});
-
-// Define the Genkit Flow
-const extractWikipediaConflictsFlow = ai.defineFlow(
-  {
-    name: 'extractWikipediaConflictsFlow',
-    inputSchema: ExtractWikipediaConflictsInputSchema,
-    outputSchema: ExtractWikipediaConflictsOutputSchema,
-  },
-  async (input) => {
-    const { output } = await extractConflictsPrompt(input);
-    const currentTime = new Date().toISOString();
-
-    if (!output) {
-      console.error('Wikipedia conflict extraction flow returned undefined/null output.');
-      // Return a structured error or a default empty state that matches the schema
-      return {
-        conflicts: [],
-        sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL,
-        lastUpdated: currentTime,
-      };
-    }
-    
-    // Ensure the output conforms, especially if AI might omit 'conflicts'
-    return {
-        ...output,
-        conflicts: output.conflicts || [], // Ensure conflicts is always an array
-        sourcePage: WIKIPEDIA_CONFLICTS_PAGE_URL, // Ensure sourcePage is always set
-        lastUpdated: currentTime, // Override lastUpdated with the current processing time
-    };
-  }
-);
-
-    
+    response_format: { type: 'json_object' },
+  });
+  const content = completion.choices[0]?.message?.content;
+  if (!content) throw new Error('O GPT não retornou conflitos estruturados.');
+  const cleaned = content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const jsonStart = cleaned.indexOf('{');
+  const jsonEnd = cleaned.lastIndexOf('}');
+  if (jsonStart < 0 || jsonEnd <= jsonStart) throw new Error('O GPT não retornou JSON de conflitos válido.');
+  const raw = OutputSchema.parse(JSON.parse(cleaned.slice(jsonStart, jsonEnd + 1)));
+  const parsed = {
+    conflicts: raw.conflicts.map((conflict, index) => ({
+      ...conflict,
+      id: conflict.id || `${conflict.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${index}`,
+      severity: conflict.severity || 'UNKNOWN',
+      fatalitiesRaw: conflict.fatalitiesRaw || 'Não informado pela fonte',
+      locations: conflict.locations || [],
+    })),
+  };
+  if (parsed.conflicts.length === 0) throw new Error('A IA não conseguiu extrair conflitos das tabelas atuais da Wikipedia.');
+  return { ...parsed, sourcePage: SOURCE_URL, lastUpdated: new Date().toISOString() } as WikipediaConflictsData;
+}

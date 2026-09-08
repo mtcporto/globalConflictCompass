@@ -6,7 +6,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { 
   getAiSummaryAction, 
   fetchBbcNewsForAISummary, 
-  fetchReliefWebForAISummary,
   fetchAlJazeeraForAISummary,
   fetchHrwReportsForAISummary,
   fetchGuardianNewsForAISummary
@@ -45,14 +44,13 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       // The decision to fetch fresh news or use DB cache is now inside getAiSummaryAction
       const newsFetchPromises = [
         fetchBbcNewsForAISummary(5), 
-        fetchReliefWebForAISummary(5),
         fetchAlJazeeraForAISummary(5),
         fetchHrwReportsForAISummary(5),
         fetchGuardianNewsForAISummary(5)
       ];
 
       const results = await Promise.all(newsFetchPromises);
-      const [bbcData, reliefWebData, alJazeeraData, hrwData, guardianData] = results;
+      const [bbcData, alJazeeraData, hrwData, guardianData] = results;
 
       const newsItemsToSummarize: SummarizeNewsInputItem[] = [];
       const processItems = (items: Array<BbcNewsItemRss | ReliefWebReport>, sourceName: string) => {
@@ -75,7 +73,6 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       };
 
       processItems(bbcData, 'BBC');
-      processItems(reliefWebData, 'ReliefWeb');
       processItems(alJazeeraData, 'AlJazeera');
       processItems(hrwData, 'HRW');
       processItems(guardianData, 'The Guardian');
@@ -136,7 +133,7 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
       <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-start gap-2">
         <Info className="w-4 h-4 mt-0.5 shrink-0" />
         <span>
-          Este resumo é gerado por IA com base nas notícias mais recentes de fontes como BBC, ReliefWeb, Al Jazeera, Human Rights Watch e The Guardian (até 5 de cada). 
+          Este resumo é gerado por IA com base nas notícias mais recentes da BBC, Al Jazeera, Human Rights Watch e The Guardian (até 5 de cada).
           Pode não refletir todos os conflitos ativos listados em outras seções.
         </span>
       </div>

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { CuratedConflictEntry, ConflictSeverityCategory } from '@/lib/types';
 
@@ -25,10 +25,11 @@ interface MapDisplayProps {
 
 // Dark theme color map for Leaflet elements
 const leafletSeverityColorMap: Record<ConflictSeverityCategory, string> = {
-  "Alta Gravidade": '#EF4444', // Red-500 (Vibrant Red)
-  "Média Gravidade": '#F97316', // Orange-500 (Vibrant Orange)
-  "Baixa Gravidade": '#EAB308', // Yellow-500 (Vibrant Yellow)
+  "Alta Gravidade": '#8B0000',
+  "Média Gravidade": '#F21D1D',
+  "Baixa Gravidade": '#F39C12',
 };
+const unknownSeverityColor = '#F2C94C';
 
 // Style for countries not directly involved in highlighted conflicts
 const defaultCountryStyle = {
@@ -109,15 +110,16 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
     );
 
     if (involvedConflicts.length > 0) {
-      let highestSeverityCategory: ConflictSeverityCategory = "Baixa Gravidade"; // Default to lowest if categories don't match
+      let highestSeverityCategory: ConflictSeverityCategory | null = null;
       if (involvedConflicts.some(c => c.severityCategory === 'Alta Gravidade')) highestSeverityCategory = 'Alta Gravidade';
       else if (involvedConflicts.some(c => c.severityCategory === 'Média Gravidade')) highestSeverityCategory = 'Média Gravidade';
+      else if (involvedConflicts.some(c => c.severityCategory === 'Baixa Gravidade')) highestSeverityCategory = 'Baixa Gravidade';
       
       return {
-        fillColor: leafletSeverityColorMap[highestSeverityCategory] || defaultCountryStyle.fillColor,
+        fillColor: highestSeverityCategory ? leafletSeverityColorMap[highestSeverityCategory] : unknownSeverityColor,
         weight: 1,
         opacity: 1,
-        color: leafletSeverityColorMap[highestSeverityCategory] ? '#FFF' : (defaultCountryStyle.color), // White border for highlighted countries for better contrast
+        color: '#FFF',
         fillOpacity: 0.6 // Slightly more opaque for conflicted countries
       };
     }
@@ -189,11 +191,11 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
         )}
 
         {validConflicts.map((conflict) => {
-          const severityCat = conflict.severityCategory || "Baixa Gravidade";
-          const color = leafletSeverityColorMap[severityCat] || '#A0AEC0'; // Fallback color
-          let radius = 6; // Default radius
-          if (severityCat === "Alta Gravidade") radius = 10;
-          else if (severityCat === "Média Gravidade") radius = 8;
+          const severityCat = conflict.severityCategory as ConflictSeverityCategory | undefined;
+          const color = severityCat ? leafletSeverityColorMap[severityCat] : unknownSeverityColor;
+          let radius = 7;
+          if (severityCat === "Alta Gravidade") radius = 12;
+          else if (severityCat === "Média Gravidade") radius = 9;
 
           return (
             <CircleMarker
@@ -203,20 +205,21 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
               pathOptions={{
                 color: color, // Border color of the circle
                 fillColor: color, // Fill color of the circle
-                fillOpacity: 0.7, // Make circles a bit more prominent
-                weight: 1,
+                fillOpacity: 0.9,
+                weight: 2,
               }}
             >
+              <Tooltip sticky>{conflict.nome}</Tooltip>
               <Popup>
                 <div className="text-sm max-w-xs">
                   <h4 className="font-semibold text-base mb-1 text-slate-800">{conflict.nome}</h4>
                   <p className="text-slate-700"><span className="font-medium">Gravidade:</span> {severityCat}</p>
-                  <p className="text-slate-700"><span className="font-medium">Fatalidades:</span> ${conflict.fatalidades_texto}</p>
-                  {conflict.territorio && <p className="text-slate-700"><span className="font-medium">Território Específico:</span> ${conflict.territorio}</p>}
+                  <p className="text-slate-700"><span className="font-medium">Fatalidades:</span> {conflict.fatalidades_texto}</p>
+                  {conflict.territorio && <p className="text-slate-700"><span className="font-medium">Território Específico:</span> {conflict.territorio}</p>}
                   {conflict.envolvidos && conflict.envolvidos.length > 0 && (
                     <p className="text-slate-700"><span className="font-medium">Envolvidos (Países/Grupos):</span> {conflict.envolvidos.join(', ')}</p>
                   )}
-                  {conflict.inicio && <p className="text-slate-700"><span className="font-medium">Início:</span> ${conflict.inicio}</p>}
+                  {conflict.inicio && <p className="text-slate-700"><span className="font-medium">Início:</span> {conflict.inicio}</p>}
                   {conflict.wikipedia_link && (
                     <a
                       href={conflict.wikipedia_link}

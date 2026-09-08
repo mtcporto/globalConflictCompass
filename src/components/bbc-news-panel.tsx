@@ -13,8 +13,8 @@ interface BbcNewsPanelProps {
   triggerFetch?: number;
 }
 
-// Using rss2json as a proxy for BBC RSS feed as in user's example
-const BBC_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=http://feeds.bbci.co.uk/news/world/rss.xml';
+// The server route fetches and parses the RSS feed.
+const BBC_NEWS_API_URL = '/api/rss?source=bbc';
 const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar'];
 
 export function BbcNewsPanel({ onStatusChange, triggerFetch }: BbcNewsPanelProps) {
@@ -35,8 +35,8 @@ export function BbcNewsPanel({ onStatusChange, triggerFetch }: BbcNewsPanelProps
 
       if (apiResponse.status !== 'ok' || !apiResponse.items || apiResponse.items.length === 0) {
         setData([]);
-        onStatusChange({ status: 'success', message: 'Nenhuma notícia da BBC encontrada ou erro na API rss2json.' });
-        setError('Nenhuma notícia da BBC encontrada ou erro na API rss2json.');
+        onStatusChange({ status: 'success', message: 'Nenhuma notícia da BBC encontrada.' });
+        setError('Nenhuma notícia da BBC encontrada.');
         return;
       }
       
@@ -58,7 +58,7 @@ export function BbcNewsPanel({ onStatusChange, triggerFetch }: BbcNewsPanelProps
         id: item.guid,
         date: item.pubDate,
         title: item.title,
-        // rss2json description is HTML, strip tags for plain text snippet
+        // RSS descriptions are HTML, strip tags for a plain text snippet.
         description: item.description.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...',
         link: item.link,
         source: 'BBC News',

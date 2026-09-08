@@ -6,19 +6,17 @@ import type React from 'react';
 import { useState, useCallback, useMemo }from 'react';
 import type { AllApiStatuses, ApiName, SourceStatus } from '@/lib/types';
 import { DataCard } from './data-card';
-import { AcledPanel } from './acled-panel';
-import { ReliefWebPanel } from './reliefweb-panel';
 import { BbcNewsPanel } from './bbc-news-panel';
 import { AlJazeeraNewsPanel } from './aljazeera-news-panel';
 import { HrwReportsPanel } from './hrw-reports-panel';
 import { GuardianNewsPanel } from './guardian-news-panel'; // Added
 import { AiSummaryPanel } from './ai-summary-panel';
 import { WikipediaMacroPanel } from './wikipedia-macro-panel';
-import { BarChartBig, Globe, HelpingHand, Newspaper, Sparkles, AlertTriangle, CheckCircle2, Loader2, BookOpen, Landmark } from 'lucide-react';
+import { Newspaper, Globe, Sparkles, AlertTriangle, CheckCircle2, Loader2, BookOpen, Landmark } from 'lucide-react';
 
 const initialApiStatuses: AllApiStatuses = {
-  acled: { status: 'loading' },
-  reliefweb: { status: 'loading' },
+  acled: { status: 'idle', message: 'Temporariamente oculto.' },
+  reliefweb: { status: 'idle', message: 'Temporariamente oculto.' },
   bbc: { status: 'loading' },
   aljazeera: { status: 'loading' },
   hrw: { status: 'loading' },
@@ -34,12 +32,6 @@ export default function ConflictDashboard() {
     aiSummary: 0, wikipediaConflicts: 0,
   });
 
-  const handleAcledStatusChange = useCallback((status: SourceStatus) => {
-    setApiStatuses(prev => ({ ...prev, acled: status }));
-  }, []);
-  const handleReliefWebStatusChange = useCallback((status: SourceStatus) => {
-    setApiStatuses(prev => ({ ...prev, reliefweb: status }));
-  }, []);
   const handleBbcStatusChange = useCallback((status: SourceStatus) => {
     setApiStatuses(prev => ({ ...prev, bbc: status }));
   }, []);
@@ -108,30 +100,6 @@ export default function ConflictDashboard() {
       <h2 className="text-2xl font-semibold text-foreground mb-4 mt-10 text-center">Fontes de Notícias e Dados Adicionais</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <DataCard 
-          title="ACLED" 
-          icon={BarChartBig} 
-          onRefresh={() => handleRefresh('acled')}
-          isLoading={apiStatuses.acled.status === 'loading'}
-        >
-          <AcledPanel 
-            onStatusChange={handleAcledStatusChange}
-            triggerFetch={fetchTriggers.acled}
-          />
-        </DataCard>
-
-        <DataCard 
-          title="ReliefWeb" 
-          icon={HelpingHand}
-          onRefresh={() => handleRefresh('reliefweb')}
-          isLoading={apiStatuses.reliefweb.status === 'loading'}
-        >
-          <ReliefWebPanel 
-            onStatusChange={handleReliefWebStatusChange}
-            triggerFetch={fetchTriggers.reliefweb}
-          />
-        </DataCard>
-
-        <DataCard 
           title="BBC News" 
           icon={Newspaper}
           onRefresh={() => handleRefresh('bbc')}
@@ -187,7 +155,7 @@ export default function ConflictDashboard() {
         </div>
 
         <DataCard 
-          title="Resumo por IA (BBC, Al Jazeera, HRW, ReliefWeb, The Guardian)" 
+          title="Resumo por IA (BBC, Al Jazeera, HRW, The Guardian)"
           icon={Sparkles}
           className="md:col-span-2 lg:col-span-3" 
           disableMaxHeight={true}

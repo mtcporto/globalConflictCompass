@@ -14,8 +14,8 @@ interface GuardianNewsPanelProps {
   triggerFetch?: number;
 }
 
-// The Guardian World News RSS feed via rss2json
-const GUARDIAN_NEWS_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.theguardian.com%2Fworld%2Frss';
+// The server route fetches and parses The Guardian RSS feed.
+const GUARDIAN_NEWS_API_URL = '/api/rss?source=guardian';
 const CONFLICT_KEYWORDS = ['war', 'conflict', 'ukraine', 'gaza', 'syria', 'military', 'troops', 'airstrike', 'ceasefire', 'palestine', 'israel', 'yemen', 'sudan', 'myanmar', 'rebel', 'insurgent', 'crisis', 'humanitarian', 'refugees', 'displaced'];
 
 export function GuardianNewsPanel({ onStatusChange, triggerFetch }: GuardianNewsPanelProps) {
@@ -36,14 +36,14 @@ export function GuardianNewsPanel({ onStatusChange, triggerFetch }: GuardianNews
 
       if (apiResponse.status !== 'ok' || !apiResponse.items || apiResponse.items.length === 0) {
         setData([]);
-        onStatusChange({ status: 'success', message: 'Nenhuma notícia do The Guardian encontrada ou erro na API rss2json.' });
-        setError('Nenhuma notícia do The Guardian encontrada ou erro na API rss2json.');
+        onStatusChange({ status: 'success', message: 'Nenhuma notícia do The Guardian encontrada.' });
+        setError('Nenhuma notícia do The Guardian encontrada.');
         return;
       }
       
       const conflictNews = apiResponse.items.filter(item => {
         const titleLower = item.title.toLowerCase();
-        // Guardian descriptions can be short, sometimes full content is in 'content' field for rss2json
+        // Guardian descriptions can be short; content may contain the longer snippet.
         const descriptionLower = (item.description || item.content || "").toLowerCase();
         return CONFLICT_KEYWORDS.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword));
       }).slice(0, 10);

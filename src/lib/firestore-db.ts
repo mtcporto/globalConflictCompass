@@ -1,68 +1,37 @@
 
-import { db } from './firebase';
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore';
 import type { SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
 import type { CachedAiSummary } from '@/lib/types';
+import { ensureTursoSchema, turso } from './turso';
 
-const SUMMARIES_COLLECTION = 'aiSummaries';
-
-export async function addAiSummaryToFirestore(summary: SummarizeConflictNewsOutput): Promise<void> {
+export async function addAiSummaryToTurso(summary: SummarizeConflictNewsOutput, inputHash: string): Promise<void> {
   try {
-    await addDoc(collection(db, SUMMARIES_COLLECTION), {
-      summary_data: JSON.stringify(summary),
-      generated_at: serverTimestamp(), // Usa o timestamp do servidor do Firestore
+    if (!turso) return;
+    await ensureTursoSchema();
+    await turso.execute({
+      sql: 'INSERT INTO ai_summaries (summary_data, input_hash, generated_at) VALUES (?, ?, ?)',
+      args: [JSON.stringify(summary), inputHash, new Date().toISOString()],
     });
-    console.log('AI Summary added to Firestore.');
   } catch (error) {
-    console.error('Failed to add AI summary to Firestore:', error);
+    console.error('Failed to add AI summary to Turso:', error);
     throw error; // Re-throw para ser tratado pelo chamador
   }
 }
 
-export async function getLatestAiSummaryFromFirestore(): Promise<CachedAiSummary | null> {
+export async function getLatestAiSummaryFromTurso(inputHash?: string): Promise<CachedAiSummary | null> {
   try {
-    const q = query(
-      collection(db, SUMMARIES_COLLECTION),
-      orderBy('generated_at', 'desc'),
-      limit(1)
-    );
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      const doc = querySnapshot.docs[0];
-      const data = doc.data();
-      const summary = JSON.parse(data.summary_data) as SummarizeConflictNewsOutput;
-      const lastGeneratedTimestamp = data.generated_at as Timestamp; // Firestore Timestamp
-
-      if (!lastGeneratedTimestamp) {
-        // Caso de fallback se o timestamp não estiver presente por algum motivo (improvável com serverTimestamp)
-        console.warn('Firestore document for AI summary is missing generated_at timestamp.');
-        return {
-          summary,
-          lastGenerated: new Date(0).toISOString(), // Data muito antiga
-        };
-      }
-      
-      const lastGenerated = lastGeneratedTimestamp.toDate().toISOString();
-      console.log('Latest AI Summary fetched from Firestore, generated at:', lastGenerated);
-      return {
-        summary,
-        lastGenerated,
-      };
-    }
-    console.log('No AI Summary found in Firestore.');
-    return null;
+    if (!turso) return null;
+    await ensureTursoSchema();
+    const result = await turso.execute({
+      sql: inputHash
+        ? 'SELECT summary_data, generated_at FROM ai_summaries WHERE input_hash = ? ORDER BY generated_at DESC LIMIT 1'
+        : 'SELECT summary_data, generated_at FROM ai_summaries ORDER BY generated_at DESC LIMIT 1',
+      args: inputHash ? [inputHash] : [],
+    });
+    const row = result.rows[0] as { summary_data?: string; generated_at?: string } | undefined;
+    if (!row?.summary_data || !row.generated_at) return null;
+    return { summary: JSON.parse(row.summary_data) as SummarizeConflictNewsOutput, lastGenerated: row.generated_at };
   } catch (error) {
-    console.error('Failed to get latest AI summary from Firestore:', error);
+    console.error('Failed to get latest AI summary from Turso:', error);
     // Não relance o erro aqui para permitir que a lógica de fallback gere um novo resumo
     return null;
   }
