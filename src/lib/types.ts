@@ -14,6 +14,11 @@ export interface NewsItem {
 }
 
 export type WikipediaConflictSeverity = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
+export interface WikipediaConflictLink {
+  title: string;
+  url: string;
+  depth: number;
+}
 export interface WikipediaConflict {
   id: string;
   name: string;
@@ -23,6 +28,7 @@ export interface WikipediaConflict {
   startDate?: string;
   territory?: string;
   detailsLink?: string;
+  wikipediaLinks?: WikipediaConflictLink[];
   imageUrl?: string;
   latitude?: number | null;
   longitude?: number | null;

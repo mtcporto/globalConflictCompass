@@ -5,6 +5,7 @@ import { summarizeConflictNews, type SummarizeConflictNewsInput, type SummarizeC
 import { addAiSummaryToTurso, getLatestAiSummaryFromTurso } from '@/lib/firestore-db';
 import { fetchRssFeed } from '@/lib/rss';
 import type { BbcNewsItemRss, SummarizeNewsInputItem } from '@/lib/types';
+import { getConflictSnapshot } from '@/lib/conflict-cache';
 
 const SUMMARY_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_ITEMS_PER_SOURCE = 5;
@@ -58,6 +59,16 @@ async function fetchNewsForSummary(): Promise<SummarizeNewsInputItem[]> {
   return results.flat();
 }
 
+function keepMonitoredConflictNews(items: SummarizeNewsInputItem[], conflicts: SummarizeConflictNewsInput['conflicts']) {
+  const generic = new Set(['africa', 'asia', 'europe', 'north america', 'south america', 'global', 'world']);
+  const terms = conflicts.flatMap(conflict => [conflict.name, ...conflict.locations]).map(value => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()).filter(value => value.length > 3 && !generic.has(value));
+  const armedIndicators = ['war', 'conflict', 'attack', 'airstrike', 'military', 'troops', 'ceasefire', 'insurgent', 'rebel', 'offensive', 'clash', 'shelling', 'fighters', 'armed'];
+  return items.filter(item => {
+    const text = `${item.title} ${item.description}`.toLowerCase();
+    return terms.some(term => text.includes(term)) && armedIndicators.some(term => text.includes(term));
+  });
+}
+
 function fingerprint(items: SummarizeNewsInputItem[]) {
   const stableItems = [...items].sort((a, b) => `${a.source}:${a.link || a.title}`.localeCompare(`${b.source}:${b.link || b.title}`));
   return createHash('sha256').update(JSON.stringify(stableItems)).digest('hex');
@@ -73,13 +84,17 @@ export async function getAiSummaryAction(
     }
   }
 
-  const newsItems = await fetchNewsForSummary();
+  const snapshot = await getConflictSnapshot();
+  if (!snapshot) return { error: 'O panorama de conflitos ainda não está disponível para contextualizar o resumo.' };
+  const conflicts = snapshot?.data.conflicts.map(conflict => ({ id: conflict.id, name: conflict.name, locations: conflict.locations })) || [];
+  const fetchedNews = await fetchNewsForSummary();
+  const newsItems = keepMonitoredConflictNews(fetchedNews, conflicts);
   if (newsItems.length === 0) {
     return { error: 'Nenhuma notícia relevante foi encontrada nas fontes configuradas.' };
   }
 
   try {
-    const input: SummarizeConflictNewsInput = { newsItems };
+    const input: SummarizeConflictNewsInput = { conflicts, newsItems };
     const result = await summarizeConflictNews(input);
     const generatedAt = new Date().toISOString();
     await addAiSummaryToTurso(result, fingerprint(newsItems));

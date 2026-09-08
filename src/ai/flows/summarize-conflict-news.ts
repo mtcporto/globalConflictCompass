@@ -11,6 +11,11 @@ import OpenAI from 'openai';
 import {z} from 'zod';
 
 const SummarizeConflictNewsInputSchema = z.object({
+  conflicts: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    locations: z.array(z.string()),
+  })).describe('The currently monitored armed-conflict groups.'),
   newsItems: z.array(
     z.object({
       title: z.string().describe('The title of the news item.'),
@@ -43,6 +48,8 @@ export async function summarizeConflictNews(input: SummarizeConflictNewsInput): 
 }
 
 const systemPrompt = `Você é um analista de conflitos globais escrevendo para uma pessoa que não acompanhou as notícias. Responda em português brasileiro, com clareza e contexto, usando somente os fatos presentes nas notícias fornecidas. Não invente números, causas, atores ou acontecimentos. Diferencie fato reportado de incerteza. Ao conectar notícias, explique a conexão sem afirmar mais do que as fontes permitem.
+
+O campo conflicts contém os conflitos armados monitorados pelo aplicativo. Fale somente sobre notícias que possam ser relacionadas a um desses conflitos. Ignore notícias sobre corrupção, desastres naturais, diplomacia ou política geral quando não forem um desenvolvimento do conflito armado monitorado. Nunca transforme a presença de um país numa notícia em prova de que a notícia trata do conflito.
 
 Com base apenas nas notícias fornecidas:
 
