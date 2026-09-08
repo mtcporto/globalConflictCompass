@@ -53,24 +53,28 @@ export default function ConflictDashboard() {
   };
   
   const overallStatus = useMemo(() => {
-    const statuses = [apiStatuses.bbc, apiStatuses.aljazeera, apiStatuses.hrw, apiStatuses.guardian, apiStatuses.aiSummary];
+    const statuses = [
+      ['BBC News', apiStatuses.bbc],
+      ['Al Jazeera', apiStatuses.aljazeera],
+      ['Human Rights Watch', apiStatuses.hrw],
+      ['The Guardian', apiStatuses.guardian],
+      ['Resumo por IA', apiStatuses.aiSummary],
+    ] as const;
     const total = statuses.length;
-    const successCount = statuses.filter(s => s.status === 'success').length;
-    const errorCount = statuses.filter(s => s.status === 'error').length;
-    const loadingCount = statuses.filter(s => s.status === 'loading').length;
-    const idleCount = statuses.filter(s => s.status === 'idle').length;
+    const successCount = statuses.filter(([, status]) => status.status === 'success').length;
+    const errors = statuses.filter(([, status]) => status.status === 'error');
+    const errorCount = errors.length;
+    const loadingCount = statuses.filter(([, status]) => status.status === 'loading').length;
+    const idleCount = statuses.filter(([, status]) => status.status === 'idle').length;
 
     if (loadingCount > 0) {
       return { text: `Carregando ${loadingCount} fonte(s) de dados...`, icon: <Loader2 className="h-4 w-4 animate-spin" />, color: "text-blue-600 bg-blue-100" };
     }
     if (errorCount > 0) {
-      return { text: `${errorCount} fonte(s) com erro. ${successCount + idleCount} funcionando/ociosa(s).`, icon: <AlertTriangle className="h-4 w-4" />, color: "text-red-600 bg-red-100" };
+      return { text: `${errorCount} serviço(s) com erro: ${errors.map(([name]) => name).join(', ')}. ${successCount + idleCount} funcionando/ociosa(s).`, icon: <AlertTriangle className="h-4 w-4" />, color: "text-red-600 bg-red-100" };
     }
     if (successCount + idleCount === total && total > 0) {
          return { text: `Todas as fontes de dados operacionais.`, icon: <CheckCircle2 className="h-4 w-4" />, color: "text-green-600 bg-green-100"};
-    }
-    if (total === 0) {
-        return { text: "Nenhuma fonte de dados configurada.", icon: <AlertTriangle className="h-4 w-4" />, color: "text-yellow-600 bg-yellow-100"};
     }
     return { text: "Verificando status das fontes...", icon: <Loader2 className="h-4 w-4 animate-spin" />, color: "text-gray-600 bg-gray-100"};
 

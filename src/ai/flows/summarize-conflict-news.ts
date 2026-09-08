@@ -37,7 +37,10 @@ const SummarizeConflictNewsOutputSchema = z.object({
   impactoHumanitario: z.string().optional().describe('Breve descrição do impacto humanitário mencionado (e.g., deslocados, vítimas, necessidade de ajuda), se houver. Se não houver, pode omitir o campo ou retornar "Não mencionado explicitamente nas notícias fornecidas".'),
   causasFatoresMencionados: z.string().optional().describe('Breve descrição das causas ou fatores que contribuem para os conflitos, conforme explicitamente mencionado nas notícias. Não especule. Se não houver, pode omitir o campo ou retornar "Não mencionado explicitamente nas notícias fornecidas".'),
   oQueAcompanhar: z.array(z.string()).optional().describe('Developments readers should watch next, only when directly supported by the reports.'),
-  fontes: z.array(z.object({ source: z.string(), title: z.string(), link: z.string().optional() })).optional().describe('The sources used, preserving only links provided in the input.'),
+  fontes: z.array(z.union([
+    z.object({ source: z.string(), title: z.string(), link: z.string().optional() }),
+    z.string().transform(title => ({ source: 'Fonte', title, link: undefined as string | undefined })),
+  ])).optional().describe('The sources used, preserving only links provided in the input.'),
   resumoGeral: z.string().describe('Um resumo geral conciso dos eventos e da situação, em português brasileiro, conectando os pontos principais.'),
 });
 
@@ -101,12 +104,41 @@ function parseJsonResponse(content: string) {
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim();
+  function escapeControlCharactersInsideStrings(value: string) {
+    let output = '';
+    let insideString = false;
+    let escaped = false;
+    for (const character of value) {
+      if (insideString) {
+        if (escaped) {
+          output += character;
+          escaped = false;
+        } else if (character === '\\') {
+          output += character;
+          escaped = true;
+        } else if (character === '"') {
+          output += character;
+          insideString = false;
+        } else if (character === '\n') output += '\\n';
+        else if (character === '\r') output += '\\r';
+        else if (character === '\t') output += '\\t';
+        else if (character.charCodeAt(0) < 0x20) output += ' ';
+        else output += character;
+      } else {
+        output += character;
+        if (character === '"') insideString = true;
+      }
+    }
+    return output;
+  }
+
+  const parse = (value: string) => JSON.parse(escapeControlCharactersInsideStrings(value));
   try {
-    return JSON.parse(cleaned);
+    return parse(cleaned);
   } catch {
     const start = cleaned.indexOf('{');
     const end = cleaned.lastIndexOf('}');
-    if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1));
+    if (start >= 0 && end > start) return parse(cleaned.slice(start, end + 1));
     throw new Error('O GPT retornou conteúdo que não é JSON válido.');
   }
 }
