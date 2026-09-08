@@ -45,7 +45,7 @@
     "firebase": "^11.8.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.475.0",
-    "next": "^15.5.25",
+    "next": "16.3.4",
     "openai": "^4.104.0",
     "patch-package": "^8.0.0",
     "react": "^18.3.1",
@@ -66,8 +66,5 @@
     "postcss": "8.5.28",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
-  },
-  "overrides": {
-    "postcss": "8.5.28"
   }
 }
