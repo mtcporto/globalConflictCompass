@@ -3,13 +3,13 @@ import type { SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-
 import type { CachedAiSummary } from '@/lib/types';
 import { ensureTursoSchema, turso } from './turso';
 
-export async function addAiSummaryToTurso(summary: SummarizeConflictNewsOutput, inputHash: string): Promise<void> {
+export async function addAiSummaryToTurso(summary: SummarizeConflictNewsOutput, inputHash: string, version = 2): Promise<void> {
   try {
     if (!turso) return;
     await ensureTursoSchema();
     await turso.execute({
-      sql: 'INSERT INTO ai_summaries (summary_data, input_hash, generated_at) VALUES (?, ?, ?)',
-      args: [JSON.stringify(summary), inputHash, new Date().toISOString()],
+      sql: 'INSERT INTO ai_summaries (summary_data, input_hash, generated_at, summary_version) VALUES (?, ?, ?, ?)',
+      args: [JSON.stringify(summary), inputHash, new Date().toISOString(), version],
     });
   } catch (error) {
     console.error('Failed to add AI summary to Turso:', error);
@@ -17,15 +17,15 @@ export async function addAiSummaryToTurso(summary: SummarizeConflictNewsOutput, 
   }
 }
 
-export async function getLatestAiSummaryFromTurso(inputHash?: string): Promise<CachedAiSummary | null> {
+export async function getLatestAiSummaryFromTurso(inputHash?: string, minimumVersion = 1): Promise<CachedAiSummary | null> {
   try {
     if (!turso) return null;
     await ensureTursoSchema();
     const result = await turso.execute({
       sql: inputHash
-        ? 'SELECT summary_data, generated_at FROM ai_summaries WHERE input_hash = ? ORDER BY generated_at DESC LIMIT 1'
-        : 'SELECT summary_data, generated_at FROM ai_summaries ORDER BY generated_at DESC LIMIT 1',
-      args: inputHash ? [inputHash] : [],
+        ? 'SELECT summary_data, generated_at FROM ai_summaries WHERE input_hash = ? AND summary_version >= ? ORDER BY generated_at DESC LIMIT 1'
+        : 'SELECT summary_data, generated_at FROM ai_summaries WHERE summary_version >= ? ORDER BY generated_at DESC LIMIT 1',
+      args: inputHash ? [inputHash, minimumVersion] : [minimumVersion],
     });
     const row = result.rows[0] as { summary_data?: string; generated_at?: string } | undefined;
     if (!row?.summary_data || !row.generated_at) return null;

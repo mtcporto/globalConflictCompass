@@ -20,6 +20,11 @@ export async function ensureTursoSchema() {
   } catch {
     // Column already exists on databases initialized with the current schema.
   }
+  try {
+    await turso.execute("ALTER TABLE ai_summaries ADD COLUMN summary_version INTEGER NOT NULL DEFAULT 1");
+  } catch {
+    // Column already exists on databases initialized with the current schema.
+  }
   await turso.execute(`CREATE TABLE IF NOT EXISTS conflict_snapshots (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     snapshot_data TEXT NOT NULL,

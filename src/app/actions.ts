@@ -78,7 +78,7 @@ export async function getAiSummaryAction(
   forceRefresh = false,
 ): Promise<{ summary?: SummarizeConflictNewsOutput; error?: string; lastGenerated?: string; dataSource?: 'db' | 'ai'; sourceCount?: number }> {
   if (!forceRefresh) {
-    const cached = await getLatestAiSummaryFromTurso();
+    const cached = await getLatestAiSummaryFromTurso(undefined, 2);
     if (cached && Date.now() - new Date(cached.lastGenerated).getTime() < SUMMARY_TTL_MS) {
       return { summary: cached.summary, lastGenerated: cached.lastGenerated, dataSource: 'db' };
     }
