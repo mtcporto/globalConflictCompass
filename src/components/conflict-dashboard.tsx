@@ -53,7 +53,7 @@ export default function ConflictDashboard() {
   };
   
   const overallStatus = useMemo(() => {
-    const statuses = Object.values(apiStatuses);
+    const statuses = [apiStatuses.bbc, apiStatuses.aljazeera, apiStatuses.hrw, apiStatuses.guardian, apiStatuses.aiSummary];
     const total = statuses.length;
     const successCount = statuses.filter(s => s.status === 'success').length;
     const errorCount = statuses.filter(s => s.status === 'error').length;
@@ -97,7 +97,8 @@ export default function ConflictDashboard() {
           </DataCard>
       </div>
 
-      <h2 className="text-2xl font-semibold text-foreground mb-4 mt-10 text-center">Fontes de Notícias e Dados Adicionais</h2>
+      <section className="mt-10">
+      <div className="mb-4 text-center"><h2 className="text-2xl font-semibold text-foreground">Atualizações recentes</h2><p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground">Notícias e relatórios ajudam a acompanhar os acontecimentos recentes. A lista de conflitos e o mapa continuam baseados na fonte principal indicada acima.</p></div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <DataCard 
           title="BBC News" 
@@ -163,6 +164,7 @@ export default function ConflictDashboard() {
           <AiSummaryPanel onStatusChange={handleAiSummaryStatusChange} />
         </DataCard>
       </div>
+      </section>
     </div>
   );
 }

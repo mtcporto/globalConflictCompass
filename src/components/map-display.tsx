@@ -21,6 +21,8 @@ if (typeof window !== 'undefined') {
 
 interface MapDisplayProps {
   conflicts: CuratedConflictEntry[];
+  selectedConflictId?: string | null;
+  onSelectConflict?: (name: string) => void;
 }
 
 // Dark theme color map for Leaflet elements
@@ -76,7 +78,15 @@ const LegendControl = ({ severityMap }: { severityMap: Record<ConflictSeverityCa
   return null;
 };
 
-function MapDisplayComponent({ conflicts }: MapDisplayProps) {
+function MapSelectionSync({ conflict, }: { conflict?: CuratedConflictEntry }) {
+  const map = useMap();
+  useEffect(() => {
+    if (conflict?.coordenadas) map.flyTo(conflict.coordenadas, Math.max(map.getZoom(), 3), { duration: 0.6 });
+  }, [conflict, map]);
+  return null;
+}
+
+function MapDisplayComponent({ conflicts, selectedConflictId, onSelectConflict }: MapDisplayProps) {
   const [countriesGeoJson, setCountriesGeoJson] = useState<any>(null);
   const [loadingGeoJson, setLoadingGeoJson] = useState(true);
 
@@ -193,9 +203,11 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
         {validConflicts.map((conflict) => {
           const severityCat = conflict.severityCategory as ConflictSeverityCategory | undefined;
           const color = severityCat ? leafletSeverityColorMap[severityCat] : unknownSeverityColor;
+          const isSelected = conflict.nome === selectedConflictId;
           let radius = 7;
           if (severityCat === "Alta Gravidade") radius = 12;
           else if (severityCat === "Média Gravidade") radius = 9;
+          if (isSelected) radius += 3;
 
           return (
             <CircleMarker
@@ -206,8 +218,9 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
                 color: color, // Border color of the circle
                 fillColor: color, // Fill color of the circle
                 fillOpacity: 0.9,
-                weight: 2,
+                weight: isSelected ? 4 : 2,
               }}
+              eventHandlers={{ click: () => onSelectConflict?.(conflict.nome) }}
             >
               <Tooltip sticky>{conflict.nome}</Tooltip>
               <Popup>
@@ -235,6 +248,7 @@ function MapDisplayComponent({ conflicts }: MapDisplayProps) {
             </CircleMarker>
           );
         })}
+        <MapSelectionSync conflict={validConflicts.find(conflict => conflict.nome === selectedConflictId)} />
         <LegendControl severityMap={leafletSeverityColorMap} />
       </MapContainer>
 

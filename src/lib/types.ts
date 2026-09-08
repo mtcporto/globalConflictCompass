@@ -138,6 +138,8 @@ export interface SummarizeNewsInputItem {
   title: string;
   description: string;
   link?: string;
+  source: string;
+  publishedAt?: string;
 }
 
 // For Curated Conflict Data from JSON file

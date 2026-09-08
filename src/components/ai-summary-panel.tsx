@@ -1,25 +1,22 @@
-
 "use client";
 
-import type React from 'react';
-import { useState, useCallback, useEffect } from 'react';
-import { 
-  getAiSummaryAction, 
-  fetchBbcNewsForAISummary, 
-  fetchAlJazeeraForAISummary,
-  fetchHrwReportsForAISummary,
-  fetchGuardianNewsForAISummary
-} from '@/app/actions';
-import type { SourceStatus, SummarizeNewsInputItem, BbcNewsItemRss, ReliefWebReport } from '@/lib/types';
+import { useCallback, useEffect, useState } from 'react';
+import { DatabaseZap, ExternalLink, Info, RefreshCw, Sparkles } from 'lucide-react';
+import { getAiSummaryAction } from '@/app/actions';
+import type { SourceStatus } from '@/lib/types';
 import type { SummarizeConflictNewsOutput } from '@/ai/flows/summarize-conflict-news';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
-import { Wand2, Info, AlertTriangle, DatabaseZap } from 'lucide-react';
+import { LoadingSpinner } from './loading-spinner';
 import { formatDate } from '@/lib/utils';
 
 interface AiSummaryPanelProps {
   onStatusChange: (status: SourceStatus) => void;
+}
+
+function TextList({ items }: { items?: string[] }) {
+  if (!items?.length) return null;
+  return <ul className="space-y-2">{items.map((item, index) => <li key={`${item}-${index}`} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />{item}</li>)}</ul>;
 }
 
 export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
@@ -29,166 +26,68 @@ export function AiSummaryPanel({ onStatusChange }: AiSummaryPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generateSummary = useCallback(async (forceRefresh: boolean = false) => {
+  const loadSummary = useCallback(async (forceRefresh = false) => {
     setIsLoading(true);
     setError(null);
-    if (forceRefresh) { // Only clear previous summary if forcing a full refresh
-        setSummary(null);
-        setLastGenerated(null);
-        setDataSource(null);
-    }
     onStatusChange({ status: 'loading' });
-
     try {
-      // Fetch news items only if we need to generate a new summary (forceRefresh or no valid cache/DB entry)
-      // The decision to fetch fresh news or use DB cache is now inside getAiSummaryAction
-      const newsFetchPromises = [
-        fetchBbcNewsForAISummary(5), 
-        fetchAlJazeeraForAISummary(5),
-        fetchHrwReportsForAISummary(5),
-        fetchGuardianNewsForAISummary(5)
-      ];
-
-      const results = await Promise.all(newsFetchPromises);
-      const [bbcData, alJazeeraData, hrwData, guardianData] = results;
-
-      const newsItemsToSummarize: SummarizeNewsInputItem[] = [];
-      const processItems = (items: Array<BbcNewsItemRss | ReliefWebReport>, sourceName: string) => {
-        items.forEach((item: any) => { 
-          let title: string;
-          let description: string;
-          let link: string | undefined;
-
-          if (sourceName === 'ReliefWeb') { // Assuming ReliefWeb items have 'fields'
-            title = item.fields.title;
-            description = item.fields.body?.replace(/<[^>]*>?/gm, '').substring(0, 350) + '...' || 'Sem descrição detalhada.';
-            link = item.fields.url;
-          } else { // Assuming other sources (BBC, Al Jazeera, HRW, Guardian) have a common structure
-            title = item.title;
-            description = (item.content || item.description || "").replace(/<[^>]*>?/gm, '').substring(0, 350) + '...';
-            link = item.link;
-          }
-          newsItemsToSummarize.push({ title, description, link });
-        });
-      };
-
-      processItems(bbcData, 'BBC');
-      processItems(alJazeeraData, 'AlJazeera');
-      processItems(hrwData, 'HRW');
-      processItems(guardianData, 'The Guardian');
-      
-      if (newsItemsToSummarize.length === 0 && forceRefresh) {
-        // Only error out if forcing refresh and no news. If not forcing, getAiSummaryAction might return from DB.
-        setError("Nenhuma notícia encontrada para gerar o resumo. Verifique as fontes de notícias.");
-        onStatusChange({ status: 'error', message: "Nenhuma notícia para resumir." });
-        setIsLoading(false);
-        return;
-      }
-      
-      // Pass newsItemsToSummarize, action will decide if they are needed based on forceRefresh and DB state
-      const result = await getAiSummaryAction(newsItemsToSummarize, forceRefresh);
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      
+      const result = await getAiSummaryAction(forceRefresh);
+      if (result.error) throw new Error(result.error);
       setSummary(result.summary || null);
       setLastGenerated(result.lastGenerated || null);
       setDataSource(result.dataSource || null);
       onStatusChange({ status: 'success' });
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao gerar resumo.';
-      setError(errorMessage);
-      onStatusChange({ status: 'error', message: errorMessage });
-      console.error("AI Summary error:", err);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Erro desconhecido ao carregar o resumo.';
+      setError(message);
+      onStatusChange({ status: 'error', message });
     } finally {
       setIsLoading(false);
     }
   }, [onStatusChange]);
-  
-  useEffect(() => {
-    // Generate summary on initial load, try to use DB cache first
-    generateSummary(false); 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
 
+  useEffect(() => { void loadSummary(); }, [loadSummary]);
 
   return (
-    <div className="flex flex-col h-full">
-      <Button onClick={() => generateSummary(true)} disabled={isLoading} className="mb-4 w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-        <Wand2 className="mr-2 h-4 w-4" />
-        {isLoading ? 'Analisando Notícias e Gerando Resumo...' : 'Atualizar Resumo Agora'}
-      </Button>
-      
-      {lastGenerated && (
-        <div className={`mb-3 text-xs text-center ${dataSource === 'db' ? 'text-green-600' : 'text-blue-600'} flex items-center justify-center gap-1.5 p-1.5 bg-muted/50 rounded-md border`}>
-          {dataSource === 'db' ? <DatabaseZap className="w-3.5 h-3.5" /> : <Wand2 className="w-3.5 h-3.5" />}
-          <span>
-            Resumo {dataSource === 'db' ? 'carregado do banco de dados' : 'gerado pela IA'}. Última geração: {formatDate(lastGenerated)} às {new Date(lastGenerated).toLocaleTimeString('pt-BR')}.
-          </span>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+        <div>
+          <p className="font-medium">Leitura editorial das atualizações recentes</p>
+          <p className="text-xs text-muted-foreground">O resumo é salvo no Turso por 24 horas para evitar chamadas desnecessárias ao GPT.</p>
         </div>
-      )}
-
-      <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-start gap-2">
-        <Info className="w-4 h-4 mt-0.5 shrink-0" />
-        <span>
-          Este resumo é gerado por IA com base nas notícias mais recentes da BBC, Al Jazeera, Human Rights Watch e The Guardian (até 5 de cada).
-          Pode não refletir todos os conflitos ativos listados em outras seções.
-        </span>
+        <Button onClick={() => void loadSummary(true)} disabled={isLoading} variant="outline" size="sm">
+          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          {isLoading ? 'Atualizando…' : 'Atualizar resumo'}
+        </Button>
       </div>
 
-      {isLoading && <LoadingSpinner text="Analisando notícias e gerando resumo..." />}
+      {lastGenerated && <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {dataSource === 'db' ? <DatabaseZap className="h-3.5 w-3.5 text-emerald-600" /> : <Sparkles className="h-3.5 w-3.5 text-primary" />}
+        <span>{dataSource === 'db' ? 'Carregado do Turso' : 'Gerado pelo GPT-4o'} · {formatDate(lastGenerated)} às {new Date(lastGenerated).toLocaleTimeString('pt-BR')}</span>
+      </div>}
+
+      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+        <Info className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>A análise usa até cinco itens relevantes de cada fonte disponível. Ela resume o noticiário; não substitui a fonte original nem a lista de conflitos.</span>
+      </div>
+
+      {isLoading && <LoadingSpinner text="Consultando o resumo salvo ou analisando as notícias…" />}
       {error && <ErrorDisplay message={error} />}
-      
-      {summary && !isLoading && (
-        <div className="p-1 md:p-3 bg-card rounded-lg shadow-md space-y-6 text-sm">
-            
-          {summary.resumoGeral && (
-            <div>
-              <h3 className="font-semibold text-lg mb-2 text-accent border-b pb-2">Resumo Geral dos Eventos:</h3>
-              <p className="whitespace-pre-wrap text-foreground/90">{summary.resumoGeral}</p>
-            </div>
-          )}
-          
-          {summary.eventosChave && summary.eventosChave.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-base mb-1 text-accent">Eventos Chave:</h4>
-              <ul className="list-disc list-inside ml-4 space-y-0.5 text-foreground/90">
-                {summary.eventosChave.map((evento, index) => <li key={`evento-${index}`}>{evento}</li>)}
-              </ul>
-            </div>
-          )}
-          {summary.atoresEnvolvidos && summary.atoresEnvolvidos.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-base mb-1 text-accent">Atores Envolvidos:</h4>
-               <ul className="list-disc list-inside ml-4 space-y-0.5 text-foreground/90">
-                {summary.atoresEnvolvidos.map((ator, index) => <li key={`ator-${index}`}>{ator}</li>)}
-              </ul>
-            </div>
-          )}
-          {summary.impactoHumanitario && summary.impactoHumanitario !== "Não mencionado explicitamente nas notícias fornecidas" && (
-            <div>
-              <h4 className="font-semibold text-base mb-1 text-accent">Impacto Humanitário:</h4>
-              <p className="whitespace-pre-wrap text-foreground/90">{summary.impactoHumanitario}</p>
-            </div>
-          )}
-           {summary.causasFatoresMencionados && summary.causasFatoresMencionados !== "Não mencionado explicitamente nas notícias fornecidas" && (
-            <div>
-              <h4 className="font-semibold text-base mb-1 text-accent">Causas/Fatores Mencionados:</h4>
-              <p className="whitespace-pre-wrap text-foreground/90">{summary.causasFatoresMencionados}</p>
-            </div>
-          )}
-          {(!summary.resumoGeral && (!summary.eventosChave || summary.eventosChave.length === 0)) && (
-              <p className="text-muted-foreground">Não foi possível extrair informações detalhadas das notícias fornecidas para esta análise.</p>
-          )}
+
+      {summary && !isLoading && <article className="space-y-6 rounded-xl border bg-card p-4 shadow-sm sm:p-6">
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">Panorama</p>
+          <p className="whitespace-pre-wrap text-[15px] leading-7 text-foreground/90">{summary.panorama || summary.resumoGeral}</p>
         </div>
-      )}
-      {!summary && !isLoading && !error && (
-         <p className="text-sm text-muted-foreground text-center flex-grow flex items-center justify-center">
-           Clique no botão "Atualizar Resumo Agora" para gerar um novo resumo das notícias ou aguarde o carregamento inicial.
-         </p>
-      )}
+        <div className="grid gap-6 md:grid-cols-2">
+          <section><h3 className="mb-3 font-semibold">Principais desenvolvimentos</h3><TextList items={summary.eventosChave} /></section>
+          <section><h3 className="mb-3 font-semibold">Conflitos em destaque</h3><TextList items={summary.conflitosEmDestaque} /></section>
+          <section><h3 className="mb-3 font-semibold">Impacto humanitário</h3><p className="leading-6 text-foreground/85">{summary.impactoHumanitario || 'Não mencionado explicitamente nas notícias fornecidas.'}</p></section>
+          <section><h3 className="mb-3 font-semibold">Atores e fatores</h3><div className="space-y-3 leading-6 text-foreground/85"><TextList items={summary.atoresEnvolvidos} />{summary.causasFatoresMencionados && <p>{summary.causasFatoresMencionados}</p>}</div></section>
+        </div>
+        {summary.oQueAcompanhar?.length ? <section className="border-t pt-5"><h3 className="mb-3 font-semibold">O que acompanhar</h3><TextList items={summary.oQueAcompanhar} /></section> : null}
+        {summary.fontes?.length ? <section className="border-t pt-5"><h3 className="mb-3 font-semibold">Fontes usadas</h3><ul className="space-y-2 text-sm">{summary.fontes.map((source, index) => <li key={`${source.link || source.title}-${index}`}><a className="inline-flex items-center gap-1 text-primary hover:underline" href={source.link} target="_blank" rel="noreferrer">{source.source}: {source.title}<ExternalLink className="h-3 w-3" /></a></li>)}</ul></section> : null}
+      </article>}
     </div>
   );
 }

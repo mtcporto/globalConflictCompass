@@ -16,6 +16,8 @@ const SummarizeConflictNewsInputSchema = z.object({
       title: z.string().describe('The title of the news item.'),
       description: z.string().describe('A brief description of the news item.'),
       link: z.string().optional().describe('The URL of the news item.'),
+      source: z.string().describe('The publication or organization that provided the item.'),
+      publishedAt: z.string().optional().describe('Publication date when available.'),
     })
   ).describe('An array of news items to summarize.'),
 });
@@ -23,10 +25,14 @@ const SummarizeConflictNewsInputSchema = z.object({
 export type SummarizeConflictNewsInput = z.infer<typeof SummarizeConflictNewsInputSchema>;
 
 const SummarizeConflictNewsOutputSchema = z.object({
+  panorama: z.string().optional().describe('A clear, contextual overview explaining what is happening and why it matters.'),
   eventosChave: z.array(z.string()).optional().describe("Lista dos eventos chave ou desenvolvimentos mais significativos nas notícias. Se nenhum evento chave for identificado, retornar um array vazio [] ou omitir este campo."),
+  conflitosEmDestaque: z.array(z.string()).optional().describe('Conflitos ou crises mais presentes nas notícias, with the country or region when explicit.'),
   atoresEnvolvidos: z.array(z.string()).optional().describe("Principais atores (países, grupos formações políticas, etc.) explicitamente mencionados como envolvidos nos conflitos. Se nenhum ator for identificado, retornar um array vazio [] ou omitir este campo."),
   impactoHumanitario: z.string().optional().describe('Breve descrição do impacto humanitário mencionado (e.g., deslocados, vítimas, necessidade de ajuda), se houver. Se não houver, pode omitir o campo ou retornar "Não mencionado explicitamente nas notícias fornecidas".'),
   causasFatoresMencionados: z.string().optional().describe('Breve descrição das causas ou fatores que contribuem para os conflitos, conforme explicitamente mencionado nas notícias. Não especule. Se não houver, pode omitir o campo ou retornar "Não mencionado explicitamente nas notícias fornecidas".'),
+  oQueAcompanhar: z.array(z.string()).optional().describe('Developments readers should watch next, only when directly supported by the reports.'),
+  fontes: z.array(z.object({ source: z.string(), title: z.string(), link: z.string().optional() })).optional().describe('The sources used, preserving only links provided in the input.'),
   resumoGeral: z.string().describe('Um resumo geral conciso dos eventos e da situação, em português brasileiro, conectando os pontos principais.'),
 });
 
@@ -36,7 +42,7 @@ export async function summarizeConflictNews(input: SummarizeConflictNewsInput): 
   return summarizeConflictNewsFlow(input);
 }
 
-const systemPrompt = `Você é um analista de conflitos globais. Responda em português brasileiro e use somente os fatos presentes nas notícias fornecidas. Não invente números, causas, atores ou acontecimentos. Quando uma informação não estiver presente, use uma lista vazia ou a frase padrão indicada pelo schema.
+const systemPrompt = `Você é um analista de conflitos globais escrevendo para uma pessoa que não acompanhou as notícias. Responda em português brasileiro, com clareza e contexto, usando somente os fatos presentes nas notícias fornecidas. Não invente números, causas, atores ou acontecimentos. Diferencie fato reportado de incerteza. Ao conectar notícias, explique a conexão sem afirmar mais do que as fontes permitem.
 
 Com base apenas nas notícias fornecidas:
 
@@ -60,6 +66,14 @@ Com base apenas nas notícias fornecidas:
 
 5.  **Resumo Geral** (campo: \`resumoGeral\`): Forneça um parágrafo de resumo geral que conecte os pontos principais e a situação atual conforme as notícias. Este campo é OBRIGATÓRIO e deve ser um resumo mais detalhado dos eventos.
 
+6. **Panorama** (campo: \`panorama\`): Escreva 2 ou 3 parágrafos explicando o que está acontecendo, onde, quem é afetado e qual é a dimensão dos desenvolvimentos. Evite frases genéricas.
+
+7. **Conflitos em destaque** (campo: \`conflitosEmDestaque\`): Liste os conflitos ou crises claramente identificáveis nas notícias, com país ou região quando estiver explícito.
+
+8. **O que acompanhar** (campo: \`oQueAcompanhar\`): Liste até 4 desenvolvimentos futuros que as próprias notícias indiquem como relevantes. Não faça previsões.
+
+9. **Fontes** (campo: \`fontes\`): Liste as notícias realmente usadas, mantendo exatamente os links recebidos. Nunca crie ou altere URLs.
+
 Instruções CRÍTICAS para o formato da resposta:
 - O resultado DEVE estar em português brasileiro (pt-BR).
 - É ABSOLUTAMENTE CRUCIAL que a sua resposta respeite o schema de output JSON fornecido.
@@ -67,7 +81,7 @@ Instruções CRÍTICAS para o formato da resposta:
 - Para campos de string opcionais (\`impactoHumanitario\`, \`causasFatoresMencionados\`): se nenhuma informação for encontrada, siga as instruções detalhadas acima (omitir o campo ou retornar a string padrão, quando aplicável).
 - O campo \`resumoGeral\` é obrigatório e deve sempre ser uma string.
 
-Mantenha o resultado conciso e focado nos fatos.`;
+Mantenha o resultado informativo, específico e focado nos fatos. Um resumo curto demais que apenas repete manchetes não atende ao pedido.`;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'not-needed',
