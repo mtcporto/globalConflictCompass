@@ -60,7 +60,6 @@ export default function OpenFreeMapLayer() {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://openfreemap.org/">OpenFreeMap</a>',
       });
       layer.addTo(map);
-      layer.bringToBack?.();
     }).catch(error => console.error("OpenFreeMap basemap could not load:", error));
     return () => {
       disposed = true;
