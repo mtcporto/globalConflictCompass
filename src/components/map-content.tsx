@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import OpenFreeMapLayer from './openfreemap-layer';
 import type { WikipediaConflict, WikipediaConflictSeverity } from '@/lib/types';
 
 // Correção do ícone do Leaflet
@@ -53,10 +54,7 @@ function MapContent({ conflicts, severityColorMap }: MapContentProps) {
       style={{ height: '100%', width: '100%' }}
       scrollWheelZoom={true}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
-      />
+      <OpenFreeMapLayer />
 
       {conflicts.map((conflict: WikipediaConflict) => (
         <Marker
