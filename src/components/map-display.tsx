@@ -4,6 +4,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import OpenFreeMapLayer from './openfreemap-layer';
 import type { CuratedConflictEntry, ConflictSeverityCategory } from '@/lib/types';
 
 // Patch Leaflet's default icon path to prevent issues with bundlers
@@ -188,10 +189,7 @@ function MapDisplayComponent({ conflicts, selectedConflictId, onSelectConflict }
         maxBounds={WorldMapBounds} // Restrict panning to the world bounds
         maxBoundsViscosity={1.0} // Makes bounds "hard"
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_matter_nolabels/{z}/{x}/{y}{r}.png"
-        />
+        <OpenFreeMapLayer />
 
         {countriesGeoJson && (
           <GeoJSON
