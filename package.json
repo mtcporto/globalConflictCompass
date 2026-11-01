@@ -48,7 +48,7 @@
     "linkedom": "0.18.13",
     "lucide-react": "^0.475.0",
     "next": "16.4.2",
-    "openai": "^4.104.0",
+    "openai": "^7.47.0",
     "patch-package": "^8.0.0",
     "react": "19.3.0",
     "react-day-picker": "^9.0.0",
@@ -58,7 +58,7 @@
     "recharts": "^2.15.1",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.24.2",
+    "zod": "^4.6.7",
     "braces": "file:vendor/guarded-braces"
   },
   "devDependencies": {
